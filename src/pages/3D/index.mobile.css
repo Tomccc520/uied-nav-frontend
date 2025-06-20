@@ -1,0 +1,297 @@
+/**
+ * @file 3D/index.mobile.css
+ * @description 3D设计页面移动端样式 - 遵循苹果设计规范
+ * @copyright 版权所有 (c) 2025 UIED技术团队
+ * @website https://fsuied.com
+ * @license MIT
+ * @version 1.0.0
+ */
+
+/* 移动端3D页面样式 - 750px以下设备，遵循苹果设计规范 */
+@media (max-width: 750px) {
+  /* ===== 页面容器 ===== */
+  .threed-page {
+    padding: 0;
+    margin: 0;
+    min-height: 100vh;
+    background: #f8f9fa; /* 苹果浅色背景 */
+  }
+
+  /* ===== 主布局 ===== */
+  .main-layout {
+    flex-direction: column;
+    gap: 16px; /* 8的倍数 */
+    padding: 16px; /* 苹果推荐边距 */
+    margin: 0;
+    margin-top: -2rem; /* 增加向上的1rem间距 */
+    min-height: auto;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* ===== 工具主内容区域 ===== */
+  .tools-main {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* ===== 内容区块 ===== */
+  .content-section {
+    margin-bottom: 24px; /* 8的倍数 */
+    padding: 0;
+  }
+
+  /* ===== 区块标题 ===== */
+  .section-header-simple h2 {
+    font-size: 1.25rem; /* 20px */
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 16px;
+    color: #1c1c1e; /* 苹果文字颜色 */
+    text-align: left;
+  }
+
+  /* ===== 工具网格布局 ===== */
+  .tools-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* 单列布局 */
+    gap: 12px; /* 8的倍数，紧凑间距 */
+    padding: 0;
+    margin: 0;
+  }
+
+  /* ===== 工具卡片样式 ===== */
+  .tool-card {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 12px; /* 苹果圆角 */
+    padding: 16px;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tool-card:hover {
+    background: #fafafa;
+    border-color: rgba(111, 66, 193, 0.2);
+    box-shadow: 0 4px 12px rgba(111, 66, 193, 0.1);
+    transform: translateY(-1px);
+  }
+
+  /* ===== 工具标签样式 ===== */
+  .threed-page .tool-tag {
+    display: inline-block;
+    padding: 4px 8px; /* 紧凑内边距 */
+    margin: 2px 4px 2px 0;
+    font-size: 0.75rem; /* 12px */
+    font-weight: 500;
+    line-height: 1.2;
+    border-radius: 6px; /* 小圆角 */
+    background: rgba(111, 66, 193, 0.08);
+    color: #6f42c1;
+    border: 1px solid rgba(111, 66, 193, 0.15);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    text-decoration: none;
+  }
+
+  .threed-page .tool-tag:hover {
+    background: rgba(111, 66, 193, 0.12);
+    color: #5936a1;
+    border-color: rgba(111, 66, 193, 0.25);
+    transform: translateY(-0.5px);
+  }
+
+  /* ===== 工具卡片内容布局 ===== */
+  .tool-card .tool-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .tool-card .tool-icon {
+    width: 40px; /* 8的倍数 */
+    height: 40px;
+    border-radius: 8px;
+    background: rgba(111, 66, 193, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: #6f42c1;
+    flex-shrink: 0;
+  }
+
+  .tool-card .tool-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .tool-card .tool-name {
+    font-size: 1rem; /* 16px */
+    font-weight: 600;
+    line-height: 1.3;
+    color: #1c1c1e;
+    margin: 0 0 4px 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tool-card .tool-description {
+    font-size: 0.875rem; /* 14px */
+    line-height: 1.4;
+    color: #8e8e93; /* 苹果次要文字颜色 */
+    margin: 0 0 8px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* ===== 侧边栏导航 ===== */
+  .category-sidebar {
+    order: -1; /* 移动端显示在顶部 */
+    width: 100%;
+    max-width: none;
+    position: static;
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+
+  /* ===== 导航网格 ===== */
+  .nav-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+  }
+  
+  /* ===== 侧边栏导航项 ===== */
+  .sidebar-nav-item {
+    padding: 12px 8px;
+    border-radius: 8px;
+    text-align: center;
+    background: #f8f9fa;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    min-height: 64px; /* 8的倍数 */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .sidebar-nav-item:hover {
+    background: rgba(111, 66, 193, 0.05);
+    border-color: rgba(111, 66, 193, 0.15);
+  }
+  
+  .sidebar-nav-item.active {
+    background: rgba(111, 66, 193, 0.1);
+    border-color: #6f42c1;
+    border-left-width: 1px; /* 重置移动端边框 */
+  }
+
+  .sidebar-nav-item .nav-item-name {
+    font-size: 0.875rem; /* 14px */
+    font-weight: 500;
+    line-height: 1.3;
+    color: #1c1c1e;
+    margin: 0;
+  }
+  
+  .sidebar-nav-item.active .nav-item-name {
+    color: #6f42c1;
+    font-weight: 600;
+  }
+
+  .sidebar-nav-item .nav-item-count {
+    font-size: 0.75rem; /* 12px */
+    color: #8e8e93;
+    margin: 0;
+  }
+
+  /* ===== 搜索栏 ===== */
+  .search-section .search-bar {
+    width: 100%;
+    max-width: none;
+    margin: 0 0 16px 0;
+  }
+
+  /* ===== 深色模式适配 ===== */
+
+/* ===== 超小屏幕优化 (iPhone SE等) ===== */
+@media (max-width: 375px) {
+  .main-layout {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .tool-card {
+    padding: 12px;
+  }
+
+  .tool-card .tool-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+
+  .nav-grid {
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 6px;
+  }
+
+  .sidebar-nav-item {
+    padding: 8px 4px;
+    min-height: 56px;
+  }
+}
+
+/* ===== 横屏模式优化 ===== */
+@media (max-width: 750px) and (orientation: landscape) {
+  .main-layout {
+    flex-direction: row;
+    gap: 16px;
+  }
+
+  .category-sidebar {
+    order: 0;
+    width: 200px;
+    flex-shrink: 0;
+    margin-bottom: 0;
+    margin-right: 16px;
+  }
+
+  .tools-main {
+    flex: 1;
+  }
+
+  .nav-grid {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .sidebar-nav-item {
+    padding: 8px 12px;
+    min-height: 40px;
+    flex-direction: row;
+    text-align: left;
+    gap: 8px;
+  }
+
+  .sidebar-nav-item .nav-item-count {
+    margin-left: auto;
+  }
+}
+
+} /* 关闭主要的 @media (max-width: 750px) 块 */ 

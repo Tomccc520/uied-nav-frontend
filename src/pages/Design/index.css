@@ -1,0 +1,71 @@
+/**
+ * @file Design/index.css
+ * @description 平面导航页面样式
+ * @copyright 版权所有 (c) 2025 UIED技术团队
+ * @website https://fsuied.com
+ * @license MIT
+ * @version 1.0.0
+ */
+
+/* 平面导航页面特定样式 */
+.design-page {
+  /* 平面设计主题色彩 */
+  --design-primary: #ff9800;
+  --design-primary-light: rgba(255, 152, 0, 0.1);
+  --design-primary-dark: #f57c00;
+}
+
+/* 平面导航页面的主容器 */
+.design-page .main-layout {
+  margin-top: 1rem;
+}
+
+/* 重写工具卡片在平面导航中的样式 */
+.design-page .tool-card {
+  border-left: 3px solid var(--design-primary);
+}
+
+.design-page .tool-card:hover {
+  box-shadow: 0 4px 12px var(--design-primary-light);
+}
+
+/* 移除自定义分类标题样式，使用通用样式 */
+
+/* 平面导航的侧边栏样式 */
+.design-page .sidebar-nav-item.active {
+  background: var(--design-primary-light);
+  border-left: 3px solid var(--design-primary);
+}
+
+.design-page .sidebar-nav-item.active .nav-item-name {
+  color: var(--design-primary-dark);
+  font-weight: 600;
+}
+
+/* 子分类样式 */
+.subcategory-section {
+  margin-bottom: 2rem;
+}
+
+.subcategory-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+}
+
+.subcategory-header h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary, #1f2937);
+  margin: 0;
+}
+
+.subcategory-header .resource-count {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6b7280);
+  background: var(--bg-secondary, #f3f4f6);
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+} 

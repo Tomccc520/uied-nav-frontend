@@ -1,0 +1,568 @@
+/**
+ * @file Home/index.css
+ * @description 首页样式 - 参考AIBase设计
+ * @copyright 版权所有 (c) 2025 UIED技术团队
+ * @website https://fsuied.com
+ * @license MIT
+ * @version 1.0.0
+ */
+
+/* 全局变量 */
+:root {
+  --primary-color: #FF6B00;
+  --primary-gradient: linear-gradient(135deg, #FF6B00 0%, #FF913E 100%);
+  --secondary-color: #8B5DFF;
+  --success-color: #10a37f;
+  --warning-color: #FFB800;
+  --error-color: #FF4757;
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --text-tertiary: #999999;
+  --background-light: #ffffff;
+  --background-gray: #f8f9fa;
+  --border-light: #e5e7eb;
+  --border-medium: #d1d5db;
+  --shadow-light: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  --shadow-medium: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+  --shadow-heavy: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --radius-small: 0.5rem;
+  --radius-medium: 0.75rem;
+  --radius-large: 1rem;
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+}
+
+/* 首页容器 */
+.home-container {
+  width: 100%;
+  max-width: 77.5rem; /* 1240px转换为rem */
+  margin: 0 auto;
+  padding: 1.25rem;
+  background: var(--background-light);
+  min-height: 100vh;
+}
+
+/* 顶部区域：轮播图和排行榜并排 */
+.home-top-section {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  align-items: flex-start;
+}
+
+/* 左侧轮播图区域 */
+.home-carousel-section {
+  flex: 2;
+  min-height: 25rem;
+}
+
+/* 轮播图容器 */
+.carousel-container {
+  position: relative;
+  width: 100%;
+  height: 25rem;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.1);
+}
+
+.carousel-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.carousel-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.6s ease-in-out;
+  cursor: pointer;
+  background: linear-gradient(135deg, 
+    rgba(255, 107, 0, 0.9) 0%, 
+    rgba(255, 140, 0, 0.8) 50%, 
+    rgba(255, 165, 0, 0.7) 100%
+  );
+}
+
+.carousel-slide.active {
+  opacity: 1;
+}
+
+.carousel-slide:nth-child(1) {
+  background: linear-gradient(135deg, 
+    rgba(255, 107, 0, 0.9) 0%, 
+    rgba(255, 140, 0, 0.8) 100%
+  );
+}
+
+.carousel-slide:nth-child(2) {
+  background: linear-gradient(135deg, 
+    rgba(0, 102, 255, 0.9) 0%, 
+    rgba(51, 153, 255, 0.8) 100%
+  );
+}
+
+.carousel-slide:nth-child(3) {
+  background: linear-gradient(135deg, 
+    rgba(138, 43, 226, 0.9) 0%, 
+    rgba(186, 85, 211, 0.8) 100%
+  );
+}
+
+.carousel-slide:nth-child(4) {
+  background: linear-gradient(135deg, 
+    rgba(34, 193, 195, 0.9) 0%, 
+    rgba(253, 187, 45, 0.8) 100%
+  );
+}
+
+.slide-content {
+  text-align: center;
+  color: white;
+  padding: 2rem;
+  max-width: 80%;
+}
+
+.slide-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  line-height: 1.3;
+  text-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
+}
+
+.slide-subtitle {
+  font-size: 1rem;
+  font-weight: 400;
+  opacity: 0.95;
+  line-height: 1.5;
+  text-shadow: 0 0.0625rem 0.125rem rgba(0, 0, 0, 0.2);
+}
+
+/* 轮播指示器 */
+.carousel-indicators {
+  position: absolute;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.5rem;
+  z-index: 10;
+}
+
+.indicator {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.indicator.active {
+  background: white;
+  transform: scale(1.2);
+}
+
+/* 右侧排行榜区域 */
+.home-ranking-section {
+  flex: 1;
+  background: white;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color);
+  height: 25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.ranking-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  border-radius: 0.75rem 0.75rem 0 0;
+}
+
+.ranking-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ranking-title::before {
+  content: '//';
+  font-size: 1rem;
+  color: var(--primary-color);
+  font-weight: 700;
+  margin-right: 0.5rem;
+}
+
+.ranking-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.ranking-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0;
+}
+
+/* 排行榜项目样式（参考AntRankingPage） */
+.ranking-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.02);
+}
+
+.ranking-item:hover {
+  background-color: rgba(0, 102, 255, 0.02);
+}
+
+.ranking-item:last-child {
+  border-bottom: none;
+}
+
+/* 排名数字容器 */
+.rank-number-container {
+  flex: 0 0 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 0.75rem;
+}
+
+.rank-number {
+  font-size: 0.875rem;
+  font-weight: bold;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+  background: #f5f5f5;
+  color: #999;
+}
+
+/* 前三名特殊样式 */
+.rank-number-1 .rank-number {
+  background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
+  color: #fff;
+  box-shadow: 0 0.125rem 0.5rem rgba(255, 71, 87, 0.3);
+}
+
+.rank-number-2 .rank-number {
+  background: linear-gradient(135deg, #ff7f50 0%, #ff9f7f 100%);
+  color: #fff;
+  box-shadow: 0 0.125rem 0.5rem rgba(255, 127, 80, 0.3);
+}
+
+.rank-number-3 .rank-number {
+  background: linear-gradient(135deg, #ffa502 0%, #ffb733 100%);
+  color: #fff;
+  box-shadow: 0 0.125rem 0.5rem rgba(255, 165, 2, 0.3);
+}
+
+/* 排行榜项目内容 */
+.ranking-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.ranking-item-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.4;
+  margin-bottom: 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.ranking-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.ranking-item-views,
+.ranking-item-score {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.ranking-item-score {
+  color: #ff4d4f;
+  font-weight: 500;
+}
+
+/* 标签样式 */
+.new-tag,
+.hot-tag {
+  display: inline-block;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.625rem;
+  font-weight: 500;
+  border-radius: 0.25rem;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+.new-tag {
+  background: #f6ffed;
+  color: #52c41a;
+  border: 1px solid #b7eb8f;
+}
+
+.hot-tag {
+  background: #fff2e8;
+  color: #fa8c16;
+  border: 1px solid #ffd591;
+}
+
+/* 下方Banner区域 */
+.home-banner-section {
+  width: 100%;
+  margin-top: 2rem;
+}
+
+/* 加载和错误状态 */
+.ranking-loading,
+.ranking-error {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 0.125rem solid #f3f3f3;
+  border-top: 0.125rem solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text,
+.error-message {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.error-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.retry-button {
+  padding: 0.5rem 1rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.retry-button:hover {
+  background: var(--primary-dark);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .home-container {
+    padding: 1rem;
+  }
+  
+  .home-top-section {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .home-carousel-section,
+  .home-ranking-section {
+    flex: none;
+    width: 100%;
+  }
+  
+  .carousel-container {
+    height: 20rem;
+  }
+  
+  .home-ranking-section {
+    height: auto;
+    min-height: 20rem;
+  }
+  
+  .slide-title {
+    font-size: 1.5rem;
+  }
+  
+  .slide-subtitle {
+    font-size: 0.875rem;
+  }
+  
+  .ranking-item {
+    padding: 0.625rem 1rem;
+  }
+  
+  .ranking-item-title {
+    font-size: 0.8125rem;
+  }
+}
+
+/* 下方：设计文章区域 */
+.home-design-section {
+  margin-top: 3rem;
+  padding: 0 1rem;
+}
+
+/* 确保设计文章网格组件的样式 */
+.home-design-section .design-article-grid-container {
+  max-width: 75rem;
+  margin: 0 auto;
+}
+
+/* 设计文章网格的标题样式 */
+.home-design-section .section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+}
+
+/* 设计文章网格的子分类标签样式 */
+.home-design-section .subcategory-tabs {
+  margin-bottom: 2rem;
+}
+
+.home-design-section .subcategory-tab {
+  padding: 0.5rem 1rem;
+  margin-right: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-small);
+  background: var(--white);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.home-design-section .subcategory-tab:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.home-design-section .subcategory-tab.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: var(--white);
+}
+
+/* 设计文章卡片样式 */
+.home-design-section .article-card {
+  background: var(--white);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.08);
+  transition: all var(--transition-normal);
+  cursor: pointer;
+}
+
+.home-design-section .article-card:hover {
+  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15);
+  transform: translateY(-0.25rem);
+}
+
+.home-design-section .article-image-container {
+  position: relative;
+  width: 100%;
+  height: 10rem;
+  overflow: hidden;
+}
+
+.home-design-section .article-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-normal);
+}
+
+.home-design-section .article-card:hover .article-image {
+  transform: scale(1.05);
+}
+
+.home-design-section .article-content {
+  padding: 1rem;
+}
+
+.home-design-section .article-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.home-design-section .article-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 1.25rem;
+  padding: 0 0.375rem;
+  border-radius: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--white);
+  flex-shrink: 0;
+}
+
+.home-design-section .article-title-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+

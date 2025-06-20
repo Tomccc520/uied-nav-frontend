@@ -1,0 +1,590 @@
+/**
+ * @file ToolCard/index.mobile.css
+ * @description 通用工具卡片组件样式 - 优化版本，使用CSS动画替代Motion
+ * @copyright 版权所有 (c) 2025 UIED技术团队
+ * @website https://fsuied.com
+ * @license MIT
+ * @version 1.2.0 - 性能优化版本
+ */
+
+/* 移动端专用样式 - 仅在750px以下设备生效，与Home页面保持一致 */
+@media (max-width: 750px) {
+  /* ===== 移动端工具卡片 - 与Home页面保持PC端风格但适配移动端 ===== */
+  .tool-item-card {
+    background: var(--white) !important; /* 与Home页面一致 */
+    border-radius: 0.5rem !important; /* 与Home页面一致 */
+    padding: 0.75rem !important; /* 与Home页面一致 */
+    border: 1px solid #e1e5e9 !important; /* 与Home页面一致 */
+    transition: border-color 0.3s ease !important; /* 与Home页面一致 */
+    cursor: pointer !important;
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important; /* 移动端改为纵向布局 */
+    gap: 0.5rem !important;
+    height: auto !important; /* 移动端允许自适应高度 */
+    min-height: 120px !important; /* 最小高度保证内容显示 */
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+    box-shadow: none !important; /* 移除阴影 */
+  }
+
+  .tool-item-card:hover {
+    border-color: var(--primary-color) !important; /* 与Home页面一致 */
+    transform: translateY(-1px) !important; /* 与Home页面一致 */
+    box-shadow: none !important; /* 移除阴影 */
+  }
+
+  /* ===== 移动端卡片内部布局 - 与Home页面一致 ===== */
+  .tool-item-header {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 0.5rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+
+  /* 移动端图标 - 保持PC端风格 */
+  .tool-item-icon,
+  .tool-item-icon img {
+    width: 2rem !important; /* 与Home页面一致 */
+    height: 2rem !important; /* 与Home页面一致 */
+    border-radius: 0.375rem !important; /* 与Home页面一致 */
+    object-fit: cover !important;
+    flex-shrink: 0 !important;
+  }
+
+  .tool-item-icon-fallback {
+    width: 2rem !important;
+    height: 2rem !important;
+    border-radius: 0.375rem !important;
+    font-size: 0.875rem !important; /* 与Home页面一致 */
+    color: var(--text-secondary) !important; /* 与Home页面一致 */
+    font-weight: 600 !important;
+    background: var(--background-light) !important; /* 与Home页面一致 */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* 移动端内容区域 */
+  .tool-item-content {
+    flex: 1 !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.25rem !important;
+  }
+
+  .tool-item-info {
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .tool-item-name {
+    font-size: 0.875rem !important; /* 与Home页面一致 */
+    font-weight: 600 !important; /* 与Home页面一致 */
+    color: var(--text-primary) !important; /* 与Home页面一致 */
+    line-height: 1.3 !important;
+    margin: 0 0 0.25rem 0 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 1 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .tool-item-name:hover {
+    text-decoration: underline !important; /* 与Home页面一致 */
+  }
+
+  /* 移动端描述文本 - 保持PC端样式 */
+  .tool-item-description {
+    font-size: 0.75rem !important; /* 与Home页面一致 */
+    color: var(--text-secondary) !important; /* 与Home页面一致 */
+    line-height: 1.4 !important;
+    margin: 0 0 0.5rem 0 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important; /* 与Home页面一致 */
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+  }
+
+  /* 移动端徽章 */
+  .tool-item-badges {
+    display: flex !important;
+    gap: 0.25rem !important;
+    flex-shrink: 0 !important;
+    margin-left: auto !important; /* 右对齐 */
+    align-self: flex-start !important;
+  }
+
+  /* 移动端底部元数据 - 保持PC端风格 */
+  .tool-item-meta {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    font-size: 0.625rem !important; /* 与Home页面一致 */
+    color: var(--text-light) !important; /* 与Home页面一致 */
+    margin-top: auto !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* 移动端标签 - 保持PC端风格但简化 */
+  .tool-item-tags {
+    display: flex !important;
+    gap: 0.25rem !important;
+    flex-wrap: wrap !important;
+    max-height: 1.5rem !important; /* 限制高度避免溢出 */
+    overflow: hidden !important;
+  }
+
+  .tool-item-tags .tool-tag {
+    padding: 0.125rem 0.375rem !important; /* 与Home页面一致 */
+    border-radius: 1rem !important; /* 与Home页面一致 */
+    font-size: 0.625rem !important;
+    font-weight: 500 !important; /* 与Home页面一致 */
+    border: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent 60%) !important; /* 与Home页面一致 */
+    background: color-mix(in srgb, var(--background-light) 60%, transparent 40%) !important; /* 与Home页面一致 */
+    color: var(--text-quaternary, #9ca3af) !important; /* 与Home页面一致 */
+    opacity: 0.8 !important; /* 与Home页面一致 */
+    transition: all 0.2s ease !important; /* 与Home页面一致 */
+    white-space: nowrap !important;
+  }
+
+  .tool-item-tags .tool-tag:hover {
+    background: color-mix(in srgb, var(--primary-light) 60%, transparent 40%) !important; /* 与Home页面一致 */
+    color: color-mix(in srgb, var(--primary-color) 80%, transparent 20%) !important; /* 与Home页面一致 */
+    opacity: 1 !important; /* 与Home页面一致 */
+  }
+}
+
+/* ===== 小屏幕设备优化 (iPhone SE等) ===== */
+@media (max-width: 375px) {
+  .tool-item-card {
+    padding: 0.625rem !important;
+    min-height: 110px !important;
+  }
+
+  .tool-item-name {
+    font-size: 0.8125rem !important;
+  }
+
+  .tool-item-description {
+    font-size: 0.6875rem !important;
+  }
+
+  .tool-item-icon,
+  .tool-item-icon img,
+  .tool-item-icon-fallback {
+    width: 1.75rem !important;
+    height: 1.75rem !important;
+  }
+
+  .tool-item-icon-fallback {
+    font-size: 0.75rem !important;
+  }
+}
+
+/* ===== 横屏优化 ===== */
+@media (max-width: 750px) and (max-height: 500px) and (orientation: landscape) {
+  .tool-item-card {
+    min-height: 100px !important;
+  }
+}
+
+/* ===== 深色模式适配 ===== */
+
+/* ===== 触摸设备优化 ===== */
+@media (max-width: 750px) {
+  .tool-item-card {
+    min-height: 44px !important; /* iOS触摸目标最小尺寸 */
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+  }
+
+  .tool-item-name,
+  .tool-item-description {
+    -webkit-user-select: text !important;
+    user-select: text !important;
+  }
+}
+
+/* ===== 热门推荐组件特定样式 ===== */
+@media (max-width: 750px) {
+  .hot-recommendations .tool-item-card {
+    /* 继承所有上述样式，无需重复定义 */
+  }
+}
+
+/* ===== 悬停描述层样式 ===== */
+.tool-card-wrapper {
+  position: relative;
+}
+
+.tool-item-hover-description {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  padding: 1rem;
+  margin-top: 0.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.hover-description-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.hover-description-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.hover-description-text {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+  max-height: none; /* 悬停时显示完整描述 */
+  display: block;
+  -webkit-line-clamp: none;
+  -webkit-box-orient: none;
+  overflow: visible;
+}
+
+.hover-description-tags {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.hover-tag {
+  padding: 0.125rem 0.375rem;
+  border-radius: 1rem;
+  font-size: 0.625rem;
+  font-weight: 500;
+  border: 1px solid color-mix(in srgb, var(--primary-color) 40%, transparent 60%);
+  background: color-mix(in srgb, var(--primary-light) 60%, transparent 40%);
+  color: color-mix(in srgb, var(--primary-color) 80%, transparent 20%);
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.hover-description-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.hover-description-url {
+  color: var(--text-light);
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+}
+
+.hover-description-action {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+/* 移动端隐藏悬停描述 */
+@media (max-width: 750px) {
+  .tool-item-hover-description {
+    display: none !important;
+  }
+}
+
+/* 工具卡片容器 */
+.tool-card-wrapper {
+  width: 100%;
+  height: 100%;
+  transition: transform 0.2s ease-out;
+}
+
+/* 悬停效果 */
+.tool-card-wrapper:hover {
+  transform: translateY(-0.25rem) scale(1.01);
+}
+
+/* 工具卡片主体 */
+.tool-item-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background: var(--card-background, #ffffff);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 0.5rem;
+  transition: all 0.2s ease-out;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.tool-item-card:hover {
+  border-color: var(--primary-color, #3373dc);
+  box-shadow: 0 0.25rem 1rem rgba(51, 115, 220, 0.1);
+}
+
+/* 工具图标区域 - 修复右边距问题 */
+.tool-item-icon {
+  margin-right: 12px; /* 使用8的倍数，统一间距 */
+  flex-shrink: 0;
+  transition: transform 0.2s ease-out;
+}
+
+.tool-item-card:hover .tool-item-icon {
+  transform: scale(1.05);
+}
+
+/* 工具图标样式 */
+.tool-icon-img {
+  width: 2.5rem;
+  height: 2.5rem;
+  object-fit: contain;
+  border-radius: 0.5rem;
+  transition: transform 0.2s ease-out;
+}
+
+.tool-item-card:hover .tool-icon-img {
+  transform: scale(1.1);
+}
+
+/* 备用图标样式 */
+.tool-item-icon-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background-color: var(--primary-color, #3373dc);
+  border-radius: 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: white;
+  transition: transform 0.2s ease-out;
+}
+
+.tool-item-card:hover .tool-item-icon-fallback {
+  transform: scale(1.1);
+}
+
+/* 工具内容区域 */
+.tool-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 工具标题 */
+.tool-item-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary, #333333);
+  margin: 0 0 0.5rem 0;
+  line-height: 1.4;
+  transition: color 0.2s ease-out;
+}
+
+.tool-item-card:hover .tool-item-name {
+  color: var(--primary-color, #3373dc);
+}
+
+/* 工具描述 */
+.tool-item-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #666666);
+  line-height: 1.5;
+  margin: 0 0 0.75rem 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* 工具标签区域 */
+.tool-item-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.tool-tag {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #666666);
+  background: var(--tag-background, #f5f5f5);
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease-out;
+}
+
+.tool-item-card:hover .tool-tag {
+  background: var(--primary-light, #e3f2fd);
+  color: var(--primary-color, #3373dc);
+}
+
+/* 悬停详细描述层 */
+.tool-item-hover-description {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  opacity: 0;
+  transform: translateY(0.5rem);
+  transition: all 0.3s ease-out;
+  pointer-events: none;
+}
+
+.tool-item-card:hover .tool-item-hover-description {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* 悬停描述内容 */
+.hover-description-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.hover-description-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--primary-color, #3373dc);
+  margin: 0 0 0.5rem 0;
+}
+
+.hover-description-text {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #666666);
+  line-height: 1.5;
+  margin: 0 0 0.75rem 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.hover-description-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.hover-tag {
+  font-size: 0.625rem;
+  color: var(--primary-color, #3373dc);
+  background: var(--primary-light, #e3f2fd);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+}
+
+.hover-description-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+}
+
+.hover-description-url {
+  color: var(--text-secondary, #666666);
+}
+
+.hover-description-action {
+  color: var(--primary-color, #3373dc);
+  font-weight: 600;
+}
+
+/* 响应式设计 - 移动端 */
+@media (max-width: 768px) {
+  .tool-item-card {
+    padding: 0.875rem;
+  }
+  
+  .tool-item-icon {
+    margin-right: 0.75rem;
+  }
+  
+  .tool-icon-img,
+  .tool-item-icon-fallback {
+    width: 2rem;
+    height: 2rem;
+  }
+  
+  .tool-item-name {
+    font-size: 0.875rem;
+  }
+  
+  .tool-item-description {
+    font-size: 0.8125rem;
+    -webkit-line-clamp: 1;
+  }
+  
+  /* 移动端不显示悬停描述 */
+  .tool-item-hover-description {
+    display: none;
+  }
+}
+
+/* 暗色模式适配 */
+[data-theme="dark"] .tool-item-card {
+  background: var(--card-background-dark, #2a2a2a);
+  border-color: var(--border-color-dark, #444444);
+}
+
+[data-theme="dark"] .tool-item-card:hover {
+  box-shadow: 0 0.25rem 1rem rgba(51, 115, 220, 0.2);
+}
+
+[data-theme="dark"] .tool-item-hover-description {
+  background: rgba(42, 42, 42, 0.95);
+}
+
+/* 减少动画模式支持 */
+@media (prefers-reduced-motion: reduce) {
+  .tool-card-wrapper,
+  .tool-item-card,
+  .tool-item-icon,
+  .tool-icon-img,
+  .tool-item-icon-fallback,
+  .tool-item-name,
+  .tool-tag,
+  .tool-item-hover-description {
+    transition: none;
+  }
+  
+  .tool-card-wrapper:hover {
+    transform: none;
+  }
+  
+  .tool-item-card:hover .tool-item-icon,
+  .tool-item-card:hover .tool-icon-img,
+  .tool-item-card:hover .tool-item-icon-fallback {
+    transform: none;
+  }
+} 

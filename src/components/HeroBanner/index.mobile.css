@@ -1,0 +1,367 @@
+/**
+ * @file HeroBanner/index.mobile.css
+ * @description HeroBanner组件移动端样式 - 遵循苹果设计规范
+ * @copyright 版权所有 (c) 2025 UIED技术团队
+ * @website https://fsuied.com
+ * @license MIT
+ * @version 1.0.0
+ */
+
+/* 移动端专用样式 - 750px以下设备，遵循苹果设计规范 */
+@media (max-width: 750px) {
+  /* ===== HeroBanner容器移动端优化 ===== */
+  .hero-banner {
+    height: 280px; /* 适中高度 */
+    padding: 20px 0; /* 苹果推荐使用8的倍数 */
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero-content {
+    padding: 0 16px; /* 苹果推荐的16px边距 */
+    max-width: 100%;
+    width: 100%;
+  }
+
+  /* ===== 移动端文本样式 - 苹果字体规范 ===== */
+
+  .hero-title {
+    font-size: 28px; /* 苹果Large Title规范 */
+    font-weight: 700;
+    line-height: 1.2; /* 苹果推荐行高 */
+    margin-bottom: 12px; /* 8的倍数 */
+    color: #000; /* 苹果纯黑色文本 */
+    text-align: center;
+    letter-spacing: -0.5px; /* 苹果字母间距 */
+  }
+
+  .hero-description {
+    font-size: 17px; /* 苹果Body文本规范 */
+    color: #6d6d70; /* 苹果次要文本颜色 */
+    line-height: 1.4; /* 苹果推荐行高 */
+    margin-bottom: 16px;
+    text-align: center;
+    padding: 0 8px;
+    font-weight: 400; /* 苹果Regular权重 */
+  }
+
+  /* ===== 移动端统计信息样式 - 苹果卡片设计 ===== */
+  .website-stats {
+    font-size: 15px; /* 苹果Subheadline规范 */
+    border-radius: 12px; /* 苹果推荐圆角 */
+    background: rgba(255, 255, 255, 0.95);
+    border: 0.5px solid rgba(0, 0, 0, 0.1); /* 苹果细边框 */
+    /* 移除阴影 - 符合要求 */
+  }
+
+  .stats-text {
+    font-size: 15px; /* 苹果Subheadline */
+    color: #000;
+    font-weight: 400;
+  }
+
+  .stats-number {
+    font-size: 17px; /* 苹果Body */
+    font-weight: 600; /* 苹果Semibold */
+  }
+
+  /* ===== 移动端搜索框样式 - 苹果搜索栏设计 ===== */
+  .hero-search-modern {
+    margin: 16px 0;
+    padding: 0 8px;
+  }
+
+  .search-container {
+    max-width: 100%;
+    padding: 12px 16px; /* 苹果推荐内边距 */
+    border-radius: 12px; /* 苹果搜索栏圆角 */
+    background: rgba(255, 255, 255, 0.95);
+    border: 0.5px solid rgba(0, 0, 0, 0.1); /* 苹果细边框 */
+    /* 移除阴影 - 符合要求 */
+    gap: 8px; /* 8的倍数 */
+    transition: all 0.2s ease; /* 苹果动画时长 */
+  }
+
+  .search-container:hover,
+  .search-container:focus-within {
+    transform: none; /* 移除变换动画 */
+    border-color: #007aff; /* 苹果蓝色 */
+    /* 移除阴影 - 符合要求 */
+  }
+
+  /* AI和UI/UX页面移动端搜索框蓝色主题 */
+  .hero-banner.ai-theme .search-container:focus-within,
+  .hero-banner.uiux-theme .search-container:focus-within {
+    border-color: #007aff; /* 统一使用苹果蓝色 */
+    /* 移除阴影 - 符合要求 */
+  }
+
+  .search-icon {
+    opacity: 0.6; /* 苹果图标透明度 */
+    color: #6d6d70; /* 苹果次要颜色 */
+  }
+
+  .search-input {
+    font-size: 17px; /* 苹果Body文本 */
+    line-height: 1.4;
+    color: #000; /* 苹果主文本颜色 */
+    font-weight: 400;
+  }
+
+  .search-input::placeholder {
+    font-size: 17px;
+    opacity: 0.6; /* 苹果占位符透明度 */
+    color: #6d6d70; /* 苹果次要颜色 */
+  }
+
+  /* ===== 移动端搜索按钮 - 修复文字超出问题 ===== */
+  .search-btn {
+    background: #007aff; /* 苹果蓝色 */
+    color: white;
+    border: none;
+    border-radius: 8px; /* 苹果推荐圆角 */
+    padding: 8px 12px; /* 8的倍数，紧凑内边距 */
+    font-size: 15px; /* 苹果Subheadline */
+    font-weight: 500; /* 苹果Medium */
+    cursor: pointer;
+    transition: all 0.2s ease; /* 苹果动画时长 */
+    margin-left: 8px; /* 8的倍数 */
+    flex-shrink: 0;
+    white-space: nowrap; /* 防止文字换行 */
+    min-width: 60px; /* 确保按钮有足够宽度 */
+    height: 36px; /* 固定高度，8的倍数 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* 移除阴影和变换动画 */
+  }
+
+  .search-btn:hover,
+  .search-btn:active {
+    background: #0056b3; /* 苹果蓝色深色版本 */
+    transform: none; /* 移除变换动画 */
+    /* 移除阴影 */
+  }
+
+  /* ===== 移动端热门标签样式 - 苹果按钮设计，减小尺寸 ===== */
+  .hot-tags-modern {
+    margin-top: 16px;
+    gap: 6px; /* 减小间距 */
+    padding: 0 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .tags-label {
+    font-size: 13px; /* 减小字体，苹果Caption */
+    color: #000;
+    margin-right: 4px;
+    margin-bottom: 4px;
+    width: 100%;
+    text-align: center;
+    font-weight: 400;
+  }
+
+  .tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px; /* 减小间距 */
+    justify-content: center;
+    width: 100%;
+  }
+
+  .tag-btn {
+    padding: 6px 12px; /* 减小内边距，8的倍数 */
+    font-size: 13px; /* 减小字体，苹果Caption */
+    border-radius: 16px; /* 减小圆角 */
+    background: rgba(255, 255, 255, 0.95);
+    border: 0.5px solid rgba(0, 0, 0, 0.1); /* 苹果细边框 */
+    color: #000;
+    font-weight: 400; /* 苹果Regular */
+    transition: all 0.2s ease; /* 苹果动画时长 */
+    white-space: nowrap;
+    min-height: 32px; /* 减小最小高度，8的倍数 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* 移除阴影 - 符合要求 */
+  }
+
+  .tag-btn:hover,
+  .tag-btn:active {
+    background: #007aff; /* 苹果蓝色 */
+    border-color: #007aff;
+    color: white;
+    transform: none; /* 移除变换动画 */
+    /* 移除阴影 - 符合要求 */
+  }
+
+  /* 各页面移动端标签主题样式 */
+  /* AI和UI/UX页面 - 苹果蓝色主题 */
+  .hero-banner.ai-theme .tag-btn:hover,
+  .hero-banner.ai-theme .tag-btn:active,
+  .hero-banner.uiux-theme .tag-btn:hover,
+  .hero-banner.uiux-theme .tag-btn:active {
+    background: #007aff; /* 统一使用苹果蓝色 */
+    border-color: #007aff;
+    color: white;
+  }
+
+  /* 3D页面 - 紫色主题 */
+  .hero-banner.threed-theme .tag-btn:hover,
+  .hero-banner.threed-theme .tag-btn:active {
+    background: #6f42c1;
+    border-color: #6f42c1;
+    color: white;
+  }
+
+  /* 电商页面 - 红色主题 */
+  .hero-banner.ecommerce-theme .tag-btn:hover,
+  .hero-banner.ecommerce-theme .tag-btn:active {
+    background: #e74c3c;
+    border-color: #e74c3c;
+    color: white;
+  }
+
+  /* 室内设计页面 - 绿色主题 */
+  .hero-banner.interior-theme .tag-btn:hover,
+  .hero-banner.interior-theme .tag-btn:active {
+    background: #27ae60;
+    border-color: #27ae60;
+    color: white;
+  }
+
+  /* 设计资源页面 - 橙色主题 */
+  .hero-banner.design-theme .tag-btn:hover,
+  .hero-banner.design-theme .tag-btn:active {
+    background: #f39c12;
+    border-color: #f39c12;
+    color: white;
+  }
+}
+
+/* ===== 超小屏幕优化 (375px以下) - 苹果iPhone SE规范 ===== */
+@media (max-width: 375px) {
+  .hero-banner {
+    height: 240px;
+    padding: 16px 0; /* 8的倍数 */
+  }
+
+  .hero-content {
+    padding: 0 16px; /* 保持苹果边距 */
+  }
+
+  .hero-title {
+    font-size: 24px; /* 适配小屏幕 */
+    margin-bottom: 8px;
+    letter-spacing: -0.3px;
+  }
+
+  .hero-description {
+    font-size: 15px; /* 苹果Subheadline */
+    margin-bottom: 12px;
+    padding: 0 4px;
+  }
+
+  .website-stats {
+    padding: 8px 12px; /* 8的倍数 */
+    margin: 12px 0;
+  }
+
+  .stats-text {
+    font-size: 13px; /* 苹果Caption */
+  }
+
+  .stats-number {
+    font-size: 15px; /* 苹果Subheadline */
+  }
+
+  .search-container {
+    padding: 10px 12px; /* 8的倍数 */
+    border-radius: 10px;
+  }
+
+  .search-input {
+    font-size: 15px; /* 苹果Subheadline */
+  }
+
+  .search-btn {
+    padding: 6px 10px; /* 8的倍数 */
+    font-size: 13px; /* 苹果Caption */
+    min-width: 50px; /* 适配小屏幕 */
+    height: 32px; /* 8的倍数 */
+  }
+
+  .tag-btn {
+    padding: 4px 8px; /* 8的倍数 */
+    font-size: 12px; /* 更小字体 */
+    min-height: 28px; /* 小屏幕适配，8的倍数 */
+    border-radius: 14px; /* 适配小屏幕 */
+  }
+
+  .tags-label {
+    font-size: 12px; /* 更小字体 */
+  }
+
+  .hot-tags-modern {
+    gap: 4px; /* 更小间距 */
+  }
+
+  .tags-list {
+    gap: 4px; /* 更小间距 */
+  }
+}
+
+/* ===== 横屏模式优化 - 苹果横屏规范 ===== */
+@media (max-width: 750px) and (max-height: 500px) and (orientation: landscape) {
+  .hero-banner {
+    height: 200px;
+    padding: 12px 0; /* 8的倍数 */
+  }
+
+  .hero-title {
+    font-size: 22px; /* 横屏适配 */
+    margin-bottom: 8px;
+  }
+
+  .hero-description {
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
+
+  .website-stats {
+    margin: 8px 0;
+  }
+
+  .hot-tags-modern {
+    margin-top: 8px;
+  }
+
+  .tag-btn {
+    padding: 4px 8px; /* 横屏紧凑布局 */
+    font-size: 12px;
+    min-height: 28px;
+  }
+}
+
+/* ===== 触摸设备优化 - 苹果触摸规范 ===== */
+@media (max-width: 750px) and (pointer: coarse) {
+  .tag-btn {
+    min-height: 32px; /* 苹果最小触摸目标 */
+    min-width: 32px;
+  }
+
+  .search-container {
+    min-height: 44px; /* 苹果最小触摸目标 */
+  }
+
+  .search-btn {
+    min-height: 36px; /* 苹果推荐触摸目标 */
+    min-width: 60px;
+  }
+}
+
+/* ===== 深色模式移动端适配 - 苹果深色模式规范 ===== */

@@ -1,0 +1,268 @@
+/* 布局样式 - 适配新的导航栏和页脚 */
+.layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 头部样式 */
+.layout-header {
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 64px;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.logo {
+  font-size: 32px;
+  margin-right: 12px;
+}
+
+.logo-text {
+  font-size: 20px;
+  font-weight: bold;
+  color: #165DFF;
+}
+
+.nav-menu {
+  flex: 1;
+  margin: 0 40px;
+  border-bottom: none;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-btn {
+  border: none;
+  padding: 4px;
+}
+
+/* 内容区域样式 */
+.layout-content {
+  flex: 1;
+  background: #f5f5f5;
+  margin-top: 64px; /* 为固定导航栏留出空间 */
+  min-height: calc(100vh - 64px);
+  padding: 0; /* 移除默认内边距，让页面组件自己控制 */
+}
+
+/* 主内容区域样式 - 对应Layout.tsx中的layout-main */
+.layout-main {
+  flex: 1;
+  /*background: #f5f5f5;*/
+  margin-top: 64px; /* 为固定导航栏留出空间 */
+  min-height: calc(100vh - 64px);
+  padding: 0; /* 移除默认内边距，让页面组件自己控制 */
+}
+
+/* 底部样式 */
+.layout-footer {
+  background: #001529;
+  color: rgba(255, 255, 255, 0.65);
+  text-align: center;
+  padding: 24px 0;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.footer-info {
+  margin-bottom: 16px;
+}
+
+.footer-info p {
+  margin: 4px 0;
+  line-height: 1.5;
+}
+
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}
+
+.footer-links a {
+  color: rgba(255, 255, 255, 0.65);
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.footer-links a:hover {
+  color: #165DFF;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .header-content {
+    padding: 0 16px;
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 64px;
+  }
+  
+  .nav-menu {
+    display: none;
+  }
+  
+  .header-actions {
+    width: 100%;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  
+  .header-actions .arco-input-search {
+    width: 100% !important;
+    max-width: 400px;
+  }
+  
+  .footer-links {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  
+  .layout-content {
+    margin-top: 56px; /* 移动端导航栏高度较小 */
+    min-height: calc(100vh - 56px);
+  }
+}
+
+/* 应用布局样式 */
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.app-content {
+  margin-top: 64px; /* 为固定导航栏留出空间 */
+  min-height: calc(100vh - 64px); /* 确保内容区域至少占满屏幕 */
+  display: flex;
+  flex-direction: column;
+}
+
+.content-wrapper {
+  flex: 1;
+  width: 100%;
+}
+
+/* 页面容器 */
+.page-container {
+  max-width: 1230px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .app-content {
+    margin-top: 56px;
+    min-height: calc(100vh - 56px);
+  }
+  
+  .page-container {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-container {
+    padding: 10px;
+  }
+}
+
+/* 确保页面内容不被固定导航栏遮挡 */
+.app-content .content-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+/* Banner在内容上方的样式调整 */
+.layout-main .banner-section {
+  margin-bottom: 1.5rem; /* 添加与内容之间的间距 */
+  width: 100%;
+  z-index: 2;
+}
+
+/* 在移动端上调整Banner样式 */
+@media (max-width: 768px) {
+  .layout-main .banner-section {
+    margin-bottom: 1rem;
+  }
+}
+
+/* 滚动优化 */
+.app-layout {
+  scroll-behavior: smooth;
+}
+
+/* 加载状态样式 */
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+/* 错误状态样式 */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+}
+
+.error-container h2 {
+  margin-bottom: 16px;
+  color: #f53f3f;
+}
+
+.error-container p {
+  color: #666;
+  margin-bottom: 24px;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+} 

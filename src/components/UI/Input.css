@@ -1,0 +1,107 @@
+/* 自定义输入框样式 */
+.custom-input-wrapper {
+  display: flex;
+  align-items: center;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.custom-input-wrapper:focus-within {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.custom-input-wrapper--disabled {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 输入框尺寸 */
+.custom-input-wrapper--small {
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.custom-input-wrapper--medium {
+  padding: 12px 16px;
+}
+
+.custom-input-wrapper--large {
+  padding: 16px 20px;
+  border-radius: 10px;
+}
+
+/* 输入框本体 */
+.custom-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 16px;
+  color: #374151;
+  font-family: inherit;
+}
+
+.custom-input::placeholder {
+  color: #9ca3af;
+}
+
+.custom-input:disabled {
+  cursor: not-allowed;
+  color: #6b7280;
+}
+
+/* 图标样式 */
+.custom-input__icon {
+  display: flex;
+  align-items: center;
+  margin-right: 12px;
+  color: #6b7280;
+  font-size: 18px;
+}
+
+.custom-input__suffix {
+  display: flex;
+  align-items: center;
+  margin-left: 12px;
+  color: #6b7280;
+}
+
+/* 特殊样式变体 */
+.custom-input-wrapper--search {
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.custom-input-wrapper--search:focus-within {
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+}
+
+/* 搜索框特殊样式 */
+.hero-search .custom-input-wrapper {
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  padding: 0 8px;
+}
+
+.hero-search .custom-input {
+  padding: 16px 24px;
+  font-size: 16px;
+  color: #333;
+  border: none;
+}
+
+.hero-search .custom-input::placeholder {
+  color: #999;
+} 

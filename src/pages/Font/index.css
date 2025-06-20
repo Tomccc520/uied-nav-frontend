@@ -1,0 +1,80 @@
+/**
+ * @file Font/index.css
+ * @description 字体导航页面特定样式
+ * @copyright 版权所有 (c) 2025 UIED技术团队
+ * @website https://fsuied.com
+ * @license MIT
+ * @version 1.0.0
+ */
+
+/* 字体页面特定样式 */
+.font-page {
+  /* 字体页面主题色调 - 紫色 */
+  --primary-color: #9B59B6;
+  --primary-hover: #8E44AD;
+  --primary-light: #BB7EDB;
+  /* 继承通用页面样式，添加特定的字体主题色调 */
+}
+
+/* 字体工具分类标签统一样式 */
+.font-page .tool-tag {
+  padding: 0.125rem 0.5rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 0.0625rem solid color-mix(in srgb, var(--border-color) 40%, transparent 60%);
+  background: color-mix(in srgb, var(--background-light) 60%, transparent 40%);
+  color: var(--text-quaternary, #9ca3af);
+  opacity: 0.8;
+  transition: all 0.2s ease;
+}
+
+.font-page .tool-tag:hover {
+  background: color-mix(in srgb, var(--primary-light) 60%, transparent 40%);
+  color: color-mix(in srgb, var(--primary-color) 80%, transparent 20%);
+  opacity: 1;
+}
+
+/* 全站搜索提示样式 */
+.global-search-tip {
+  text-align: center;
+  padding: 0.75rem 1rem;
+  margin: -1rem auto 1rem;
+  max-width: 800px;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(5px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  font-size: 0.875rem;
+  color: var(--text-secondary, #666);
+}
+
+.global-search-tip p {
+  margin: 0;
+}
+
+.inline-search-link {
+  background: none;
+  border: none;
+  color: var(--primary-color, #9B59B6);
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  text-decoration: underline;
+  font-size: 0.875rem;
+}
+
+.inline-search-link:hover {
+  color: var(--primary-hover, #8E44AD);
+}
+
+/* 移除暗黑模式适配后的清理 */
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .global-search-tip {
+    font-size: 0.75rem;
+    padding: 0.5rem;
+    margin: -0.5rem auto 0.5rem;
+  }
+} 

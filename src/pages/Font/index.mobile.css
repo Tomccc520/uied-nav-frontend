@@ -1,0 +1,216 @@
+/**
+ * @file Font/index.mobile.css
+ * @description 字体页面移动端样式 - 遵循苹果设计规范
+ * @copyright 版权所有 (c) 2025 UIED技术团队
+ * @website https://fsuied.com
+ * @license MIT
+ * @version 1.0.0
+ */
+
+/* 移动端字体页面样式 - 750px以下设备，遵循苹果设计规范 */
+@media (max-width: 750px) {
+  /* ===== 页面容器 ===== */
+  .font-page {
+    padding: 0;
+    margin: 0;
+    min-height: 100vh;
+    background: #f8f9fa; /* 苹果浅色背景 */
+  }
+
+  /* ===== 主布局 ===== */
+  .main-layout {
+    flex-direction: column;
+    gap: 16px; /* 8的倍数 */
+    padding: 16px; /* 苹果推荐边距 */
+    margin: 0;
+    margin-top: -2rem; /* 增加向上的1rem间距 */
+    min-height: auto;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* ===== 工具主内容区域 ===== */
+  .tools-main {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* ===== 内容区块 ===== */
+  .content-section {
+    margin-bottom: 24px; /* 8的倍数 */
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px); /* 苹果毛玻璃效果 */
+    border-radius: 12px; /* 苹果推荐圆角 */
+    border: 0.5px solid rgba(0, 0, 0, 0.1); /* 苹果细边框 */
+    padding: 16px; /* 8的倍数 */
+    /* 移除阴影 */
+    overflow: hidden;
+  }
+
+  /* ===== 区块标题 ===== */
+  .section-header-simple {
+    margin-bottom: 16px; /* 8的倍数 */
+    padding-bottom: 8px; /* 8的倍数 */
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.05); /* 苹果分割线 */
+  }
+
+  .section-header-simple h2 {
+    font-size: 20px; /* 苹果Headline */
+    font-weight: 600; /* 苹果Semibold */
+    color: #000; /* 苹果主文本 */
+    margin: 0;
+    line-height: 1.3;
+    letter-spacing: -0.3px; /* 苹果字母间距 */
+  }
+
+  .resource-count {
+    font-size: 13px; /* 苹果Caption */
+    color: #6d6d70; /* 苹果次要颜色 */
+    font-weight: 400; /* 苹果Regular */
+    margin-top: 4px; /* 8的倍数 */
+  }
+
+  /* ===== 工具网格 ===== */
+  .tools-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* 移动端单列布局 */
+    gap: 12px; /* 8的倍数 */
+    margin: 0;
+    padding: 0;
+  }
+
+  /* ===== 字体工具标签样式 ===== */
+  .font-page .tool-tag {
+    padding: 4px 8px; /* 8的倍数 */
+    border-radius: 6px; /* 小圆角 */
+    font-size: 11px; /* 苹果Caption2 */
+    font-weight: 500; /* 苹果Medium */
+    border: 0.5px solid rgba(155, 89, 182, 0.2); /* 字体主题色边框 */
+    background: rgba(155, 89, 182, 0.05);
+    color: #9B59B6; /* 字体主题色 */
+    transition: all 0.2s ease; /* 苹果动画时长 */
+    /* 移除阴影 */
+  }
+
+  .font-page .tool-tag:hover {
+    background: rgba(155, 89, 182, 0.1); /* 字体主题色背景 */
+    color: #8E44AD; /* 字体主题色深色版本 */
+    border-color: rgba(155, 89, 182, 0.3);
+  }
+
+  /* ===== 空结果状态 ===== */
+  .empty-result {
+    text-align: center;
+    padding: 32px 16px; /* 8的倍数 */
+    color: #6d6d70; /* 苹果次要颜色 */
+  }
+
+  .empty-result p {
+    font-size: 15px; /* 苹果Subheadline */
+    font-weight: 400; /* 苹果Regular */
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  /* ===== 全站搜索提示 ===== */
+  .global-search-tip {
+    text-align: center;
+    padding: 12px 16px; /* 8的倍数 */
+    margin: 16px 0; /* 8的倍数 */
+    border-radius: 12px; /* 苹果推荐圆角 */
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px); /* 苹果毛玻璃效果 */
+    border: 0.5px solid rgba(0, 0, 0, 0.1); /* 苹果细边框 */
+    font-size: 13px; /* 苹果Caption */
+    color: #6d6d70; /* 苹果次要颜色 */
+    /* 移除阴影 */
+  }
+
+  .global-search-tip p {
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  .inline-search-link {
+    background: none;
+    border: none;
+    color: #9B59B6; /* 字体主题色 */
+    font-weight: 500; /* 苹果Medium */
+    cursor: pointer;
+    padding: 0 4px; /* 8的倍数 */
+    text-decoration: none;
+    font-size: 13px; /* 苹果Caption */
+    transition: color 0.2s ease;
+  }
+
+  .inline-search-link:hover {
+    color: #8E44AD; /* 字体主题色深色版本 */
+  }
+
+  /* ===== Hero底部横幅 ===== */
+  .hero-bottom-banner {
+    margin: 16px; /* 8的倍数 */
+    padding: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px); /* 苹果毛玻璃效果 */
+    border-radius: 12px; /* 苹果推荐圆角 */
+    border: 0.5px solid rgba(0, 0, 0, 0.1); /* 苹果细边框 */
+    /* 移除阴影 */
+    overflow: hidden;
+  }
+}
+
+/* ===== 超小屏幕优化 (375px以下) ===== */
+@media (max-width: 375px) {
+  .main-layout {
+    padding: 12px; /* 减少边距 */
+    gap: 12px; /* 减少间距 */
+  }
+
+  .content-section {
+    padding: 12px; /* 减少内边距 */
+    margin-bottom: 16px; /* 减少间距 */
+  }
+
+  .section-header-simple h2 {
+    font-size: 18px; /* 适配小屏幕 */
+  }
+
+  .tools-grid {
+    gap: 8px; /* 减少间距 */
+  }
+
+  .global-search-tip {
+    padding: 8px 12px; /* 减少内边距 */
+    margin: 12px 0; /* 减少间距 */
+    font-size: 12px; /* 适配小屏幕 */
+  }
+
+  .hero-bottom-banner {
+    margin: 12px; /* 减少边距 */
+  }
+}
+
+/* ===== 横屏模式优化 ===== */
+@media (max-width: 750px) and (max-height: 500px) and (orientation: landscape) {
+  .main-layout {
+    padding: 12px; /* 横屏紧凑布局 */
+    gap: 12px;
+  }
+
+  .content-section {
+    padding: 12px; /* 横屏紧凑布局 */
+    margin-bottom: 16px;
+  }
+
+  .section-header-simple h2 {
+    font-size: 18px; /* 横屏适配 */
+  }
+
+  .tools-grid {
+    gap: 8px; /* 横屏紧凑间距 */
+  }
+}
+
+/* ===== 深色模式适配 ===== */

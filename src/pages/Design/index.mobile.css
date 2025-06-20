@@ -1,0 +1,34 @@
+/**
+ * @file Design/index.mobile.css
+ * @description 平面导航页面移动端样式
+ * @copyright 版权所有 (c) 2025 UIED技术团队
+ * @website https://fsuied.com
+ * @license MIT
+ * @version 1.0.0
+ */
+
+/* 移动端平面导航样式 */
+@media screen and (max-width: 768px) {
+  /* 平面导航移动端工具网格 */
+  .design-page .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 移动端双列布局 */
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* 移动端平面导航卡片样式 */
+  .design-page .tool-card {
+    border-radius: 8px;
+    border-left: 2px solid var(--design-primary);
+  }
+
+  /* 移动端平面导航主布局间距 */
+  .design-page .main-layout {
+    margin-top: 1rem;
+    padding: 0 16px;
+  }
+}
+
+ 
