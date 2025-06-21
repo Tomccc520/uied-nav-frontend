@@ -773,6 +773,218 @@ export const allInteriorTools = [
     isHot: false,
     isFeatured: false,
     isNew: false
+  },
+
+  // 新增工具 - 智能家居设计
+  {
+    id: 'smartthings',
+    name: 'SmartThings',
+    description: '三星智能家居平台，连接和控制各种智能设备',
+    url: 'https://www.smartthings.com/',
+    category: 'lighting-design',
+    subcategory: 'lighting-smart',
+    tags: ['智能家居', '三星', '设备控制', '自动化'],
+    isHot: true,
+    isFeatured: true,
+    isNew: false
+  },
+  {
+    id: 'philips-hue',
+    name: 'Philips Hue',
+    description: '飞利浦智能照明系统，支持1600万种颜色',
+    url: 'https://www.philips-hue.com/',
+    category: 'lighting-design',
+    subcategory: 'lighting-smart',
+    tags: ['智能照明', '飞利浦', '色彩控制', 'LED'],
+    isHot: true,
+    isFeatured: true,
+    isNew: false
+  },
+
+  // 新增工具 - 色彩设计
+  {
+    id: 'color-hunt',
+    name: 'Color Hunt',
+    description: '精美的色彩搭配灵感平台，室内设计配色参考',
+    url: 'https://colorhunt.co/',
+    category: 'material-library',
+    subcategory: 'material-fabric',
+    tags: ['色彩搭配', '配色方案', '设计灵感', '调色板'],
+    isHot: true,
+    isFeatured: true,
+    isNew: false
+  },
+  {
+    id: 'adobe-color',
+    name: 'Adobe Color',
+    description: 'Adobe专业配色工具，创建和分享色彩主题',
+    url: 'https://color.adobe.com/',
+    category: 'material-library',
+    subcategory: 'material-fabric',
+    tags: ['Adobe', '专业配色', '色彩主题', '创意工具'],
+    isHot: true,
+    isFeatured: true,
+    isNew: false
+  },
+
+  // 新增工具 - 家装灵感
+  {
+    id: 'pinterest-home',
+    name: 'Pinterest Home Ideas',
+    description: '全球最大的家装灵感平台，海量室内设计图片',
+    url: 'https://www.pinterest.com/categories/home/',
+    category: 'project-management',
+    subcategory: 'project-planning',
+    tags: ['家装灵感', '设计图片', '创意收集', '全球平台'],
+    isHot: true,
+    isFeatured: true,
+    isNew: false
+  },
+  {
+    id: 'houzz-ideas',
+    name: 'Houzz',
+    description: '专业家装设计平台，连接业主和设计师',
+    url: 'https://www.houzz.com/',
+    category: 'project-management',
+    subcategory: 'project-collaboration',
+    tags: ['专业设计', '设计师平台', '家装服务', '装修灵感'],
+    isHot: true,
+    isFeatured: true,
+    isNew: false
+  },
+
+  // 新增工具 - 在线设计平台
+  {
+    id: 'canva-interior',
+    name: 'Canva Interior Design',
+    description: 'Canva室内设计模板，快速制作设计方案',
+    url: 'https://www.canva.com/interior-design/',
+    category: 'project-management',
+    subcategory: 'project-planning',
+    tags: ['在线设计', 'Canva', '设计模板', '快速制作'],
+    isHot: true,
+    isFeatured: false,
+    isNew: true
+  },
+  {
+    id: 'roomstyler',
+    name: 'Roomstyler 3D',
+    description: '在线3D房间设计工具，拖拽式操作简单易用',
+    url: 'https://roomstyler.com/',
+    category: '3d-modeling',
+    subcategory: '3d-general',
+    tags: ['在线3D', '房间设计', '拖拽操作', '易用'],
+    isHot: false,
+    isFeatured: true,
+    isNew: false
+  },
+
+  // 新增工具 - VR/AR体验
+  {
+    id: 'oculus-home',
+    name: 'Oculus Home',
+    description: 'Meta VR家居体验平台，虚拟现实家装预览',
+    url: 'https://www.meta.com/quest/',
+    category: 'vr-walkthrough',
+    subcategory: 'vr-headset',
+    tags: ['VR体验', 'Meta', '虚拟现实', '家装预览'],
+    isHot: true,
+    isFeatured: true,
+    isNew: true
+  },
+  {
+    id: 'apple-arkit-room',
+    name: 'ARKit室内设计应用',
+    description: 'Apple ARKit技术的室内设计AR应用合集',
+    url: 'https://developer.apple.com/augmented-reality/',
+    category: 'vr-walkthrough',
+    subcategory: 'ar-tools',
+    tags: ['Apple ARKit', 'AR技术', '移动端', '增强现实'],
+    isHot: true,
+    isFeatured: false,
+    isNew: false
+  },
+
+  // 新增工具 - 专业材质库
+  {
+    id: 'poliigon',
+    name: 'Poliigon',
+    description: '高质量PBR材质纹理库，适用于建筑可视化',
+    url: 'https://www.poliigon.com/',
+    category: 'material-library',
+    subcategory: 'material-pbr',
+    tags: ['PBR材质', '高质量', '建筑可视化', '纹理库'],
+    isHot: true,
+    isFeatured: true,
+    isNew: false
+  },
+  {
+    id: 'cc0-textures',
+    name: 'CC0 Textures',
+    description: '免费商用的高分辨率纹理素材库',
+    url: 'https://cc0textures.com/',
+    category: 'material-library',
+    subcategory: 'material-texture',
+    tags: ['免费商用', '高分辨率', 'CC0授权', '纹理素材'],
+    isHot: true,
+    isFeatured: true,
+    isNew: false
+  },
+
+  // 新增工具 - 风水设计
+  {
+    id: 'feng-shui-calculator',
+    name: 'Feng Shui Calculator',
+    description: '风水布局计算工具，传统文化与现代设计结合',
+    url: 'https://www.fengshuicalculator.com/',
+    category: 'project-management',
+    subcategory: 'project-planning',
+    tags: ['风水布局', '传统文化', '空间规划', '文化设计'],
+    isHot: false,
+    isFeatured: false,
+    isNew: true
+  },
+
+  // 新增工具 - 绿植设计
+  {
+    id: 'plant-parent',
+    name: 'PlantParent',
+    description: '室内植物选择和养护指南，绿色生活设计',
+    url: 'https://www.plantparent.com/',
+    category: 'furniture-design',
+    subcategory: 'furniture-catalog',
+    tags: ['室内植物', '绿色设计', '植物养护', '生态设计'],
+    isHot: false,
+    isFeatured: true,
+    isNew: true
+  },
+
+  // 新增工具 - 日式设计
+  {
+    id: 'muji-design',
+    name: 'MUJI Design Philosophy',
+    description: '无印良品设计理念和家居方案参考',
+    url: 'https://www.muji.com/',
+    category: 'furniture-design',
+    subcategory: 'furniture-catalog',
+    tags: ['日式设计', '无印良品', '简约风格', '设计理念'],
+    isHot: true,
+    isFeatured: true,
+    isNew: false
+  },
+
+  // 新增工具 - 可持续设计
+  {
+    id: 'sustainable-design',
+    name: 'Sustainable Interior Design',
+    description: '可持续室内设计资源，环保材料和绿色设计',
+    url: 'https://www.usgbc.org/',
+    category: 'material-library',
+    subcategory: 'material-wood',
+    tags: ['可持续设计', '环保材料', '绿色建筑', 'LEED认证'],
+    isHot: false,
+    isFeatured: true,
+    isNew: true
   }
 ];
 
