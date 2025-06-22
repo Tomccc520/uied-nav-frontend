@@ -150,7 +150,7 @@
 
   /* ===== Hero底部横幅 ===== */
   .hero-bottom-banner {
-    margin: 16px; /* 8的倍数 */
+    margin: 12px; /* 减少边距 */
     padding: 0;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px); /* 苹果毛玻璃效果 */
@@ -214,3 +214,172 @@
 }
 
 /* ===== 深色模式适配 ===== */
+
+/* ===== 字体文章样式卡片 - 移动端优化 ===== */
+
+/* 移动端字体文章网格 */
+@media (max-width: 750px) {
+  .font-articles-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px; /* 8的倍数 */
+    margin: 16px 0; /* 8的倍数 */
+    padding: 0;
+  }
+
+  /* 字体文章卡片 - 移动端 */
+  .font-article-card {
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px); /* 苹果毛玻璃效果 */
+    border-radius: 12px; /* 苹果推荐圆角 */
+    border: 0.5px solid rgba(0, 0, 0, 0.1); /* 苹果细边框 */
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease; /* 苹果动画时长 */
+    position: relative;
+    /* 移除阴影 */
+  }
+
+  .font-article-card:hover {
+    transform: translateY(-1px);
+    border-color: rgba(155, 89, 182, 0.3);
+    /* 移除阴影 */
+  }
+
+  /* 字体文章图片容器 - 移动端 */
+  .font-article-image-container {
+    width: 100%;
+    aspect-ratio: 4/3; /* 移动端使用4:3比例 */
+    overflow: hidden;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 字体文章图片 - 移动端 */
+  .font-article-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.2s ease;
+  }
+
+  .font-article-card:hover .font-article-image {
+    transform: scale(1.02); /* 移动端缩小放大效果 */
+  }
+
+  /* 字体文章图片占位符 - 移动端 */
+  .font-article-image-fallback {
+    width: 2.5rem; /* 8的倍数 */
+    height: 2.5rem; /* 8的倍数 */
+    border-radius: 8px; /* 苹果小圆角 */
+    background: linear-gradient(135deg, #9B59B6, #BB7EDB);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem; /* 18px */
+    font-weight: 600; /* 苹果Semibold */
+    text-transform: uppercase;
+    /* 移除阴影 */
+  }
+
+  /* 字体文章内容区域 - 移动端 */
+  .font-article-content {
+    padding: 12px; /* 8的倍数 */
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* 8的倍数 */
+  }
+
+  /* 字体文章标题 - 移动端 */
+  .font-article-title {
+    margin: 0;
+    font-size: 13px; /* 苹果Caption */
+    font-weight: 600; /* 苹果Semibold */
+    line-height: 1.3;
+    color: #000; /* 苹果主文本 */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    letter-spacing: -0.2px; /* 苹果字母间距 */
+  }
+
+  .font-article-title-text {
+    transition: color 0.2s ease;
+  }
+
+  .font-article-card:hover .font-article-title-text {
+    color: #9B59B6; /* 字体主题色 */
+  }
+
+  /* 字体文章描述 - 移动端 */
+  .font-article-description {
+    font-size: 11px; /* 苹果Caption2 */
+    color: #6d6d70; /* 苹果次要颜色 */
+    line-height: 1.4;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+  }
+
+  /* 字体文章标签 - 移动端 */
+  .font-article-tags {
+    display: flex;
+    gap: 4px; /* 8的倍数 */
+    flex-wrap: wrap;
+    margin-top: auto;
+  }
+
+  .font-article-tag {
+    padding: 2px 6px; /* 小间距 */
+    border-radius: 4px; /* 小圆角 */
+    font-size: 10px; /* 超小字体 */
+    font-weight: 500; /* 苹果Medium */
+    background: rgba(155, 89, 182, 0.1);
+    color: #9B59B6; /* 字体主题色 */
+    border: 0.5px solid rgba(155, 89, 182, 0.2);
+    transition: all 0.2s ease;
+  }
+
+  .font-article-card:hover .font-article-tag {
+    background: rgba(155, 89, 182, 0.15);
+    border-color: rgba(155, 89, 182, 0.3);
+  }
+}
+
+/* ===== 超小屏幕字体文章优化 (375px以下) ===== */
+@media (max-width: 375px) {
+  .font-articles-grid {
+    gap: 8px; /* 减少间距 */
+    margin: 12px 0; /* 减少间距 */
+  }
+
+  .font-article-content {
+    padding: 8px; /* 减少内边距 */
+    gap: 6px; /* 减少间距 */
+  }
+
+  .font-article-title {
+    font-size: 12px; /* 适配小屏幕 */
+  }
+
+  .font-article-description {
+    font-size: 10px; /* 适配小屏幕 */
+  }
+
+  .font-article-image-fallback {
+    width: 2rem; /* 减少尺寸 */
+    height: 2rem;
+    font-size: 1rem;
+  }
+}

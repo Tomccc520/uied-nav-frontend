@@ -379,6 +379,62 @@ const FontPage: React.FC = () => {
     ));
   }, [renderToolCards]);
 
+  /**
+   * 渲染字体文章样式卡片 - 类似设计文章的卡片样式
+   */
+  const renderFontArticleCards = useCallback((tools: Tool[]) => {
+    const toolCardData = renderToolCards(tools);
+    
+    return toolCardData.map(({ key, tool, onClick }) => (
+      <div
+        key={key}
+        className="font-article-card"
+        onClick={onClick}
+      >
+        {/* 缩略图容器 */}
+        <div className="font-article-image-container">
+          {tool.iconUrl || tool.icon ? (
+            <img 
+              src={tool.iconUrl || tool.icon} 
+              alt={`${tool.name} 图标`}
+              className="font-article-image"
+              loading="lazy"
+              onError={(e) => {
+                const img = e.currentTarget;
+                if (img.dataset.errorHandled) return;
+                img.dataset.errorHandled = 'true';
+                // 使用文字替代图标
+                const container = img.parentElement;
+                if (container) {
+                  container.innerHTML = `<div class="font-article-image-fallback">${tool.name.charAt(0).toUpperCase()}</div>`;
+                }
+              }}
+            />
+          ) : (
+            <div className="font-article-image-fallback">
+              {tool.name.charAt(0).toUpperCase()}
+            </div>
+          )}
+        </div>
+        
+        {/* 内容区域 */}
+        <div className="font-article-content">
+          <h4 className="font-article-title">
+            <span className="font-article-title-text">{tool.name}</span>
+          </h4>
+          {tool.description && (
+            <p className="font-article-description">{tool.description}</p>
+          )}
+          <div className="font-article-tags">
+            {tool.tags.slice(0, 2).map(tag => (
+              <span key={tag} className="font-article-tag">{tag}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    ));
+  }, [renderToolCards]);
+
   // 数据和MetaData
   const metaData = {
     title: '字体导航',
@@ -452,8 +508,8 @@ const FontPage: React.FC = () => {
               </div>
               
               {searchResults.length > 0 ? (
-                <div className="tools-grid">
-                  {renderFontToolCards(searchResults)}
+                <div className="font-articles-grid">
+                  {renderFontArticleCards(searchResults)}
                 </div>
               ) : (
                 <div className="empty-result">
@@ -483,28 +539,10 @@ const FontPage: React.FC = () => {
                   <h2 data-category={navItem.id}>{navItem.name}</h2>
                 </div>
                 
-                {/* 如果有子分类，使用HotRecommendations组件来显示子分类切换 */}
-                {hasSubCategories ? (
-                  <HotRecommendations 
-                    limit={0}
-                    title=""
-                    showTitle={false} /* 不显示标题，避免重复 */
-                    showMoreButton={false}
-                    categoryFilter={navItem.id}
-                    enableSubCategories={true}
-                    defaultSubCategory={subCategories[0]?.id}
-                    customDataSource={{
-                      getBySubCategory: (subCategoryId) => getToolsBySubCategory(subCategoryId),
-                      getSubCategories: (categoryId) => getSubCategoriesByCategory(categoryId),
-                      getSubCategoryStats: (categoryId) => getSubCategoryStats(categoryId)
-                    }}
-                  />
-                ) : (
-                  // 如果没有子分类，直接显示工具网格
-                  <div className="tools-grid">
-                    {renderFontToolCards(dataService.getWebsites({ category: navItem.id }))}
-                  </div>
-                )}
+                {/* 所有分类都使用新的字体文章样式 */}
+                <div className="font-articles-grid">
+                  {renderFontArticleCards(dataService.getWebsites({ category: navItem.id }))}
+                </div>
               </section>
             );
           })}

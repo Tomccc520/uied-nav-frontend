@@ -24,6 +24,8 @@ interface CustomDataSource {
   getBySubCategory?: (subCategoryId: string, limit?: number) => any[];
   getSubCategories?: (categoryId: string) => any[];
   getSubCategoryStats?: (categoryId: string) => any;
+  getHotTools?: (limit?: number) => any[];
+  getFeaturedTools?: (limit?: number) => any[];
 }
 
 interface HotRecommendationsProps {
@@ -106,6 +108,10 @@ const HotRecommendations: React.FC<HotRecommendationsProps> = ({
     // 如果有分类过滤
     if (categoryFilter) {
       return getHotRecommendationsByCategory(categoryFilter, limit);
+    }
+    // 如果有自定义热门工具数据源，优先使用
+    if (customDataSource?.getHotTools) {
+      return customDataSource.getHotTools(limit);
     }
     // 默认获取所有热门推荐
     return getHotRecommendations(limit);

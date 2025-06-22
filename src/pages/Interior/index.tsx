@@ -458,14 +458,9 @@ const InteriorPage: React.FC = () => {
             limit={12}
             title="热门推荐"
             showMoreButton={false}
-            categoryFilter="cad-software"
+            categoryFilter="hot-recommendations"
             enableSubCategories={true}
-            defaultSubCategory="cad-2d"
-            customDataSource={{
-              getBySubCategory: (subCategoryId) => getToolsBySubCategory(subCategoryId),
-              getSubCategories: (categoryId) => getSubCategoriesByCategory(categoryId),
-              getSubCategoryStats: (categoryId) => getSubCategoryStats(categoryId)
-            }}
+            defaultSubCategory="hot-recommendations-hot"
           />
 
           {/* 设计文章网格组件 - 显示最新设计文章 */}

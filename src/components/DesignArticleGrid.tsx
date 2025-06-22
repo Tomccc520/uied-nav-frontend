@@ -52,7 +52,7 @@ const TAG_OPTIONS: TagOption[] = [
   { key: '3d', name: '三维', type: 'category', id: 1031 },
   { key: 'tips', name: '设计干货', type: 'category', id: 307 },
   { key: 'inspiration', name: '设计灵感', type: 'category', id: 1861 },
-  { key: 'Font', name: '字体', type: 'category', id: 335 }, // 添加字体分类，使用平面设计分类ID
+  { key: 'Font', name: '字体', type: 'category', id: 319 }, // 添加字体分类，使用平面设计分类ID
   { key: 'AIGC', name: 'AIGC', type: 'category', id: 417 }, // 添加AIGC分类
 ];
 
