@@ -252,7 +252,7 @@ const HotRecommendations: React.FC<HotRecommendationsProps> = ({
       }
       
       const tools: Tool[] = filteredItems.map(item => ({
-        id: String(item.id),
+        id: item.websiteId ? String(item.websiteId) : String(item.id),
         name: item.name,
         description: item.description,
         url: item.url,
@@ -261,8 +261,11 @@ const HotRecommendations: React.FC<HotRecommendationsProps> = ({
         tags: [],
         isHot: item.position === 'hot',
         isFeatured: item.position === 'featured',
-        isNew: false
-      }));
+        isNew: false,
+        slug: item.websiteSlug || undefined,
+        _recommendationId: String(item.id), // 保留推荐表原始 ID，用于记录点击
+        _hasWebsiteMatch: !!item.websiteId, // 是否有匹配的网站记录
+      } as Tool & { _recommendationId: string; _hasWebsiteMatch: boolean }));
       return limit > 0 && !enableSubCategories ? tools.slice(0, limit) : tools;
     }
     
@@ -483,9 +486,16 @@ const HotRecommendations: React.FC<HotRecommendationsProps> = ({
             arrowIsExternal={arrowIsExternal}
             directArrowNewWindow={directArrowNewWindow}
             onClick={() => {
-              // 记录点击（只有当使用 API 数据且没有自定义数据源时才记录）
-              if (shouldUseApi && tool.id) {
-                recordClick(tool.id);
+              // 记录点击（使用推荐表原始 ID）
+              if (shouldUseApi) {
+                const recId = (tool as any)._recommendationId || tool.id;
+                recordClick(recId);
+              }
+              
+              // 如果没有匹配的网站记录，直接打开外部链接（无法跳转详情页）
+              if (!(tool as any)._hasWebsiteMatch) {
+                window.open(tool.url, '_blank', 'noopener,noreferrer');
+                return;
               }
               
               // 如果有外部点击回调（由页面传入），优先使用它

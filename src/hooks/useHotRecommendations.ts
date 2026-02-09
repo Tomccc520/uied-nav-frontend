@@ -17,6 +17,8 @@ export interface HotRecommendation {
   order: number;
   visible: boolean;
   clickCount: number;
+  websiteId?: number | null;
+  websiteSlug?: string | null;
 }
 
 interface UseHotRecommendationsOptions {
