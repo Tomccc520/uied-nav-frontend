@@ -533,7 +533,7 @@
 }
 
 .btn-visit-main {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
@@ -548,6 +548,7 @@
   text-decoration: none;
   cursor: pointer;
   transition: background var(--transition-fast, 0.2s ease);
+  box-sizing: border-box;
 }
 
 .btn-visit-main:hover {
