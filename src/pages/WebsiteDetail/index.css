@@ -379,6 +379,27 @@
   font-weight: 400;
 }
 
+/* ==================== 缩略图预览 ==================== */
+.detail-thumbnail {
+  margin-bottom: 2rem;
+  border-radius: var(--border-radius-small, 0.5rem);
+  overflow: hidden;
+  border: 1px solid var(--border-color, #f0f0f0);
+  cursor: pointer;
+  transition: border-color var(--transition-fast, 0.2s ease);
+}
+
+.detail-thumbnail:hover {
+  border-color: var(--primary-color, #0066ff);
+}
+
+.detail-thumbnail img {
+  width: 100%;
+  display: block;
+  object-fit: cover;
+  max-height: 420px;
+}
+
 /* ==================== 详情内容 ==================== */
 .detail-content {
   margin-bottom: 2rem;

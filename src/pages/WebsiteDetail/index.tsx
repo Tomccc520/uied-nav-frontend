@@ -73,6 +73,7 @@ interface WebsiteDetail {
   seoKeywords?: string;
   detailContent?: string;
   screenshots?: string | string[];
+  thumbnail?: string;
   visitBtnText?: string;
   averageRating?: number | null;
   totalRatings?: number;
@@ -360,6 +361,21 @@ const WebsiteDetail: React.FC = () => {
               ))}
             </div>
 
+            {/* 缩略图预览 */}
+            {website.thumbnail && (
+              <section className="detail-thumbnail">
+                <img 
+                  src={getFullImageUrl(website.thumbnail)} 
+                  alt={`${website.name} 预览`} 
+                  loading="lazy"
+                  onClick={() => {
+                    setLightboxIndex(-1);
+                    setLightboxOpen(true);
+                  }}
+                />
+              </section>
+            )}
+
             {/* 详情内容 */}
             <article className="detail-content">
               {website.detailContent ? (
@@ -497,7 +513,14 @@ const WebsiteDetail: React.FC = () => {
       </div>
 
       {/* 图片灯箱 */}
-      {lightboxOpen && screenshots.length > 0 && (
+      {lightboxOpen && (lightboxIndex === -1 ? (
+        <div className="lightbox" onClick={() => setLightboxOpen(false)}>
+          <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
+            <button className="lightbox-close" onClick={() => setLightboxOpen(false)}>×</button>
+            <img src={getFullImageUrl(website.thumbnail || '')} alt={`${website.name} 预览`} />
+          </div>
+        </div>
+      ) : screenshots.length > 0 && (
         <div className="lightbox" onClick={() => setLightboxOpen(false)}>
           <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
             <button className="lightbox-close" onClick={() => setLightboxOpen(false)}>×</button>
@@ -521,7 +544,7 @@ const WebsiteDetail: React.FC = () => {
             )}
           </div>
         </div>
-      )}
+      ))}
     </div>
   );
 };
