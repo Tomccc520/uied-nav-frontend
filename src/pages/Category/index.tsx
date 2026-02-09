@@ -138,10 +138,12 @@ const CategoryListView: React.FC = () => {
       />
 
       <div className="category-list-container">
-        <h1 className="category-list-title">所有分类</h1>
-        <p className="category-list-desc">
-          共 {categories.length} 个分类，浏览并发现你需要的设计工具和资源
-        </p>
+        <div className="category-list-header">
+          <h1 className="category-list-title">所有分类</h1>
+          <p className="category-list-desc">
+            共 {categories.length} 个分类，浏览并发现你需要的设计工具和资源
+          </p>
+        </div>
 
         <div className="category-grid">
           {categories.map(cat => {
@@ -314,32 +316,35 @@ const CategoryDetailView: React.FC<{ slug: string }> = ({ slug }) => {
 
       {/* 分类头部 */}
       <div className="category-detail-header">
-        <h1 className="category-detail-title">
-          {cat.color && (
-            <span
-              className="category-icon-badge"
-              style={{ background: `${cat.color}15`, color: cat.color }}
-            >
-              {cat.icon || cat.name.charAt(0)}
-            </span>
-          )}
-          {cat.seoTitle || cat.name}
-        </h1>
-        {(cat.seoDescription || cat.description) && (
-          <p className="category-detail-desc">{cat.seoDescription || cat.description}</p>
-        )}
-        <div className="category-detail-meta">
-          <span className="meta-item">共 {detail.total} 个网站</span>
-          {cat.subCategories.length > 0 && (
-            <span className="meta-item">{cat.subCategories.length} 个子分类</span>
-          )}
+        <div className="category-header-top">
+          <div className="category-header-icon" style={cat.color ? { background: `${cat.color}15`, color: cat.color } : undefined}>
+            {cat.icon || cat.name.charAt(0)}
+          </div>
+          <div className="category-header-info">
+            <h1 className="category-detail-title">{cat.seoTitle || cat.name}</h1>
+            {(cat.seoDescription || cat.description) && (
+              <p className="category-detail-desc">{cat.seoDescription || cat.description}</p>
+            )}
+            <div className="category-detail-meta">
+              <span className="meta-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                共 {detail.total} 个网站
+              </span>
+              {cat.subCategories.length > 0 && (
+                <span className="meta-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                  {cat.subCategories.length} 个子分类
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* 子分类标签 */}
         {cat.subCategories.length > 0 && (
           <div className="category-sub-tabs">
             <span
-              className={`category-sub-tab active`}
+              className="category-sub-tab active"
               style={{ pointerEvents: 'none' }}
             >
               全部

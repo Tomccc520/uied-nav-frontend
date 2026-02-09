@@ -123,10 +123,12 @@ const TagListView: React.FC = () => {
       />
 
       <div className="tag-list-container">
-        <h1 className="tag-list-title">所有标签</h1>
-        <p className="tag-list-desc">
-          共 {tags.length} 个标签，点击标签查看相关网站
-        </p>
+        <div className="tag-list-header">
+          <h1 className="tag-list-title">所有标签</h1>
+          <p className="tag-list-desc">
+            共 {tags.length} 个标签，点击标签查看相关网站
+          </p>
+        </div>
 
         <div className="tag-cloud">
           {tags.map(tag => (
@@ -272,20 +274,23 @@ const TagDetailView: React.FC<{ slug: string }> = ({ slug }) => {
 
       {/* 标签头部 */}
       <div className="tag-detail-header">
-        <h1 className="tag-detail-title">
-          <span className="tag-badge">
+        <div className="tag-header-top">
+          <span className="tag-badge" style={tag.color ? { background: `${tag.color}15`, color: tag.color } : undefined}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
               <line x1="7" y1="7" x2="7.01" y2="7" />
             </svg>
           </span>
-          {tag.seoTitle || tag.name}
-        </h1>
-        {(tag.seoDescription || tag.description) && (
-          <p className="tag-detail-desc">{tag.seoDescription || tag.description}</p>
-        )}
-        <div className="tag-detail-meta">
-          共 {detail.total} 个网站
+          <div className="tag-header-info">
+            <h1 className="tag-detail-title">{tag.seoTitle || tag.name}</h1>
+            {(tag.seoDescription || tag.description) && (
+              <p className="tag-detail-desc">{tag.seoDescription || tag.description}</p>
+            )}
+            <div className="tag-detail-meta">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              共 {detail.total} 个网站
+            </div>
+          </div>
         </div>
       </div>
 
