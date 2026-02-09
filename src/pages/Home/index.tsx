@@ -1,4 +1,3 @@
-import { NavMenuType } from "../../types";
 /**
  * @file Home/index.tsx
  * @description 首页组件 - 参考AIBase设计，包含轮播图和最新AI资讯
@@ -11,6 +10,7 @@ import { NavMenuType } from "../../types";
 import React, { useState, useEffect } from 'react';
 import Banner from '../../components/Banner';
 import DesignArticleGrid from '../../components/DesignArticleGrid';
+import { RankingListSkeleton } from '../../components/Skeleton';
 import wordPressApi from '../../services/wordpress-api';
 import './index.css';
 import './mobile.css';
@@ -239,10 +239,7 @@ const Home: React.FC = () => {
 
           <div className="ranking-content">
             {loading ? (
-              <div className="ranking-loading">
-                <div className="loading-spinner"></div>
-                <div className="loading-text">正在加载排行榜...</div>
-              </div>
+              <RankingListSkeleton count={10} />
             ) : error ? (
               <div className="ranking-error">
                 <div className="error-icon">⚠️</div>
@@ -275,6 +272,8 @@ const Home: React.FC = () => {
           defaultSubCategory="UI"
           showMoreButton={true}
           moreButtonLink="/uiux"
+          pageSlug="home"
+          position="main"
         />
       </div>
     </div>

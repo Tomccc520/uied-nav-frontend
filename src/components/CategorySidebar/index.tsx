@@ -8,7 +8,6 @@
  */
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { IconSearch } from '../UI/Icons/index';
 import { NavMenuType } from '../../types';
 import { 
@@ -59,13 +58,6 @@ import {
 import './index.css';
 import './index.mobile.css'; // 引入独立的移动端样式
 
-// 简单的箭头向下图标组件
-const ArrowDownIcon: React.FC<{ size?: number; className?: string }> = ({ size = 12, className = '' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
-    <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
-
 // 简单的外部链接图标组件
 const ExternalLinkIcon: React.FC<{ size?: number }> = ({ size = 14 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -93,6 +85,7 @@ export interface NavItem {
   badge?: string; // 新增：徽章文本（如"新"、"热门"等）
   disabled?: boolean; // 新增：是否禁用
   subcategories?: SubNavItem[]; // 新增：子分类列表
+  slug?: string; // 新增：分类slug，用于匹配静态数据
   }
   
   // 侧边栏配置接口
@@ -120,6 +113,8 @@ export interface CategorySidebarProps {
   navSwitchItems?: NavSwitchItem[]; // 导航切换选项
   currentNavType?: NavMenuType;     // 当前导航类型
   onNavTypeChange?: (navType: NavMenuType) => void; // 导航类型切换回调
+  // 新增：自定义徽章文本
+  badgeText?: string;              // 自定义徽章文本，如果不传则使用type
 }
 
 // 新增：导航切换项接口
@@ -130,91 +125,167 @@ export interface NavSwitchItem {
   description?: string;
 }
 
-// 默认图标映射
+// 默认图标映射 - 与后台 admin/src/config/icons.tsx 中的 availableIcons 保持一致
 const defaultIconMap: Record<string, React.ComponentType<any>> = {
   default: IconTool,
-  tool: IconTool,
-  tools: IconTools,
-  digital: IconDigital,
-  system: IconSystem,
-  carui: IconCarUI,
-  designteam: IconDesignTeam,
-  // 添加新分类的图标映射
+  
+  // ============ 设计相关 ============
+  inspiration: IconInspiration,
+  ui: DesignIcons.UI,
+  graphic: IconGraphic,
+  template: DesignIcons.Template,
+  material: IconMaterial,
+  icons: DesignIcons.Icons,
+  color: IconColor,
+  font: IconFont,
+  brand: IconBrand,
+  prototype: DesignIcons.Prototype,
+  kit: DesignIcons.Kit,
+  animation: DesignIcons.Animation,
+  '3d': Icon3D,
+  print: IconPrint,
+  art: IconArt,
+  figma: DesignIcons.Figma,
+  illustration: IconIllustration,
+  components: IconComponents,
+  mockup: IconMockup,
+  palette: IconPalette,
+  
+  // ============ 媒体相关 ============
+  image: DesignIcons.Image,
+  photo: IconPhoto,
+  video: DesignIcons.Video,
+  audio: DesignIcons.Audio,
+  camera: IconCamera,
+  
+  // ============ 技术相关 ============
+  ai: DesignIcons.AI,
+  code: DesignIcons.Code,
+  developer: DesignIcons.Developer,
+  web: DesignIcons.Web,
+  mobile: DesignIcons.Mobile,
+  plugin: DesignIcons.Plugin,
+  data: DesignIcons.Data,
+  analytics: DesignIcons.Analytics,
+  visualization: DesignIcons.Visualization || IconDigital,
   gameui: IconGameUI,
   metaverse: IconMetaverse,
-  aidesign: IconAIDesign,
-  othercontent: IconOtherContent,
-  // 平面设计分类图标映射
-  education: IconEducation,
-  learning: IconLearning,
-  inspiration: IconInspiration,
-  material: IconMaterial,
-  font: IconFont,
-  color: IconColor,
-  print: IconPrint,
-  graphic: IconGraphic,
-  brand: IconBrand,
-  photo: IconPhoto,
-  art: IconArt,
-  // 添加大写版本的映射
-  Tool: IconTool,
-  Tools: IconTools,
-  Digital: IconDigital,
-  System: IconSystem,
-  CarUI: IconCarUI,
-  DesignTeam: IconDesignTeam,
-  GameUI: IconGameUI,
-  Metaverse: IconMetaverse,
-  AIDesign: IconAIDesign,
-  OtherContent: IconOtherContent,
-  Education: IconEducation,
-  Learning: IconLearning,
-  Inspiration: IconInspiration,
-  Material: IconMaterial,
-  Font: IconFont,
-  Color: IconColor,
-  Print: IconPrint,
-  Graphic: IconGraphic,
-  Brand: IconBrand,
-  Photo: IconPhoto,
-  Art: IconArt,
-  // 电商相关图标映射
+  digital: IconDigital,
+  system: IconSystem,
+  
+  // ============ 商业相关 ============
+  ecommerce: DesignIcons.Ecommerce,
   store: IconStore,
-  camera: IconCamera,
-  layout: IconLayout,
   marketing: IconMarketing,
   platform: IconPlatform,
   livestreaming: IconLiveStreaming,
-  // 电商图标大写版本
-  Store: IconStore,
-  Camera: IconCamera,
-  Layout: IconLayout,
-  Marketing: IconMarketing,
-  Platform: IconPlatform,
-  LiveStreaming: IconLiveStreaming,
-  Banner: IconBanner,
+  banner: IconBanner,
+  package: IconPackage,
   
-  // 室内设计相关图标映射
+  // ============ 电商相关 ============
+  layout: IconLayout,
+  specs: DesignIcons.Specs,
+  
+  // ============ 室内设计 ============
   cad: IconCAD,
   furniture: IconFurniture,
   texture: IconTexture,
   lighting: IconLighting,
   project: IconProject,
   vr: IconVR,
-  '3d': Icon3D,
-  // 室内图标大写版本
+  
+  // ============ 通用图标 ============
+  tool: IconTool,
+  tools: IconTools,
+  tutorial: DesignIcons.Tutorial,
+  learn: DesignIcons.Learn,
+  blog: DesignIcons.Blog,
+  community: DesignIcons.Community,
+  book: DesignIcons.Book,
+  education: IconEducation,
+  resource: DesignIcons.Resource,
+  carui: IconCarUI,
+  designteam: IconDesignTeam,
+  aidesign: IconAIDesign,
+  othercontent: IconOtherContent,
+  learning: IconLearning,
+  
+  // ============ 兼容性映射（Heroicons/其他风格名称） ============
+  'academic-cap': IconEducation,
+  'briefcase': IconTools,
+  'globe-alt': DesignIcons.Web,
+  'shopping-cart': DesignIcons.Ecommerce,
+  'music': DesignIcons.Audio,
+  'Flag01': IconTools,  // Untitled UI 图标名称兼容
+  
+  // ============ 大写版本映射（兼容性） ============
+  Inspiration: IconInspiration,
+  UI: DesignIcons.UI,
+  Graphic: IconGraphic,
+  Template: DesignIcons.Template,
+  Material: IconMaterial,
+  Icons: DesignIcons.Icons,
+  Color: IconColor,
+  Font: IconFont,
+  Brand: IconBrand,
+  Prototype: DesignIcons.Prototype,
+  Kit: DesignIcons.Kit,
+  Animation: DesignIcons.Animation,
+  '3D': Icon3D,
+  Print: IconPrint,
+  Art: IconArt,
+  Figma: DesignIcons.Figma,
+  Illustration: IconIllustration,
+  Components: IconComponents,
+  Mockup: IconMockup,
+  Palette: IconPalette,
+  Image: DesignIcons.Image,
+  Photo: IconPhoto,
+  Video: DesignIcons.Video,
+  Audio: DesignIcons.Audio,
+  Camera: IconCamera,
+  AI: DesignIcons.AI,
+  Code: DesignIcons.Code,
+  Developer: DesignIcons.Developer,
+  Web: DesignIcons.Web,
+  Mobile: DesignIcons.Mobile,
+  Plugin: DesignIcons.Plugin,
+  Data: DesignIcons.Data,
+  Analytics: DesignIcons.Analytics,
+  Visualization: DesignIcons.Visualization || IconDigital,
+  GameUI: IconGameUI,
+  Metaverse: IconMetaverse,
+  Digital: IconDigital,
+  System: IconSystem,
+  Ecommerce: DesignIcons.Ecommerce,
+  Store: IconStore,
+  Marketing: IconMarketing,
+  Platform: IconPlatform,
+  LiveStreaming: IconLiveStreaming,
+  Banner: IconBanner,
+  Package: IconPackage,
+  Layout: IconLayout,
+  Specs: DesignIcons.Specs,
   CAD: IconCAD,
   Furniture: IconFurniture,
   Texture: IconTexture,
   Lighting: IconLighting,
   Project: IconProject,
   VR: IconVR,
-  '3D': Icon3D,
-  Package: IconPackage,
-  Illustration: IconIllustration,
-  Components: IconComponents,
-  Mockup: IconMockup,
-  Palette: IconPalette
+  Tool: IconTool,
+  Tools: IconTools,
+  Tutorial: DesignIcons.Tutorial,
+  Learn: DesignIcons.Learn,
+  Blog: DesignIcons.Blog,
+  Community: DesignIcons.Community,
+  Book: DesignIcons.Book,
+  Education: IconEducation,
+  Resource: DesignIcons.Resource,
+  CarUI: IconCarUI,
+  DesignTeam: IconDesignTeam,
+  AIDesign: IconAIDesign,
+  OtherContent: IconOtherContent,
+  Learning: IconLearning
 };
 
 // 根据导航类型获取默认配置
@@ -329,7 +400,8 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
   showNavSwitch = false,
   navSwitchItems = [],
   currentNavType,
-  onNavTypeChange
+  onNavTypeChange,
+  badgeText
 }) => {
   // 合并默认配置
   const finalConfig = { ...getDefaultConfig(config.type), ...config };
@@ -372,17 +444,8 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
         requestAnimationFrame(() => {
           const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
           
-          // 查找热门推荐组件的位置
-          const hotRecommendationsElement = document.getElementById('hot-recommendations-section');
-          let triggerPoint = 300; // 默认触发点
-          
-          if (hotRecommendationsElement) {
-            // 获取热门推荐组件距离页面顶部的位置
-            const rect = hotRecommendationsElement.getBoundingClientRect();
-            const elementTop = rect.top + scrollTop;
-            // 当滚动到热门推荐组件顶部时开始固定
-            triggerPoint = Math.max(elementTop - 100, 200); // 至少200px，避免过早触发
-          }
+          // 简化触发点计算，减少DOM查询
+          const triggerPoint = 300;
           
           // 根据滚动位置决定是否固定
           const newPosition = scrollTop > triggerPoint ? 'sticky' : 'static';
@@ -394,29 +457,15 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
       }
     };
     
-    // 使用throttle优化滚动性能
-    let throttleTimer: NodeJS.Timeout;
-    const throttledHandleScroll = () => {
-      if (!throttleTimer) {
-        throttleTimer = setTimeout(() => {
-          handleScroll();
-          throttleTimer = null as any;
-        }, 16); // ~60fps
-      }
-    };
-    
-    // 监听滚动事件
-    window.addEventListener('scroll', throttledHandleScroll, { passive: true });
+    // 使用 passive 监听器优化滚动性能
+    window.addEventListener('scroll', handleScroll, { passive: true });
     
     // 初始化检查
     handleScroll();
     
     // 清理
     return () => {
-      if (throttleTimer) {
-        clearTimeout(throttleTimer);
-      }
-      window.removeEventListener('scroll', throttledHandleScroll);
+      window.removeEventListener('scroll', handleScroll);
     };
   }, [isSticky]);
 
@@ -447,7 +496,7 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
         <h3 className="sidebar-header-title">
           {finalConfig.title}
           <div className="sidebar-type-badge" data-type={config.type}>
-            {config.type.toUpperCase()}
+            {badgeText || config.type.toUpperCase()}
           </div>
         </h3>
       </div>
@@ -472,105 +521,40 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
         
         {/* 导航项列表 */}
         {navItems.map(item => {
-          // 特殊处理几个有问题的图标
-          let IconComponent;
-          if (item.id === 'data-visualization') {
-            IconComponent = IconDigital;
-          } else if (item.id === 'automotive-design') {
-            IconComponent = IconCarUI;
-          } else if (item.id === 'design-teams') {
-            IconComponent = IconDesignTeam;
-          } else if (item.id === 'game-ui') {
-            IconComponent = IconGameUI;
-          } else if (item.id === 'metaverse-vrar') {
-            IconComponent = IconMetaverse;
-          } else if (item.id === 'ai-design') {
-            IconComponent = IconAIDesign;
-          } else if (item.id === 'other-content') {
-            IconComponent = IconOtherContent;
-          } 
-          // 电商分类特殊处理
-          else if (item.id === 'store-design') {
-            IconComponent = IconStore;
-          } else if (item.id === 'product-photo') {
-            IconComponent = IconCamera;
-          } else if (item.id === 'detail-page') {
-            IconComponent = IconLayout;
-          } else if (item.id === 'marketing-material') {
-            IconComponent = IconMarketing;
-          } else if (item.id === 'brand-design') {
-            IconComponent = IconBrand;
-          } else if (item.id === 'data-analysis') {
-            IconComponent = DesignIcons.Analytics;
-          } else if (item.id === 'live-streaming') {
-            IconComponent = IconLiveStreaming;
-          } else if (item.id === 'platform-tools') {
-            IconComponent = IconPlatform;
-          } else if (item.id === 'banner-design') {
-            IconComponent = IconBanner;
-          } else if (item.id === 'packaging-design') {
-            IconComponent = IconPackage;
-          } else if (item.id === 'icon-illustration') {
-            IconComponent = IconIllustration;
-          } else if (item.id === 'ui-components') {
-            IconComponent = IconComponents;
-          } else if (item.id === 'mockup-tools') {
-            IconComponent = IconMockup;
-          } else if (item.id === 'color-palette') {
-            IconComponent = IconPalette;
-          } else if (item.id === 'design-inspiration') {
-            IconComponent = DesignIcons.Inspiration;
-          }
-          // 室内设计分类特殊处理
-          else if (item.id === 'cad-software') {
-            IconComponent = IconCAD;
-          } else if (item.id === '3d-modeling') {
-            IconComponent = Icon3D;
-          } else if (item.id === 'rendering') {
-            IconComponent = IconDigital;
-          } else if (item.id === 'vr-walkthrough') {
-            IconComponent = IconVR;
-          } else if (item.id === 'furniture-design') {
-            IconComponent = IconFurniture;
-          } else if (item.id === 'material-library') {
-            IconComponent = IconTexture;
-          } else if (item.id === 'lighting-design') {
-            IconComponent = IconLighting;
-          } else if (item.id === 'project-management') {
-            IconComponent = IconProject;
-          } else {
-            // 原有逻辑
-            IconComponent = getIconComponent(item.icon);
-          }
+          // 获取图标组件：优先使用后台设置的图标
+          const IconComponent = getIconComponent(item.icon);
           
           const isActive = activeItem === item.id;
           const isDisabled = item.disabled;
           
           return (
-            <button
-              key={item.id}
-              className={`category-nav-item ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`}
-              onClick={() => !isDisabled && handleItemClick(item.id)}
-              data-item={item.id}
-              style={{ '--item-color': item.color } as React.CSSProperties}
-              disabled={isDisabled}
-              aria-current={isActive ? 'page' : undefined}
-            >
-              <div className="category-nav-icon">
-                <IconComponent size={18} />
-              </div>
-              <span className="category-nav-name">{item.name}</span>
+            <div key={item.id} className="category-nav-group">
+              <button
+                className={`category-nav-item ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`}
+                onClick={() => !isDisabled && handleItemClick(item.id)}
+                data-item={item.id}
+                style={{ '--item-color': item.color } as React.CSSProperties}
+                disabled={isDisabled}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                <div className="category-nav-icon">
+                  <IconComponent size={18} />
+                </div>
+                <span className="category-nav-name">{item.name}</span>
+                
+                {/* 计数显示 */}
+                {typeof item.count === 'number' && (
+                  <span className="category-nav-count">{item.count}</span>
+                )}
+                
+                {/* 徽章显示 */}
+                {item.badge && (
+                  <span className="category-nav-badge">{item.badge}</span>
+                )}
+              </button>
               
-              {/* 计数显示 */}
-              {typeof item.count === 'number' && (
-                <span className="category-nav-count">{item.count}</span>
-              )}
-              
-              {/* 徽章显示 */}
-              {item.badge && (
-                <span className="category-nav-badge">{item.badge}</span>
-              )}
-            </button>
+              {/* 子分类列表已移除 - 不再在侧边栏显示子分类 */}
+            </div>
           );
         })}
       </nav>

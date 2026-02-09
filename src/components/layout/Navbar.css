@@ -1,3 +1,13 @@
+/**
+ * @file Navbar.css
+ * @description 前端用户界面组件
+ * @author Tomda
+ * @copyright 版权所有 (c) 2026 UIED技术团队
+ * @website https://fsuied.com
+ * @license MIT
+ * @version 1.0.0
+ */
+
 /* 导航栏样式 */
 .navbar-container {
   position: fixed;
@@ -31,6 +41,14 @@
 
 .navbar-hidden {
   transform: translateY(-100%);
+}
+
+/* 当导航栏隐藏时，调整页面内容的位置 */
+.navbar-hidden ~ .app-content,
+.navbar-hidden ~ main,
+.navbar-hidden + .app-content,
+.navbar-hidden + main {
+  margin-top: 0 !important;
 }
 
 .navbar-content {

@@ -12,6 +12,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { getCachedSmartFavicon, getCravatarFavicon } from '../utils/faviconUtils';
 import { type NavItem } from '../components/CategorySidebar';
 import { NavMenuType } from "../types";
+import { useWebsiteExit } from './useWebsiteExit';
+import { usePermalinkConfig, generateWebsiteUrl } from './usePermalinkConfig';
+import { useFrontendConfig } from './useFrontendConfig';
 
 // 通用工具接口
 export interface Tool {
@@ -25,7 +28,11 @@ export interface Tool {
   isNew?: boolean;
   isFeatured?: boolean;
   isHot?: boolean;
+  isPinned?: boolean; // 置顶标识
   tags: string[];
+  status?: 'active' | 'failed' | 'unchecked'; // 网站状态（监控功能）
+  statusMessage?: string; // 失效原因
+  slug?: string; // 固定链接 slug
 }
 
 // 统计数据接口
@@ -53,13 +60,50 @@ export interface NavigationConfig {
   navType: NavMenuType;
   dataService: DataService;
   searchPageType?: string; // 搜索页面类型参数
+  dataVersion?: number; // 数据版本，用于触发重新初始化
+  pageSlug?: string; // 页面标识，用于获取页面级跳转提醒配置
 }
 
 // 工具卡片数据接口
 export interface ToolCardData {
   key: string;
   tool: Tool;
-  onClick: () => void;
+  onClick: (e: React.MouseEvent) => void;
+  index: number;
+  showDirectArrow?: boolean;
+  onDirectVisit?: (tool: Tool, e: React.MouseEvent) => void;
+  arrowLabel?: string;
+  arrowIsExternal?: boolean;
+  directArrowNewWindow?: boolean;
+}
+
+// 页面级配置接口
+export interface PageOverrideConfig {
+  enabled?: boolean;
+  title?: string;
+  description?: string;
+}
+
+// 弹窗配置接口
+export interface ExitModalConfig {
+  enabled: boolean;
+  title: string;
+  description: string;
+  confirmText: string;
+  cancelText: string;
+  showReport: boolean;
+  reportText: string;
+  // 自动跳转配置
+  autoRedirect?: boolean;
+  autoRedirectSeconds?: number;
+  // 广告配置
+  showAd?: boolean;
+  adCode?: string;
+  adPosition?: 'top' | 'bottom';
+  // 页面级配置
+  pageOverrides?: {
+    [pageSlug: string]: PageOverrideConfig;
+  };
 }
 
 // Hook返回值接口
@@ -75,6 +119,11 @@ export interface NavigationHookReturn {
   stats: Stats;
   loading: boolean;
   
+  // 网站跳转确认弹窗相关状态
+  isExitModalVisible: boolean;
+  currentExitWebsite: { name: string; url: string; description?: string; } | null;
+  exitModalConfig: ExitModalConfig;
+  
   // 方法
   handleSearch: (value: string) => Promise<void>;
   handleKeyPress: (e: React.KeyboardEvent) => void;
@@ -85,6 +134,11 @@ export interface NavigationHookReturn {
   getFaviconUrl: (url: string, size?: number) => string;
   renderToolCards: (tools: Tool[]) => ToolCardData[];
   initializeData: () => Promise<void>;
+  
+  // 网站跳转确认弹窗相关方法
+  hideExitModal: () => void;
+  confirmExitVisit: () => void;
+  reportExitWebsite: (url: string, reason: string) => void;
 }
 
 /**
@@ -95,11 +149,17 @@ export interface NavigationHookReturn {
 export const useNavigation = (config: NavigationConfig): NavigationHookReturn => {
   const navigate = useNavigate();
   const location = useLocation(); // 获取当前位置，包括hash
-  const { navType, dataService, searchPageType = '' } = config;
+  const { navType, dataService, searchPageType = '', dataVersion = 0, pageSlug } = config;
   
   // 使用ref存储dataService避免依赖问题
   const dataServiceRef = useRef(dataService);
   dataServiceRef.current = dataService;
+  
+  // 获取固定链接配置
+  const { config: permalinkConfig } = usePermalinkConfig();
+  
+  // 获取前端全局配置
+  const { config: frontendConfig } = useFrontendConfig();
   
   // 状态管理
   const [searchValue, setSearchValue] = useState('');
@@ -113,6 +173,17 @@ export const useNavigation = (config: NavigationConfig): NavigationHookReturn =>
     updateDate: new Date().toISOString().split('T')[0]
   });
   const [loading, setLoading] = useState(false);
+  
+  // 使用网站跳转确认弹窗Hook - 传入页面标识以支持页面级配置
+  const {
+    isModalVisible: isExitModalVisible,
+    currentWebsite: currentExitWebsite,
+    showExitModal,
+    hideExitModal,
+    confirmVisit: confirmExitVisit,
+    reportWebsite: reportExitWebsite,
+    modalConfig: exitModalConfig
+  } = useWebsiteExit(pageSlug);
   
   // 存储导航项ID和页面元素ID的映射关系
   const navItemToElementIdMap = useRef<Record<string, string>>({});
@@ -224,6 +295,14 @@ export const useNavigation = (config: NavigationConfig): NavigationHookReturn =>
       
       const statsData = dataServiceRef.current.getStats();
       const navItemsData = dataServiceRef.current.getNavItems();
+      
+      // 调试日志
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[useNavigation] 初始化数据 - navType: ${config.navType}, navItems数量: ${navItemsData.length}`);
+        if (navItemsData.length > 0) {
+          console.log(`[useNavigation] 第一个navItem ID: ${navItemsData[0].id}`);
+        }
+      }
 
       setStats(statsData);
       setNavItems(navItemsData);
@@ -274,6 +353,14 @@ export const useNavigation = (config: NavigationConfig): NavigationHookReturn =>
       setLoading(false);
     }
   }, [getCategoryIdFromHash, config.navType]);
+
+  // 当数据版本变化时，重新初始化数据
+  useEffect(() => {
+    if (dataVersion > 0) {
+      console.log(`[useNavigation] 数据版本变化: ${dataVersion}，重新初始化数据`);
+      initializeData();
+    }
+  }, [dataVersion, initializeData]);
 
   /**
    * 处理搜索
@@ -404,12 +491,44 @@ export const useNavigation = (config: NavigationConfig): NavigationHookReturn =>
   }, [navItems]);
 
   /**
-   * 处理网址点击
+   * 处理网址点击 - 根据配置决定跳转行为
+   * 逻辑：
+   * - websiteClickMode = 'detail': 跳转到详情页
+   * - websiteClickMode = 'direct': 显示弹窗确认后跳转外部链接
+   * - websiteClickMode = 'directExternal': 直接打开外部网站（不经过弹窗）
    */
   const handleWebsiteClick = useCallback((tool: Tool) => {
-    console.log('点击工具:', tool.name);
-    window.open(tool.url, '_blank', 'noopener,noreferrer');
-  }, []);
+    const websiteClickMode = frontendConfig?.pageGlobalConfig?.websiteClickMode ?? 'detail';
+    const detailPageNewWindow = frontendConfig?.pageGlobalConfig?.detailPageNewWindow ?? false;
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[handleWebsiteClick] 网站:', tool.name, '| 模式:', websiteClickMode);
+    }
+    
+    if (websiteClickMode === 'directExternal') {
+      // 直达网站模式：卡片点击直接打开外部网站
+      window.open(tool.url, '_blank', 'noopener,noreferrer');
+    } else if (websiteClickMode === 'direct') {
+      // 弹窗确认模式：显示弹窗确认后跳转外部链接
+      showExitModal({
+        name: tool.name,
+        url: tool.url,
+        description: tool.description
+      });
+    } else {
+      // 详情页模式（默认）：跳转到网站详情页
+      const detailUrl = generateWebsiteUrl(permalinkConfig, { 
+        id: tool.id, 
+        slug: tool.slug 
+      });
+      
+      if (detailPageNewWindow) {
+        window.open(detailUrl, '_blank');
+      } else {
+        navigate(detailUrl);
+      }
+    }
+  }, [showExitModal, permalinkConfig, navigate, frontendConfig]);
 
   /**
    * 处理热门标签点击
@@ -420,21 +539,62 @@ export const useNavigation = (config: NavigationConfig): NavigationHookReturn =>
   }, [handleSearch]);
 
   /**
+   * 处理直达箭头点击 - 根据模式决定行为
+   * - detail/direct 模式：箭头直达外部网址
+   * - directExternal 模式：箭头跳转到详情页（因为卡片已经直达外部网址）
+   */
+  const handleDirectVisit = useCallback((tool: Tool, e: React.MouseEvent) => {
+    const websiteClickMode = frontendConfig?.pageGlobalConfig?.websiteClickMode ?? 'detail';
+    const directArrowNewWindow = frontendConfig?.pageGlobalConfig?.directArrowNewWindow ?? true;
+    
+    if (websiteClickMode === 'directExternal') {
+      // 直达网站模式下，箭头跳转到详情页
+      const detailUrl = generateWebsiteUrl(permalinkConfig, { 
+        id: tool.id, 
+        slug: tool.slug 
+      });
+      if (directArrowNewWindow) {
+        window.open(detailUrl, '_blank');
+      } else {
+        navigate(detailUrl);
+        // 跳转详情页后滚动到顶部
+        window.scrollTo(0, 0);
+      }
+    } else {
+      // 其他模式下，箭头直达外部网址
+      if (directArrowNewWindow) {
+        window.open(tool.url, '_blank', 'noopener,noreferrer');
+      } else {
+        window.location.href = tool.url;
+      }
+    }
+  }, [frontendConfig, permalinkConfig, navigate]);
+
+  /**
    * 渲染工具卡片数据
    */
   const renderToolCards = useCallback((tools: Tool[]): ToolCardData[] => {
-    const toolsWithIcons = tools.map(tool => ({
-      ...tool,
-      icon: tool.icon || getFaviconUrl(tool.url, 32)
-    }));
+    // 从后台配置读取是否显示直达箭头
+    const showDirectArrow = frontendConfig?.pageGlobalConfig?.showDirectArrow ?? false;
+    const websiteClickMode = frontendConfig?.pageGlobalConfig?.websiteClickMode ?? 'detail';
+    const directArrowNewWindow = frontendConfig?.pageGlobalConfig?.directArrowNewWindow ?? true;
     
-    // 返回处理后的数据，让组件自己渲染
-    return toolsWithIcons.map(tool => ({
+    // 根据模式决定箭头文案和方向
+    const arrowLabel = websiteClickMode === 'directExternal' ? '查看详情' : '直达网站';
+    const arrowIsExternal = websiteClickMode !== 'directExternal';
+
+    return tools.map((tool, index) => ({
       key: tool.id,
       tool,
-      onClick: () => handleWebsiteClick(tool)
+      onClick: () => handleWebsiteClick(tool),
+      index,
+      showDirectArrow,
+      onDirectVisit: handleDirectVisit,
+      arrowLabel,
+      arrowIsExternal,
+      directArrowNewWindow,
     }));
-  }, [handleWebsiteClick, getFaviconUrl]);
+  }, [handleWebsiteClick, handleDirectVisit, frontendConfig]);
 
   // 监听URL hash变化，更新当前选中的导航项
   useEffect(() => {
@@ -463,6 +623,11 @@ export const useNavigation = (config: NavigationConfig): NavigationHookReturn =>
     stats,
     loading,
     
+    // 网站跳转确认弹窗相关状态
+    isExitModalVisible,
+    currentExitWebsite,
+    exitModalConfig,
+    
     // 方法
     handleSearch,
     handleKeyPress,
@@ -472,6 +637,11 @@ export const useNavigation = (config: NavigationConfig): NavigationHookReturn =>
     handleTagClick,
     getFaviconUrl,
     renderToolCards,
-    initializeData
+    initializeData,
+    
+    // 网站跳转确认弹窗相关方法
+    hideExitModal,
+    confirmExitVisit,
+    reportExitWebsite
   };
 }; 

@@ -1182,8 +1182,19 @@ export const DesignIcons = {
   Texture: IconTexture,
   Lighting: IconLighting,
   Project: IconProject,
-  VR: IconVR
+  VR: IconVR,
+  
+  // 室内设计图标小写版本
+  cad: IconCAD,
+  furniture: IconFurniture,
+  texture: IconTexture,
+  lighting: IconLighting,
+  project: IconProject,
+  vr: IconVR
 };
 
+// 导出 Untitled UI 图标组件
+export { UntitledIcon, isValidIconKey } from './UntitledIcon';
+
 // 默认导出
-export default DesignIcons; 
+export default DesignIcons;

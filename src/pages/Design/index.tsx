@@ -5,7 +5,7 @@ import { NavMenuType } from "../../types";
  * @copyright 版权所有 (c) 2025 UIED技术团队
  * @website https://fsuied.com
  * @license MIT
- * @version 1.0.0
+ * @version 2.0.0 - 支持API数据源
  */
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
@@ -28,27 +28,19 @@ import {
   IconGraphic,
   IconBrand,
   IconPhoto,
-  IconArt
+  IconArt,
+  WebsiteExitModal
 } from '../../components/UI';
 import CategorySidebar, { type NavItem, type SidebarConfig, type NavSwitchItem } from '../../components/CategorySidebar';
 import HeroBanner from '../../components/HeroBanner';
 import ToolCard from '../../components/ToolCard';
 import HotRecommendations from '../../components/HotRecommendations';
 import DesignArticleGrid from '../../components/DesignArticleGrid';
+import AdBanner from '../../components/AdBanner';
 import SEO from '../../components/SEO';
 import { useNavigation, type Tool, type DataService } from '../../hooks/useNavigation';
-import { 
-  designCategories,
-  allDesignTools,
-  getAllDesignTools,
-  getToolsByCategory,
-  getToolsBySubCategory,
-  getHotTools,
-  getFeaturedTools,
-  searchTools,
-  getSubCategoriesByCategory,
-  getSubCategoryStats
-} from '../../data/designToolsDatabase';
+import { useAPINavigation } from '../../hooks/useAPINavigation';
+import { usePageConfig } from '../../hooks/usePageConfig';
 import '../../styles/common.css';
 import './index.css';
 import './index.mobile.css';
@@ -110,105 +102,21 @@ const iconMap: Record<string, React.ComponentType<any>> = {
 };
 
 /**
- * 平面设计工具数据服务类
- */
-class DesignDataService implements DataService {
-  getNavItems(): NavItem[] {
-    return designCategories.map(cat => ({
-      id: cat.id,
-      name: cat.name,
-      count: getToolsByCategory(cat.id).length,
-      icon: iconMap[cat.iconUrl] || iconMap.default,
-      color: cat.color,
-      // 添加子分类支持
-      subcategories: cat.subcategories?.map(sub => ({
-        id: sub.id,
-        name: sub.name,
-        count: getToolsBySubCategory(sub.id).length
-      }))
-    }));
-  }
-
-  getWebsites(params?: {
-    category?: string;
-    subcategory?: string;
-    featured?: boolean;
-    hot?: boolean;
-    limit?: number;
-  }): Tool[] {
-    let tools: Tool[] = [];
-
-    // 转换数据格式以匹配Tool接口
-    const convertedTools = getAllDesignTools().map(tool => ({
-      ...tool
-      // url字段已经存在，不需要转换
-    }));
-
-    // 按分类或子分类筛选
-    if (params?.subcategory) {
-      // 按子分类筛选
-      tools = convertedTools.filter(tool => tool.subcategory === params.subcategory);
-    } else if (params?.category && params.category !== 'all') {
-      // 按主分类筛选
-      tools = convertedTools.filter(tool => tool.category === params.category);
-    } else if (params?.featured) {
-      tools = convertedTools.filter(tool => tool.isFeatured);
-    } else if (params?.hot) {
-      tools = convertedTools.filter(tool => tool.isHot);
-    } else {
-      tools = [...convertedTools];
-    }
-
-    // 排序
-    tools.sort((a, b) => {
-      if (a.isHot && !b.isHot) return -1;
-      if (!a.isHot && b.isHot) return 1;
-      if (a.isFeatured && !b.isFeatured) return -1;
-      if (!a.isFeatured && b.isFeatured) return 1;
-      return 0;
-    });
-
-    if (params?.limit) {
-      tools = tools.slice(0, params.limit);
-    }
-
-    return tools;
-  }
-
-  searchWebsites(keyword: string, limit?: number): Tool[] {
-    const results = searchTools(keyword).map(tool => ({
-      ...tool
-      // url字段已经存在，不需要转换
-    }));
-    return limit ? results.slice(0, limit) : results;
-  }
-
-  getStats() {
-    return {
-      totalWebsites: getAllDesignTools().length,
-      totalCategories: designCategories.length,
-      updateDate: new Date().toISOString().split('T')[0]
-    };
-  }
-}
-
-/**
  * 平面导航页面组件
+ * 使用API数据源
  */
 const DesignPage: React.FC = () => {
   const navigate = useNavigate();
   
-  // 创建数据服务实例
-  const dataService = useMemo(() => new DesignDataService(), []);
+  // 使用API导航Hook
+  const apiNavigation = useAPINavigation({
+    slug: 'design',
+    navType: NavMenuType.DESIGN,
+    iconComponents: iconMap,
+    searchPageType: 'design'
+  });
   
-  // 全站搜索跳转功能
-  const handleGlobalSearch = useCallback((query: string) => {
-    if (query && query.trim()) {
-      navigate(`/search?q=${encodeURIComponent(query.trim())}&type=design`);
-    }
-  }, [navigate]);
-  
-  // 使用通用导航Hook
+  // 解构导航结果
   const {
     searchValue,
     setSearchValue,
@@ -221,13 +129,30 @@ const DesignPage: React.FC = () => {
     handleKeyPress,
     handleNavItemClick,
     handleExitSearchMode,
+    handleWebsiteClick,
     renderToolCards,
-    setActiveCategory
-  } = useNavigation({
-    navType: NavMenuType.DESIGN,
-    dataService,
-    searchPageType: 'design'
-  });
+    setActiveCategory,
+    // 网站跳转确认弹窗相关
+    isExitModalVisible,
+    currentExitWebsite,
+    hideExitModal,
+    confirmExitVisit,
+    reportExitWebsite,
+    exitModalConfig,
+    // API数据服务
+    apiDataService,
+    dataSource
+  } = apiNavigation;
+
+  // 获取页面配置（用于Hero区域显示模式等）
+  const { pageConfig, heroScrollWebsites } = usePageConfig('design', true);
+  
+  // 全站搜索跳转功能
+  const handleGlobalSearch = useCallback((query: string) => {
+    if (query && query.trim()) {
+      navigate(`/search?q=${encodeURIComponent(query.trim())}&type=design`);
+    }
+  }, [navigate]);
 
   // 当前导航类型状态
   const [currentNavType, setCurrentNavType] = useState<NavMenuType>(NavMenuType.DESIGN);
@@ -364,12 +289,17 @@ const DesignPage: React.FC = () => {
   const renderDesignToolCards = useCallback((tools: Tool[]) => {
     const toolCardData = renderToolCards(tools);
     
-    return toolCardData.map(({ key, tool, onClick }, index) => (
+    return toolCardData.map(({ key, tool, onClick, showDirectArrow, onDirectVisit, arrowLabel, arrowIsExternal, directArrowNewWindow }, index) => (
       <ToolCard
         key={key}
         tool={tool}
         onClick={onClick}
         index={index}
+        showDirectArrow={showDirectArrow}
+        onDirectVisit={onDirectVisit}
+        arrowLabel={arrowLabel}
+        arrowIsExternal={arrowIsExternal}
+        directArrowNewWindow={directArrowNewWindow}
       />
     ));
   }, [renderToolCards]);
@@ -388,6 +318,15 @@ const DesignPage: React.FC = () => {
       <HeroBanner 
         pageType="design"
         showStats={true}
+        customTitle={pageConfig?.heroTitle}
+        customDescription={pageConfig?.heroSubtitle}
+        apiHotSearchTags={pageConfig?.hotSearchTags}
+        searchPlaceholder={pageConfig?.searchPlaceholder}
+        heroBgType={pageConfig?.heroBgType}
+        heroBgValue={pageConfig?.heroBgValue}
+        highlightText={pageConfig?.heroHighlightText}
+        heroDisplayMode={pageConfig?.heroDisplayMode}
+        heroScrollWebsites={heroScrollWebsites}
       />
 
       <div className="main-layout">
@@ -410,9 +349,10 @@ const DesignPage: React.FC = () => {
             limit={35}
             title="热门推荐"
             showMoreButton={false}
-            categoryFilter="hot-recommendations"
             enableSubCategories={true}
-            defaultSubCategory="hot-recommendations-hot"
+            useApi={true}
+            pageSlug="design"
+            onWebsiteClick={handleWebsiteClick}
           />
           
           {/* 平面设计文章区域 */}
@@ -424,7 +364,12 @@ const DesignPage: React.FC = () => {
             defaultSubCategory="graphic"
             showMoreButton={true}
             moreButtonLink="https://www.uied.cn/category/graphic"
+            pageSlug="design"
+            position="main"
           />
+
+          {/* 广告位 - 放在设计文章下方 */}
+          <AdBanner pageSlug="design" position="top" limit={1} />
           
           {/* 搜索结果区域 */}
           {isSearchMode && (
@@ -448,9 +393,14 @@ const DesignPage: React.FC = () => {
 
           {/* 所有分类区域 - 只在非搜索模式下显示，支持子分类切换 */}
           {!isSearchMode && navItems.map(navItem => {
-            // 获取该分类的子分类
-            const subCategories = getSubCategoriesByCategory(navItem.id);
-            const hasSubCategories = subCategories && subCategories.length > 0;
+            // 跳过字体资源分类（点击时会跳转到字体导航页面）
+            if (navItem.id === 'font') {
+              return null;
+            }
+            
+            // 获取该分类的子分类（使用API数据）
+            const subCategories = apiDataService?.getSubCategories(navItem.id) || [];
+            const hasSubCategories = subCategories.length > 0;
             
             // 确保ID唯一性，使用具体页面前缀避免不同页面间的ID冲突
             const uniqueElementId = `category-${navItem.id}`;
@@ -464,35 +414,57 @@ const DesignPage: React.FC = () => {
               >
                 <div className="section-header-simple">
                   <h2 data-category={navItem.id}>{navItem.name}</h2>
+                  {/* 显示数据源标识（开发模式） */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <span style={{ fontSize: '12px', color: '#999', marginLeft: '8px' }}>
+                      [{dataSource}]
+                    </span>
+                  )}
                 </div>
                 
-                {/* 如果有子分类，使用HotRecommendations组件来显示子分类切换 */}
+                {/* 如果有子分类，使用HotRecommendations组件来显示子分类切换（带分页功能） */}
                 {hasSubCategories ? (
                   <HotRecommendations 
                     limit={0}
                     title=""
-                    showTitle={false} /* 不显示标题，避免重复 */
+                    showTitle={false}
                     showMoreButton={false}
                     categoryFilter={navItem.id}
                     enableSubCategories={true}
                     defaultSubCategory={subCategories[0]?.id}
-                    customDataSource={{
-                      getBySubCategory: (subCategoryId) => getToolsBySubCategory(subCategoryId),
-                      getSubCategories: (categoryId) => getSubCategoriesByCategory(categoryId),
-                      getSubCategoryStats: (categoryId) => getSubCategoryStats(categoryId)
-                    }}
+                    customDataSource={apiDataService ? {
+                      getBySubCategory: (subCategoryId) => apiDataService.getWebsitesBySubCategory(subCategoryId),
+                      getSubCategories: (categoryId) => apiDataService.getSubCategories(categoryId),
+                      getSubCategoryStats: (categoryId) => apiDataService.getSubCategoryStats(categoryId)
+                    } : undefined}
+                    onWebsiteClick={handleWebsiteClick}
                   />
                 ) : (
                   // 如果没有子分类，直接显示工具网格
                   <div className="tools-grid">
-                    {renderDesignToolCards(dataService.getWebsites({ category: navItem.id }))}
+                    {renderDesignToolCards(
+                      apiDataService?.getWebsites({ category: navItem.id }) || []
+                    )}
                   </div>
                 )}
               </section>
             );
           })}
+          
+          {/* 底部广告位 */}
+          <AdBanner pageSlug="design" position="bottom" limit={3} />
         </main>
       </div>
+
+      {/* 网站跳转确认弹窗 */}
+      <WebsiteExitModal
+        visible={isExitModalVisible}
+        website={currentExitWebsite}
+        onClose={hideExitModal}
+        onConfirm={confirmExitVisit}
+        onReport={reportExitWebsite}
+        config={exitModalConfig}
+      />
     </div>
   );
 };

@@ -1,0 +1,369 @@
+/**
+ * @file pages/Articles/ArticleDetail.css
+ * @description 文章详情页样式（Pro 功能）
+ * @author Tomda
+ * @copyright 版权所有 (c) 2026 UIED技术团队
+ * @website https://fsuied.com
+ * @license MIT
+ * @version 1.0.0
+ */
+
+/* @pro-feature-start: articles */
+
+/* ==================== 容器 ==================== */
+.blog-detail-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* ==================== 返回链接 ==================== */
+.blog-back-link {
+  display: inline-block;
+  margin-bottom: 24px;
+  padding: 8px 16px;
+  background: #f5f5f5;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #666;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.blog-back-link:hover {
+  background: #e8e8e8;
+  color: #333;
+}
+
+/* ==================== 文章头部 ==================== */
+.blog-header {
+  margin-bottom: 32px;
+}
+
+.blog-meta-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #999;
+}
+
+.blog-category {
+  padding: 4px 12px;
+  background: #1890ff;
+  border-radius: 4px;
+  color: white;
+  font-size: 12px;
+}
+
+.blog-title {
+  margin: 0 0 16px;
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1.4;
+}
+
+.blog-meta-bottom {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-size: 14px;
+  color: #666;
+}
+
+/* 标签 */
+.blog-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.blog-detail-tag {
+  padding: 4px 12px;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #666;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.blog-detail-tag:hover {
+  background: #e6f7ff;
+  border-color: #1890ff;
+  color: #1890ff;
+}
+
+/* ==================== 封面图 ==================== */
+.blog-cover {
+  margin-bottom: 32px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.blog-cover img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ==================== 文章内容 ==================== */
+.blog-content {
+  font-size: 16px;
+  line-height: 1.8;
+  color: #333;
+}
+
+.blog-content h2 {
+  margin: 32px 0 16px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.blog-content h3 {
+  margin: 24px 0 12px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.blog-content p {
+  margin: 16px 0;
+}
+
+.blog-content a {
+  color: #1890ff;
+  text-decoration: none;
+}
+
+.blog-content a:hover {
+  text-decoration: underline;
+}
+
+.blog-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+.blog-content blockquote {
+  margin: 16px 0;
+  padding: 16px 20px;
+  background: #f9f9f9;
+  border-left: 4px solid #1890ff;
+  color: #666;
+}
+
+.blog-content pre {
+  margin: 16px 0;
+  padding: 16px;
+  background: #282c34;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.blog-content code {
+  font-family: 'Fira Code', 'Monaco', monospace;
+  font-size: 14px;
+}
+
+.blog-content pre code {
+  color: #abb2bf;
+}
+
+.blog-content p code {
+  padding: 2px 6px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  color: #e83e8c;
+}
+
+.blog-content ul,
+.blog-content ol {
+  margin: 16px 0;
+  padding-left: 24px;
+}
+
+.blog-content li {
+  margin: 8px 0;
+}
+
+.blog-content hr {
+  margin: 32px 0;
+  border: none;
+  border-top: 1px solid #e0e0e0;
+}
+
+.blog-content strong {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+/* ==================== 文章底部 ==================== */
+.blog-footer {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.blog-update-time {
+  font-size: 14px;
+  color: #999;
+}
+
+/* ==================== 评论区 ==================== */
+.blog-comments {
+  margin-top: 48px;
+  padding-top: 32px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.blog-comments h3 {
+  margin: 0 0 24px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.blog-comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.blog-comment-item {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.blog-comment-avatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #1890ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+}
+
+.blog-comment-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.blog-comment-content {
+  flex: 1;
+}
+
+.blog-comment-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.blog-comment-author {
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.blog-comment-time {
+  font-size: 12px;
+  color: #999;
+}
+
+.blog-comment-text {
+  margin: 0;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.6;
+}
+
+.blog-no-comments {
+  text-align: center;
+  padding: 32px;
+  color: #999;
+}
+
+/* ==================== 加载和错误状态 ==================== */
+.blog-detail-loading,
+.blog-detail-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+}
+
+.blog-detail-error h2 {
+  margin: 0 0 12px;
+  font-size: 24px;
+  color: #333;
+}
+
+.blog-detail-error p {
+  margin: 0 0 24px;
+  color: #666;
+}
+
+.blog-btn-back {
+  padding: 10px 24px;
+  background: #1890ff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 0.3s ease;
+}
+
+.blog-btn-back:hover {
+  background: #40a9ff;
+}
+
+/* ==================== 响应式 ==================== */
+@media (max-width: 768px) {
+  .blog-detail-container {
+    padding: 16px;
+  }
+
+  .blog-title {
+    font-size: 24px;
+  }
+
+  .blog-meta-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .blog-content {
+    font-size: 15px;
+  }
+
+  .blog-content h2 {
+    font-size: 20px;
+  }
+
+  .blog-content h3 {
+    font-size: 18px;
+  }
+}
+
+/* @pro-feature-end: articles */

@@ -74,8 +74,8 @@
   /* ===== 工具网格 ===== */
   .tools-grid {
     display: grid;
-    grid-template-columns: 1fr; /* 移动端单列布局 */
-    gap: 12px; /* 8的倍数 */
+    grid-template-columns: repeat(2, 1fr); /* 移动端双列布局 */
+    gap: 8px; /* 紧凑间距 */
     margin: 0;
     padding: 0;
   }

@@ -44,7 +44,7 @@ const Modal: React.FC<ModalProps> = ({
   closable = true,
   maskClosable = true,
   className = '',
-  zIndex = 1000
+  zIndex = 9999
 }) => {
   // ESC键关闭模态框
   useEffect(() => {
@@ -73,7 +73,9 @@ const Modal: React.FC<ModalProps> = ({
     }
   };
 
-  if (!visible) return null;
+  if (!visible) {
+    return null;
+  }
 
   return (
     <div 

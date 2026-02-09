@@ -55,7 +55,8 @@
   /* ===== 工具网格布局 ===== */
   .tools-grid {
     display: grid;
-    grid-template-columns: 1fr; /* 单列布局 */
+    grid-template-columns: repeat(2, 1fr); /* 移动端双列布局 */
+    gap: 8px; /* 紧凑间距 */
     gap: 12px; /* 8的倍数，紧凑间距 */
     padding: 0;
     margin: 0;

@@ -7,11 +7,11 @@
  * @version 1.5.0
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button, Chip, DesignIcons } from '../UI';
-import { categories } from '../../data/aiToolsDatabase'; // 导入AI工具分类数据
 import { useNavigate } from 'react-router-dom'; // 导入useNavigate钩子
+import { useSiteInfo } from '../../hooks/useSiteInfo'; // 导入站点信息Hook
+import { usePages } from '../../hooks/usePages'; // 导入页面列表Hook
 import './Navbar.css';
 import './Navbar.mobile.css'; // 引入独立的移动端样式
 
@@ -229,9 +229,10 @@ const IconMap: { [key: string]: React.FC<{ size?: number; className?: string }> 
  */
 const Navbar = () => {
   const navigate = useNavigate(); // 使用React Router的导航钩子
+  const { siteInfo } = useSiteInfo(); // 获取站点信息
+  const { pages: apiPages } = usePages(); // 获取页面列表
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [visible, setVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [navConfig, setNavConfig] = useState<NavbarConfig | null>(null);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null); // 激活的二级菜单
@@ -258,44 +259,88 @@ const Navbar = () => {
     }
   }, []);
 
-  // 导航切换选项配置 - 包含所有导航类型
-  const navSwitchItems: NavSwitchItem[] = [
-    {
-      type: NavMenuType.UIUX,
-      name: 'UI导航',
-      icon: DesignIcons.Figma
-    },
-    {
-      type: NavMenuType.AI,
-      name: 'AI导航',
-      icon: DesignIcons.AI
-    },
-    {
-      type: NavMenuType.DESIGN,
-      name: '平面导航',
-      icon: DesignIcons.Design
-    },
-    {
-      type: NavMenuType.THREE_D,
-      name: '三维导航',
-      icon: DesignIcons['3D']
-    },
-    {
-      type: NavMenuType.ECOMMERCE,
-      name: '电商导航',
-      icon: DesignIcons.Ecommerce
-    },
-    {
-      type: NavMenuType.INTERIOR,
-      name: '室内导航',
-      icon: DesignIcons.Design
-    },
-    {
-      type: NavMenuType.FONT,
-      name: '字体导航',
-      icon: DesignIcons.Font
-    }
-  ];
+  // 导航切换选项配置 - 支持从API动态获取
+  // 图标映射表 - 支持所有 DesignIcons 图标
+  const iconMapping: Record<string, React.ComponentType<any>> = {
+    'Figma': DesignIcons.Figma,
+    'AI': DesignIcons.AI,
+    'Design': DesignIcons.Design,
+    '3D': DesignIcons['3D'],
+    'Ecommerce': DesignIcons.Ecommerce,
+    'Font': DesignIcons.Font,
+    'Tool': DesignIcons.Tool,
+    'Video': DesignIcons.Video,
+    'Photo': DesignIcons.Photo,
+    'Code': DesignIcons.Code,
+    'Image': DesignIcons.Image,
+    'Tutorial': DesignIcons.Tutorial,
+    'UI': DesignIcons.UI,
+    'Inspiration': DesignIcons.Inspiration,
+    'Material': DesignIcons.Material,
+    'Color': DesignIcons.Color,
+    'Audio': DesignIcons.Audio,
+    'Web': DesignIcons.Web,
+    'Mobile': DesignIcons.Mobile,
+    'Animation': DesignIcons.Animation,
+    'Community': DesignIcons.Community,
+    'Specs': DesignIcons.Specs,
+    'Data': DesignIcons.Data,
+    'Blog': DesignIcons.Blog,
+    'Template': DesignIcons.Template,
+    'Graphic': DesignIcons.Graphic,
+    'Icons': DesignIcons.Icons,
+    'Kit': DesignIcons.Kit,
+    'Prototype': DesignIcons.Prototype,
+    'Brand': DesignIcons.Brand,
+    'Plugin': DesignIcons.Plugin,
+    'Developer': DesignIcons.Developer,
+    'Learn': DesignIcons.Learn,
+    'Art': DesignIcons.Art,
+    'Print': DesignIcons.Print,
+    'Analytics': DesignIcons.Analytics,
+    // 小写版本兼容
+    'figma': DesignIcons.Figma,
+    'ai': DesignIcons.AI,
+    'design': DesignIcons.Design,
+    '3d': DesignIcons['3D'],
+    'ecommerce': DesignIcons.Ecommerce,
+    'font': DesignIcons.Font,
+    'tool': DesignIcons.Tool,
+    'video': DesignIcons.Video,
+    'photo': DesignIcons.Photo,
+    'code': DesignIcons.Code,
+    'image': DesignIcons.Image,
+    'interior': DesignIcons.Design, // 室内设计使用 Design 图标
+  };
+
+  // 固定页面的slug到路由映射
+  const fixedPageRoutes: Record<string, string> = {
+    'uiux': '/',
+    'ai': '/ai',
+    'design': '/design',
+    '3d': '/3d',
+    'ecommerce': '/ecommerce',
+    'interior': '/interior',
+    'font': '/font',
+  };
+
+  // 从API数据生成导航切换选项
+  const navSwitchItems: NavSwitchItem[] = apiPages.length > 0 
+    ? apiPages.map(page => ({
+        type: page.slug as NavMenuType,
+        name: page.name,
+        icon: iconMapping[page.icon || 'Design'] || DesignIcons.Design,
+      }))
+    : [
+        // 默认配置（API加载前或失败时使用）
+        { type: NavMenuType.UIUX, name: 'UI导航', icon: DesignIcons.Figma },
+        { type: NavMenuType.AI, name: 'AI导航', icon: DesignIcons.AI },
+        { type: NavMenuType.DESIGN, name: '平面导航', icon: DesignIcons.Design },
+        { type: NavMenuType.THREE_D, name: '三维导航', icon: DesignIcons['3D'] },
+        { type: NavMenuType.ECOMMERCE, name: '电商导航', icon: DesignIcons.Ecommerce },
+        { type: NavMenuType.INTERIOR, name: '室内导航', icon: DesignIcons.Design },
+        { type: NavMenuType.FONT, name: '字体导航', icon: DesignIcons.Font },
+      ];
 
   // 切换导航类型
   const handleNavSwitch = (navType: NavMenuType) => {
@@ -306,26 +351,13 @@ const Navbar = () => {
     
     setCurrentNavType(navType);
     
-    if (navType === NavMenuType.AI) {
-      navigate('/ai');
-    } else if (navType === NavMenuType.DESIGN) {
-      // 平面导航跳转到新的平面导航页面
-      navigate('/design');
-    } else if (navType === NavMenuType.THREE_D) {
-      // 三维导航跳转到三维导航页面
-      navigate('/3d');
-    } else if (navType === NavMenuType.ECOMMERCE) {
-      // 电商导航跳转到电商导航页面
-      navigate('/ecommerce');
-    } else if (navType === NavMenuType.INTERIOR) {
-      // 室内导航跳转到室内导航页面
-      navigate('/interior');
-    } else if (navType === NavMenuType.FONT) {
-      // 字体导航跳转到字体导航页面
-      navigate('/font');
-    } else if (navType === NavMenuType.UIUX) {
-      // UIUX导航跳转到根路径
-      navigate('/');
+    // 检查是否是固定页面
+    const fixedRoute = fixedPageRoutes[navType];
+    if (fixedRoute) {
+      navigate(fixedRoute);
+    } else {
+      // 动态页面使用 /p/ 前缀
+      navigate(`/p/${navType}`);
     }
   };
 
@@ -340,21 +372,48 @@ const Navbar = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // 控制导航栏显示/隐藏的滚动监听
+  // 控制导航栏显示/隐藏的滚动监听 - 使用 useRef 避免频繁重渲染
+  const lastScrollYRef = useRef(0);
+  const ticking = useRef(false);
+  
   useEffect(() => {
     const controlNavbar = () => {
-      const currentScrollY = window.scrollY;
-      if (currentScrollY > lastScrollY && currentScrollY > 200) {
-        setVisible(false);
-      } else {
-        setVisible(true);
+      if (!ticking.current) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          const lastY = lastScrollYRef.current;
+          
+          // 只有滚动超过一定距离才触发状态变化
+          if (Math.abs(currentScrollY - lastY) > 10) {
+            if (currentScrollY > lastY && currentScrollY > 200) {
+              setVisible(false);
+            } else if (currentScrollY < lastY) {
+              setVisible(true);
+            }
+            lastScrollYRef.current = currentScrollY;
+          }
+          
+          ticking.current = false;
+        });
+        ticking.current = true;
       }
-      setLastScrollY(currentScrollY);
     };
 
-    window.addEventListener('scroll', controlNavbar);
+    window.addEventListener('scroll', controlNavbar, { passive: true });
     return () => window.removeEventListener('scroll', controlNavbar);
-  }, [lastScrollY]);
+  }, []);
+
+  // 同步 navbar 状态到 body class，用于调整页面内容位置
+  useEffect(() => {
+    if (visible) {
+      document.body.classList.remove('navbar-is-hidden');
+    } else {
+      document.body.classList.add('navbar-is-hidden');
+    }
+    return () => {
+      document.body.classList.remove('navbar-is-hidden');
+    };
+  }, [visible]);
 
   // 点击外部关闭菜单
   useEffect(() => {
@@ -384,136 +443,58 @@ const Navbar = () => {
     };
   }, [anchorEl, activeSubmenu]);
 
-  // 加载导航配置（使用默认配置）
+  // 加载导航配置（从API获取）
   useEffect(() => {
     const initNavbarConfig = async () => {
-      // 在开发环境中，直接使用默认配置，避免API调用错误
-      const defaultConfig: NavbarConfig = {
-        logo: "/logo-3.svg",
-        menuItems: [
-          { 
-            id: 'homepage',
-            text: '首页', 
-            hasSubmenu: true,
-            submenu: [
-              {
-                id: 'home-main',
-                text: '首页',
-                link: 'https://www.uied.cn/',
-                external: true,
-                icon: 'home',
-                description: 'UIED设计师社区主页'
-              },
-              {
-                id: 'home-articles',
-                text: '学习文章',
-                link: 'https://www.uied.cn/category/wenzhang',
-                external: true,
-                icon: 'article',
-                description: '设计学习文章和教程'
-              },
-              {
-                id: 'home-materials',
-                text: '设计素材',
-                link: 'https://www.uied.cn/sucai',
-                external: true,
-                icon: 'material',
-                description: '优质设计素材资源'
-              },
-              {
-                id: 'home-circle',
-                text: '摸鱼圈子',
-                link: 'https://www.uied.cn/circle',
-                external: true,
-                icon: 'circle',
-                description: '设计师交流摸鱼圈'
-              }
-            ],
-            order: 1,
-            visible: true
-          },
-          { 
-            id: '3',
-            text: '快讯', 
-            link: 'https://uiedtool.com/tools/ai-news', 
-            external: true,
-            order: 3,
-            visible: true
-          },
-          { 
-            id: '4',
-            text: '摸鱼', 
-            label: '偷学', 
-            labelType: 'info', 
-            link: 'https://www.uied.cn/circle', 
-            external: true,
-            order: 4,
-            visible: true
-          },
-          { 
-            id: '5',
-            text: '榜单', 
-            labelType: 'info', 
-            link: 'https://hot.uied.cn/', 
-            external: true,
-            order: 4,
-            visible: true
-          },
-          { 
-            id: '6',
-            text: 'AIGC', 
-            label: 'New', 
-            labelType: 'shop', 
-            link: 'https://www.uied.cn/aigc', 
-            external: true,
-            order: 6,
-            visible: true
-          },
-          { 
-            id: '7',
-            text: '投稿', 
-            link: 'https://www.uied.cn/tougao', 
-            external: true,
-            order: 7,
-            visible: true
-          },
-          { 
-            id: '8',
-            text: '设计团队', 
-            link: 'https://fsuied.com/', 
-            external: true,
-            order: 8,
-            visible: true
-          },
-          { 
-            id: '9',
-            text: 'DeepSeek', 
-            label: '满血版', 
-            labelType: 'info', 
-            link: 'https://www.wenxiaobai.com/?forceLogin=true&source=uied&ad_source=uied', 
-            external: true,
-            order: 9,
-            visible: true
-          },
-          { 
-            id: '10',
-            text: '在线工具', 
-            label: '免费', 
-            labelType: 'shop', 
-            link: 'https://uiedtool.com/', 
-            external: true,
-            order: 10,
-            visible: true
-          },
-        ]
-      };
-      
-      setNavConfig(defaultConfig);
-      console.log('✅ 导航配置已初始化，包含二级菜单功能');
+      try {
+        // 从API获取导航菜单 - 使用环境变量配置的API地址
+        const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+        const response = await fetch(`${apiBaseUrl}/settings/nav-menus`);
+        const apiMenus = await response.json();
+        
+        // 转换API数据格式为组件需要的格式
+        const menuItems: MenuItem[] = apiMenus
+          .filter((menu: any) => menu.visible)
+          .sort((a: any, b: any) => a.order - b.order)
+          .map((menu: any) => ({
+            id: menu.id,
+            text: menu.text,
+            link: menu.link || undefined,
+            external: menu.external,
+            label: menu.label || undefined,
+            labelType: menu.labelType as 'info' | 'shop' | 'warning' | 'success' | undefined,
+            order: menu.order,
+            visible: menu.visible,
+            hasSubmenu: menu.children && menu.children.length > 0,
+            submenu: menu.children?.filter((child: any) => child.visible).map((child: any) => ({
+              id: child.id,
+              text: child.text,
+              link: child.link,
+              external: child.external,
+            }))
+          }));
+
+        const config: NavbarConfig = {
+          logo: siteInfo?.logo || "/logo-3.svg",
+          menuItems
+        };
+        
+        setNavConfig(config);
+      } catch (error) {
+        // 如果API失败，使用默认配置
+        const defaultConfig: NavbarConfig = {
+          logo: siteInfo?.logo || "/logo-3.svg",
+          menuItems: [
+            { id: '1', text: '首页', link: '/', external: false, order: 1, visible: true },
+            { id: '2', text: '快讯', link: 'https://uiedtool.com/tools/ai-news', external: true, order: 2, visible: true },
+          ]
+        };
+        setNavConfig(defaultConfig);
+      }
     };
 
     initNavbarConfig();
-  }, []);
+  }, [siteInfo]); // 当站点信息变化时重新加载
 
   // 获取可见且排序的菜单项
   const getVisibleMenuItems = (): MenuItem[] => {

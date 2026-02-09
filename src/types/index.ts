@@ -7,6 +7,9 @@
  * @version 1.0.0
  */
 
+// 导出所有API类型
+export * from './api';
+
 /**
  * 导航菜单类型枚举
  */

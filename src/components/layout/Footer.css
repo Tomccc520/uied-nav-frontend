@@ -1,3 +1,13 @@
+/**
+ * @file Footer.css
+ * @description 前端用户界面组件
+ * @author Tomda
+ * @copyright 版权所有 (c) 2026 UIED技术团队
+ * @website https://fsuied.com
+ * @license MIT
+ * @version 1.0.0
+ */
+
 /* 页脚容器样式 */
 :root {
   --primary-color: #0066ff;
@@ -67,17 +77,38 @@
 }
 
 .footer-content-wrapper {
-  max-width: 1230px;
+  max-width: 1200px; /* 增加宽度以容纳6列 */
   margin: 0 auto;
   padding: 0 20px;
 }
 
-/* 网格布局 */
+/* 网格布局 - 6列：关于(1.5fr) + 4个分组(1fr) + 关注交流(120px) */
 .footer-sections-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1.5fr;
-  gap: 30px;
+  grid-template-columns: 1.5fr repeat(4, 1fr) 120px;
+  gap: 20px;
   align-items: start;
+}
+
+/* 关于UIED区域 */
+.footer-about-section {
+  display: flex;
+  flex-direction: column;
+  grid-column: 1;
+}
+
+/* 关注交流区域 - 固定宽度确保不被挤压 */
+.footer-social-section {
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+/* 提交网站和关注交流放在一行 */
+.footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-top: 16px;
 }
 
 .footer-section {
@@ -87,9 +118,9 @@
 
 /* 标题样式 */
 .widget-title {
-  font-size: 16px !important;
+  font-size: 15px !important;
   font-weight: 600 !important;
-  margin-bottom: 16px !important;
+  margin-bottom: 12px !important;
   color: var(--text-color) !important;
   position: relative;
 }
@@ -183,6 +214,21 @@
   margin-top: 8px;
   font-size: 13px;
   color: var(--text-light);
+}
+
+/* 二维码链接样式 */
+.qr-link {
+  display: block;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.qr-link:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+.qr-link img {
+  display: block;
 }
 
 /* 友情链接 */
@@ -295,8 +341,12 @@
   }
   
   .footer-sections-grid {
-    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-    gap: 25px;
+    grid-template-columns: 1.5fr repeat(4, 1fr) 100px; /* 6列紧凑版 */
+    gap: 16px;
+  }
+  
+  .footer-social-section {
+    min-width: 100px;
   }
 }
 
@@ -310,8 +360,16 @@
   }
   
   .footer-sections-grid {
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr); /* 3列布局 */
     gap: 20px;
+  }
+  
+  .footer-about-section {
+    grid-column: 1 / -1; /* 关于区域占满整行 */
+  }
+  
+  .footer-social-section {
+    min-width: auto; /* 在小屏幕上允许自适应 */
   }
   
   /* 中等屏幕下的二维码调整 */
@@ -462,6 +520,28 @@
     margin: 0 12px 5px 0;
     display: inline-block;
   }
+  
+  /* 移动端关注交流区域 */
+  .footer-mobile-social {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+  }
+  
+  .footer-mobile-social .widget-title {
+    text-align: center;
+    margin-top: 0 !important;
+    margin-bottom: 12px !important;
+  }
+  
+  .footer-mobile-social .social-media-section {
+    margin: 0;
+  }
+  
+  .footer-mobile-social .social-media-groups {
+    justify-content: center;
+    gap: 16px;
+  }
 }
 
 @media (max-width: 600px) {
@@ -577,3 +657,127 @@
   color: var(--text-light) !important;
   text-decoration: none !important;
 } 
+
+/* 关注交流分组区域 - 在 footer-actions 中 */
+.footer-actions .social-media-section {
+  margin-top: 0;
+}
+
+.footer-actions .social-media-groups {
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .footer-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .footer-actions .social-media-groups {
+    justify-content: flex-start;
+  }
+}
+
+/* 提交网站按钮 */
+.submit-website-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  text-decoration: none;
+}
+
+.submit-website-btn svg {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.submit-website-btn:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #6d28d9 100%);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+  color: #fff;
+}
+
+.submit-website-btn:hover svg {
+  transform: rotate(90deg);
+}
+
+.submit-website-btn:active {
+  opacity: 0.9;
+}
+
+.submit-website-btn:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* 页脚操作按钮统一样式 */
+.footer-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+
+.footer-action-btn svg {
+  flex-shrink: 0;
+}
+
+/* 提交网站按钮 - 主要按钮 */
+.footer-submit-btn {
+  background: var(--primary-color, #0066ff);
+  color: #fff;
+  border-color: var(--primary-color, #0066ff);
+}
+
+.footer-submit-btn:hover {
+  background: var(--primary-dark, #0052cc);
+  border-color: var(--primary-dark, #0052cc);
+  color: #fff;
+}
+
+/* 更新记录按钮 - 次要按钮 */
+.footer-changelog-btn {
+  background: transparent;
+  color: var(--text-light, #666);
+  border-color: var(--border-color, #eaeaea);
+}
+
+.footer-changelog-btn:hover {
+  background: var(--bg-medium, #f5f5f5);
+  color: var(--primary-color, #0066ff);
+  border-color: var(--primary-color, #0066ff);
+}
+
+/* 无障碍：减少动画 */
+@media (prefers-reduced-motion: reduce) {
+  .submit-website-btn,
+  .submit-website-btn svg,
+  .footer-action-btn {
+    transition: none;
+  }
+  
+  .submit-website-btn:hover svg {
+    transform: none;
+  }
+}

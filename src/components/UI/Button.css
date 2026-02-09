@@ -1,13 +1,23 @@
-/* 自定义按钮样式 */
+/**
+ * @file Button.css
+ * @description 前端用户界面组件
+ * @author Tomda
+ * @copyright 版权所有 (c) 2026 UIED技术团队
+ * @website https://fsuied.com
+ * @license MIT
+ * @version 1.0.0
+ */
+
+/* 自定义按钮样式 - 符合前端整体风格 */
 .custom-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   text-decoration: none;
   font-family: inherit;
   outline: none;
@@ -16,7 +26,8 @@
 }
 
 .custom-button:focus {
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  outline: 2px solid var(--primary-color, #0066ff);
+  outline-offset: 2px;
 }
 
 .custom-button:disabled {
@@ -25,61 +36,55 @@
   pointer-events: none;
 }
 
-/* 按钮类型样式 */
+/* 按钮类型样式 - 简洁设计，无阴影 */
 .custom-button--primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary-color, #0066ff);
   color: white;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  border: none;
 }
 
 .custom-button--primary:hover {
-  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+  background: var(--primary-dark, #0052cc);
 }
 
 .custom-button--secondary {
-  background: white;
-  color: #374151;
-  border: 1px solid #d1d5db;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: var(--white, #ffffff);
+  color: var(--text-primary, #333);
+  border: 1px solid var(--border-color, #f0f0f0);
 }
 
 .custom-button--secondary:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  border-color: var(--primary-color, #0066ff);
+  color: var(--primary-color, #0066ff);
 }
 
 .custom-button--text {
   background: transparent;
-  color: #6b7280;
+  color: var(--text-secondary, #666);
   border: none;
-  box-shadow: none;
 }
 
 .custom-button--text:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: #374151;
+  background: var(--background-light, #f6f8fb);
+  color: var(--text-primary, #333);
 }
 
 /* 按钮尺寸样式 */
 .custom-button--small {
-  padding: 8px 16px;
-  font-size: 14px;
-  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 0.375rem;
 }
 
 .custom-button--medium {
-  padding: 12px 24px;
-  font-size: 16px;
+  padding: 10px 20px;
+  font-size: 14px;
 }
 
 .custom-button--large {
-  padding: 16px 32px;
-  font-size: 18px;
-  border-radius: 10px;
+  padding: 12px 24px;
+  font-size: 15px;
+  border-radius: 0.5rem;
 }
 
 /* 图标和文本样式 */

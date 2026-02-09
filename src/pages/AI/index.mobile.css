@@ -71,45 +71,77 @@
     margin-top: 4px; /* 8的倍数 */
   }
 
-  /* ===== 子分类标签样式 ===== */
+  /* ===== 子分类标签样式 - 与HotRecommendations保持一致 ===== */
   .ai-page .subcategory-tabs {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px; /* 8的倍数 */
-    margin: 16px 0; /* 8的倍数 */
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding: 0 0 0.5rem 0;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    margin: 16px 0;
+  }
+  
+  /* 隐藏滚动条但保持功能 */
+  .ai-page .subcategory-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .ai-page .subcategory-tabs {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 
   .ai-page .subcategory-tab {
-    padding: 8px 16px; /* 8的倍数 */
-    border-radius: 20px; /* 胶囊形状 */
-    font-size: 13px; /* 苹果Caption */
-    font-weight: 500; /* 苹果Medium */
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    background: rgba(255, 255, 255, 0.9);
-    color: #6d6d70; /* 苹果次要颜色 */
-    transition: all 0.2s ease;
-    cursor: pointer;
-    min-height: 32px; /* 触摸友好 */
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    /* 移除阴影 */
+    gap: 0.25rem;
+    padding: 0.375rem 0.625rem;
+    background: transparent;
+    border: 1px solid var(--border-color, rgba(0, 0, 0, 0.1));
+    border-radius: 1rem;
+    color: var(--text-secondary, #6d6d70);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 32px; /* 触摸友好的最小高度 */
   }
 
-  .ai-page .subcategory-tab:hover {
-    background: rgba(0, 122, 255, 0.1);
-    color: #007aff;
-    border-color: rgba(0, 122, 255, 0.3);
+  .ai-page .subcategory-tab:hover,
+  .ai-page .subcategory-tab:active {
+    border-color: var(--primary-color, #007aff);
+    color: var(--primary-color, #007aff);
   }
 
   .ai-page .subcategory-tab.active {
-    background: #007aff; /* 苹果蓝色 */
-    color: #ffffff;
-    border-color: #007aff;
+    background: transparent;
+    border-color: var(--primary-color, #007aff);
+    color: var(--primary-color, #007aff);
   }
 
-  .ai-page .subcategory-tab.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+  .ai-page .subcategory-tab .tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0.875rem;
+    height: 0.875rem;
+    padding: 0 0.1875rem;
+    background: var(--border-color, rgba(0, 0, 0, 0.05));
+    border-radius: 0.4375rem;
+    font-size: 0.625rem;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--text-light, #6d6d70);
+  }
+
+  .ai-page .subcategory-tab.active .tab-count {
+    background: var(--primary-color, #007aff);
+    color: var(--white, #ffffff);
   }
 
   /* ===== 工具网格 ===== */

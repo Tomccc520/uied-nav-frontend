@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "UIED导航",
+  "name": "UIED设计导航 - 精选设计工具与资源导航平台",
+  "description": "专业的设计师导航网站，精选优质UI/UX设计工具、平面设计资源、AI设计工具",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +21,10 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#1976d2",
+  "background_color": "#ffffff",
+  "categories": ["productivity", "design", "utilities"],
+  "lang": "zh-CN",
+  "scope": "/",
+  "orientation": "any"
 }

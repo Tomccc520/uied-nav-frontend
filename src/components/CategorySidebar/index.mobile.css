@@ -87,7 +87,8 @@
   }
 
   .category-nav-item.active {
-    background: rgba(0, 0, 0, 0.08); /* 苹果选中状态 */
+    background: var(--primary-color, #007aff) !important; /* 使用主题色 */
+    color: #ffffff !important;
   }
 
   .category-nav-item.disabled {
@@ -118,7 +119,7 @@
   }
 
   .category-nav-item.active .category-nav-icon {
-    color: #000; /* 苹果主文本 */
+    color: #ffffff !important; /* 选中时图标白色 */
   }
 
   .category-nav-item.search-item .category-nav-icon {
@@ -138,7 +139,8 @@
   }
 
   .category-nav-item.active .category-nav-name {
-    font-weight: 500; /* 苹果Medium */
+    font-weight: 600; /* 选中时加粗 */
+    color: #ffffff !important;
   }
 
   .category-nav-item.search-item .category-nav-name {
@@ -160,8 +162,8 @@
   }
 
   .category-nav-item.active .category-nav-count {
-    background: rgba(0, 0, 0, 0.1);
-    color: #000;
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff !important;
   }
 
   .category-nav-item.search-item .category-nav-count {

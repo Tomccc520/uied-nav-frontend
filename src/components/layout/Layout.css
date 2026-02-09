@@ -1,3 +1,13 @@
+/**
+ * @file Layout.css
+ * @description 前端用户界面组件
+ * @author Tomda
+ * @copyright 版权所有 (c) 2026 UIED技术团队
+ * @website https://fsuied.com
+ * @license MIT
+ * @version 1.0.0
+ */
+
 /* 布局样式 - 适配新的导航栏和页脚 */
 .layout {
   min-height: 100vh;
@@ -75,6 +85,12 @@
   margin-top: 64px; /* 为固定导航栏留出空间 */
   min-height: calc(100vh - 64px);
   padding: 0; /* 移除默认内边距，让页面组件自己控制 */
+  transition: margin-top 0.3s ease-in-out;
+}
+
+/* 当导航栏隐藏时，减少顶部间距 */
+body.navbar-is-hidden .layout-main {
+  margin-top: 0;
 }
 
 /* 底部样式 */

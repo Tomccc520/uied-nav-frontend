@@ -4,7 +4,7 @@
  * @copyright 版权所有 (c) 2025 UIED技术团队
  * @website https://fsuied.com
  * @license MIT
- * @version 1.3.0 - 修复切换分类问题，优化缓存机制和交互体验
+ * @version 1.4.0 - 集成 WordPress 组件配置控制
  */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,6 +12,15 @@ import './DesignArticleGrid.css';
 
 // 导入实际的WordPress API服务
 import wordPressApi from '../services/wordpress-api';
+
+// 导入 WordPress 组件配置 Hook
+import { useWordPressWidgets } from '../hooks/useWordPressWidgets';
+
+// 导入 WordPress 分类 Hook
+import { useWordPressCategories } from '../hooks/useWordPressCategories';
+
+// 导入 WordPress 标签 Hook
+import { useWordPressTags } from '../hooks/useWordPressTags';
 
 // 导入RankItem类型
 interface RankItem {
@@ -38,13 +47,13 @@ interface RankItem {
 interface TagOption {
   key: string;
   name: string;
-  type: 'category';
+  type: 'category' | 'tag';  // 支持分类和标签两种类型
   id: number;
   description?: string;
 }
 
-// 定义标签选项（更新为新的分类ID）
-const TAG_OPTIONS: TagOption[] = [
+// 默认标签选项（作为备用）- 都是分类类型
+const DEFAULT_TAG_OPTIONS: TagOption[] = [
   { key: 'UI', name: 'UI', type: 'category', id: 334 },
   { key: 'UX', name: 'UX', type: 'category', id: 337 },
   { key: 'product', name: '产品', type: 'category', id: 336 },
@@ -52,25 +61,29 @@ const TAG_OPTIONS: TagOption[] = [
   { key: '3d', name: '三维', type: 'category', id: 1031 },
   { key: 'tips', name: '设计干货', type: 'category', id: 307 },
   { key: 'inspiration', name: '设计灵感', type: 'category', id: 1861 },
-  { key: 'Font', name: '字体', type: 'category', id: 319 }, // 添加字体分类，使用平面设计分类ID
-  { key: 'AIGC', name: 'AIGC', type: 'category', id: 417 }, // 添加AIGC分类
+  { key: 'Font', name: '字体', type: 'category', id: 319 },
+  { key: 'AIGC', name: 'AIGC', type: 'category', id: 417 },
 ];
 
-/**
- * 标签说明:
- * - UI: UI设计内容 (分类ID: 334)
- * - UX: UX设计内容 (分类ID: 337)
- * - product: 产品设计内容 (分类ID: 336)
- * - graphic: 平面设计内容 (分类ID: 335)
- * - 3d: 三维设计内容 (分类ID: 1031)
- * - tips: 设计干货内容 (分类ID: 307)
- * - inspiration: 设计灵感内容 (分类ID: 1861)
- * - Font: 字体设计内容 (分类ID: 335) - 修正字体分类名称
- * - AIGC: AI生成内容设计 (分类ID: 417) - AI设计相关文章
- */
-
 // 常量定义
-const CACHE_EXPIRE_TIME = 15 * 60 * 1000; // 15分钟缓存过期，减少缓存时间以保证数据及时更新
+const CACHE_EXPIRE_TIME = 10 * 60 * 1000; // 10分钟缓存过期
+
+// 清除所有设计文章缓存
+const clearDesignArticlesCache = () => {
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key && key.startsWith('design-articles-')) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => sessionStorage.removeItem(key));
+    console.log('DesignArticleGrid: 已清除缓存', keysToRemove.length, '个');
+  } catch (e) {
+    console.warn('清除缓存失败', e);
+  }
+};
 
 // 全局缓存 - 组件级别，持久化到sessionStorage
 const getFromSessionStorage = (key: string) => {
@@ -231,6 +244,8 @@ interface DesignArticleGridProps {
   defaultSubCategory?: string; // 默认选中的子分类
   showMoreButton?: boolean; // 是否显示查看更多按钮
   moreButtonLink?: string; // 查看更多按钮链接
+  pageSlug?: string; // 页面标识，用于获取组件配置
+  position?: string; // 组件位置，用于获取组件配置
 }
 
 const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({ 
@@ -240,10 +255,119 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
   enableSubCategories = false, // 默认不启用子分类切换
   defaultSubCategory = 'UI', // 默认选择UI分类
   showMoreButton = false, // 默认不显示查看更多按钮
-  moreButtonLink = '/articles' // 默认查看更多按钮链接
+  moreButtonLink = '/articles', // 默认查看更多按钮链接
+  pageSlug, // 页面标识
+  position = 'main' // 组件位置
 }) => {
-  // 当前选中的子分类
-  const [activeTag, setActiveTag] = useState<string>(defaultSubCategory);
+  // 获取 WordPress 组件配置
+  const { widgets, loading: widgetsLoading, getWidgetByPosition } = useWordPressWidgets({
+    pageSlug,
+    enabled: !!pageSlug
+  });
+  
+  // 从组件配置中获取设置
+  const widgetConfig = getWidgetByPosition(position);
+  
+  // 使用组件配置覆盖默认值
+  const effectiveTitle = widgetConfig?.title || title;
+  const effectiveLimit = widgetConfig?.limit || limit;
+  const effectiveShowMoreLink = widgetConfig?.showMoreLink || moreButtonLink;
+  const effectiveShowMoreButton = widgetConfig?.showMoreLink ? true : showMoreButton;
+  
+  // 调试日志 - 仅在开发环境输出
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development' && widgetConfig) {
+      console.log('[DesignArticleGrid] 使用配置:', {
+        pageSlug,
+        categoryIds: widgetConfig?.categoryIds,
+        tagIds: widgetConfig?.tagIds,
+      });
+    }
+  }, [pageSlug, widgetConfig]);
+  
+  // 获取后台配置的所有分类（用于支持新增的分类）
+  const { categories: backendCategories } = useWordPressCategories({});
+  
+  // 获取后台配置的所有标签（用于支持标签）
+  const { tags: backendTags } = useWordPressTags({});
+  
+  // 根据组件配置筛选要显示的分类和标签
+  const TAG_OPTIONS = React.useMemo(() => {
+    const configuredOptions: TagOption[] = [];
+    
+    // 处理分类ID
+    if (widgetConfig?.categoryIds && widgetConfig.categoryIds.length > 0) {
+      for (const catId of widgetConfig.categoryIds) {
+        // 先从默认配置中查找
+        const defaultOpt = DEFAULT_TAG_OPTIONS.find(opt => opt.id === catId && opt.type === 'category');
+        if (defaultOpt) {
+          configuredOptions.push(defaultOpt);
+          continue;
+        }
+        
+        // 如果默认配置中没有，从后台配置中查找
+        const backendCat = backendCategories.find(cat => cat.wpCategoryId === catId);
+        if (backendCat) {
+          configuredOptions.push({
+            key: backendCat.slug || `cat-${catId}`,
+            name: backendCat.displayName,
+            type: 'category',
+            id: catId,
+          });
+        }
+      }
+    }
+    
+    // 处理标签ID
+    if (widgetConfig?.tagIds && widgetConfig.tagIds.length > 0) {
+      for (const tagId of widgetConfig.tagIds) {
+        // 从后台配置中查找标签
+        const backendTag = backendTags.find(tag => tag.wpTagId === tagId);
+        if (backendTag) {
+          configuredOptions.push({
+            key: backendTag.slug || `tag-${tagId}`,
+            name: backendTag.displayName,
+            type: 'tag',
+            id: tagId,
+          });
+        } else {
+          // 如果后台没有配置，直接使用ID创建
+          configuredOptions.push({
+            key: `tag-${tagId}`,
+            name: `标签${tagId}`,
+            type: 'tag',
+            id: tagId,
+          });
+        }
+      }
+    }
+    
+    if (configuredOptions.length > 0) {
+      console.log('[DesignArticleGrid] 使用组件配置:', configuredOptions.map(c => `${c.name}(${c.type})`));
+      return configuredOptions;
+    }
+    
+    // 否则使用所有默认分类
+    return DEFAULT_TAG_OPTIONS;
+  }, [widgetConfig?.categoryIds, widgetConfig?.tagIds, backendCategories, backendTags]);
+  
+  // 当前选中的子分类 - 初始为空，等待TAG_OPTIONS加载后设置
+  const [activeTag, setActiveTag] = useState<string>('');
+  
+  // 当TAG_OPTIONS加载完成后，设置默认选中的分类
+  useEffect(() => {
+    if (TAG_OPTIONS.length > 0 && !activeTag) {
+      // 尝试找到匹配defaultSubCategory的选项
+      const matchingOption = TAG_OPTIONS.find(opt => 
+        opt.name === defaultSubCategory || 
+        opt.key === defaultSubCategory ||
+        opt.name.includes(defaultSubCategory)
+      );
+      const defaultKey = matchingOption?.key || TAG_OPTIONS[0].key;
+      console.log('[DesignArticleGrid] 设置默认分类:', defaultKey, 'TAG_OPTIONS:', TAG_OPTIONS.map(t => t.key));
+      setActiveTag(defaultKey);
+    }
+  }, [TAG_OPTIONS, activeTag, defaultSubCategory]);
   
   // 状态管理
   const [articles, setArticles] = useState<RankItem[]>([]);
@@ -254,14 +378,26 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
   // 使用useRef跟踪加载状态，避免重复请求
   const isLoadingRef = useRef(false);
   
-  // 使用useRef存储组件是否已挂载
+  // 使用useRef存储组件是否已挂载 - 每次渲染时重置为true
   const isMountedRef = useRef(true);
   
-  // 获取当前选中分类的ID
-  const getCurrentCategoryId = useCallback(() => {
+  // 组件挂载时重置isMountedRef
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+  
+  // 获取当前选中项的ID和类型
+  const getCurrentOption = useCallback(() => {
+    // 如果activeTag为空，使用第一个选项
+    if (!activeTag && TAG_OPTIONS.length > 0) {
+      return TAG_OPTIONS[0];
+    }
     const activeOption = TAG_OPTIONS.find(option => option.key === activeTag);
-    return activeOption ? activeOption.id : 334; // 默认为UI设计分类
-  }, [activeTag]);
+    return activeOption || TAG_OPTIONS[0] || { id: 334, type: 'category' as const, key: 'UI', name: 'UI' };
+  }, [activeTag, TAG_OPTIONS]);
 
   // 获取文章数据
   const fetchArticles = useCallback(async (forceRefresh = false) => {
@@ -271,11 +407,12 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
       return;
     }
     
-    const categoryId = getCurrentCategoryId();
-    console.log('DesignArticleGrid: 开始获取文章，分类ID:', categoryId, '当前标签:', activeTag, '强制刷新:', forceRefresh);
+    const currentOption = getCurrentOption();
+    const fetchLimit = effectiveLimit;
+    console.log('DesignArticleGrid: 开始获取文章，类型:', currentOption.type, 'ID:', currentOption.id, '当前标签:', activeTag, '强制刷新:', forceRefresh, '数量限制:', fetchLimit);
     
-    // 创建缓存键
-    const cacheKey = `design-articles-${categoryId}-${limit}`;
+    // 创建缓存键 - 包含类型信息
+    const cacheKey = `design-articles-${currentOption.type}-${currentOption.id}-${fetchLimit}`;
     
     // 如果不是强制刷新，首先尝试从sessionStorage获取缓存
     if (!forceRefresh) {
@@ -300,9 +437,10 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
     
     try {
       console.log('DesignArticleGrid: 调用API获取数据，参数:', {
-        categoryId,
+        type: currentOption.type,
+        id: currentOption.id,
         page: 1,
-        perPage: limit,
+        perPage: fetchLimit,
         orderBy: 'date',
         order: 'desc',
         useMock
@@ -313,17 +451,29 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
       // 如果使用模拟数据，直接返回案例数据
       if (useMock) {
         console.log('DesignArticleGrid: 使用案例数据进行样式调试');
-        response = generateMockData(limit);
+        response = generateMockData(fetchLimit);
       } else {
-        // 获取最新文章
-        response = await wordPressApi.getCategoryPosts({
-          categoryId: categoryId,
-          page: 1,
-          perPage: limit,
-          orderBy: 'date',
-          order: 'desc',
-          useMock: false // 使用实际API数据
-        });
+        // 根据类型调用不同的API
+        if (currentOption.type === 'tag') {
+          // 使用标签API
+          response = await wordPressApi.getTagPosts({
+            tagId: currentOption.id,
+            page: 1,
+            perPage: fetchLimit,
+            orderBy: 'date',
+            order: 'desc'
+          });
+        } else {
+          // 使用分类API
+          response = await wordPressApi.getCategoryPosts({
+            categoryId: currentOption.id,
+            page: 1,
+            perPage: fetchLimit,
+            orderBy: 'date',
+            order: 'desc',
+            useMock: false
+          });
+        }
       }
       
       console.log('DesignArticleGrid: 返回数据:', response);
@@ -342,12 +492,10 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
         // 更新状态
         setArticles(response);
         setError(null);
-        setRetryCount(0); // 重置重试计数
+        setRetryCount(0);
       } else {
         console.warn('DesignArticleGrid: 未找到文章数据或数据格式错误');
-        // 如果API返回空数据，尝试使用备用数据
-        const fallbackData = generateFallbackData(categoryId, limit);
-        setArticles(fallbackData);
+        setArticles([]);
         setError('暂无该分类的文章数据');
       }
     } catch (err) {
@@ -359,7 +507,7 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
       // 尝试从sessionStorage获取任何类别的缓存数据作为后备
       let foundFallback = false;
       for (const option of TAG_OPTIONS) {
-        const fallbackCacheKey = `design-articles-${option.id}-${limit}`;
+        const fallbackCacheKey = `design-articles-${option.type}-${option.id}-${fetchLimit}`;
         const fallbackData = getFromSessionStorage(fallbackCacheKey);
         if (fallbackData && fallbackData.length > 0) {
           console.log('DesignArticleGrid: 使用后备缓存数据:', option.name);
@@ -370,27 +518,29 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
         }
       }
       
-      // 如果仍然没有数据，使用本地备用数据
+      // 如果仍然没有数据，显示错误
       if (!foundFallback) {
-        console.log('DesignArticleGrid: 使用本地备用数据');
-        const fallbackData = generateFallbackData(categoryId, limit);
-        setArticles(fallbackData);
-        setError('暂时无法连接到服务器，显示备用数据');
+        console.log('DesignArticleGrid: 无可用数据');
+        setArticles([]);
+        setError('暂时无法连接到服务器');
       }
       
-      // 增加重试计数
       setRetryCount(prev => prev + 1);
     } finally {
-      // 组件可能已卸载，检查挂载状态
       if (isMountedRef.current) {
         setIsLoading(false);
       }
       isLoadingRef.current = false;
     }
-  }, [limit, useMock, getCurrentCategoryId, activeTag]);
+  }, [effectiveLimit, useMock, getCurrentOption, activeTag, TAG_OPTIONS]);
 
   // 处理子分类切换
   const handleTagChange = useCallback((tagKey: string) => {
+    // 如果是当前选中的标签，忽略
+    if (tagKey === activeTag) {
+      return;
+    }
+    
     // 如果正在加载中，忽略请求
     if (isLoadingRef.current) {
       console.log('DesignArticleGrid: 正在加载中，忽略切换请求');
@@ -398,23 +548,35 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
     }
     
     console.log('DesignArticleGrid: 切换分类', tagKey);
-    setActiveTag(tagKey);
     
-    // 切换分类后立即清空数据并重新获取
-    setArticles([]);
+    // 先检查缓存是否存在，如果有缓存就不显示loading
+    const targetOption = TAG_OPTIONS.find(opt => opt.key === tagKey);
+    if (targetOption) {
+      const cacheKey = `design-articles-${targetOption.type}-${targetOption.id}-${effectiveLimit}`;
+      const cachedData = getFromSessionStorage(cacheKey);
+      if (cachedData) {
+        // 有缓存，直接切换，不显示loading
+        setActiveTag(tagKey);
+        setArticles(cachedData);
+        setError(null);
+        setIsLoading(false);
+        return;
+      }
+    }
+    
+    // 没有缓存，显示loading并请求数据
+    setActiveTag(tagKey);
     setError(null);
     setIsLoading(true);
-    
-    // 重置加载状态，允许重新获取数据
     isLoadingRef.current = false;
     
-    // 使用setTimeout确保状态更新完成后再获取数据
+    // 立即获取数据
     setTimeout(() => {
       if (isMountedRef.current) {
-        fetchArticles(true); // 强制刷新，不使用缓存
+        fetchArticles(false);
       }
-    }, 50);
-  }, [fetchArticles]);
+    }, 0);
+  }, [fetchArticles, activeTag, TAG_OPTIONS, effectiveLimit]);
 
   // 重试加载数据
   const handleRetry = useCallback(() => {
@@ -423,26 +585,27 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
     fetchArticles(true); // 强制刷新
   }, [fetchArticles]);
 
-  // 组件挂载时获取数据
+  // 组件挂载时获取数据 - 等待activeTag设置后再获取
   useEffect(() => {
-    console.log('DesignArticleGrid: 组件挂载，获取初始数据');
-    fetchArticles();
-    
-    // 清理函数
-    return () => {
-      console.log('DesignArticleGrid: 组件卸载');
-      isMountedRef.current = false;
-    };
-  }, []); // 只在组件挂载时执行一次
-
-  // 当activeTag变化时获取数据
-  useEffect(() => {
-    // 如果不是初始加载（articles为空），则获取数据
-    if (articles.length > 0) {
-      console.log('DesignArticleGrid: activeTag变化，重新获取数据');
-      fetchArticles(true); // 强制刷新
+    if (activeTag) {
+      console.log('DesignArticleGrid: activeTag已设置，获取初始数据', activeTag);
+      fetchArticles();
     }
-  }, [activeTag]); // 只依赖activeTag
+  }, [activeTag]); // 依赖activeTag，当它设置后获取数据
+
+  // 当组件配置变化时，清除缓存并重新获取数据
+  useEffect(() => {
+    if (widgetConfig) {
+      console.log('DesignArticleGrid: 组件配置变化，清除缓存并重新获取数据', widgetConfig);
+      clearDesignArticlesCache();
+      // 延迟获取数据，确保缓存已清除
+      setTimeout(() => {
+        if (isMountedRef.current) {
+          fetchArticles(true);
+        }
+      }, 100);
+    }
+  }, [widgetConfig?.id, widgetConfig?.categoryIds?.join(','), widgetConfig?.limit]); // 监听配置的关键字段变化
 
   // 渲染文章卡片 - 优化鼠标移入效果
   const renderArticles = () => {
@@ -458,7 +621,7 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
       '#9E9E9E'  // 第8名及以后 - 灰色
     ];
     
-    return articles.slice(0, limit).map((article, index) => (
+    return articles.slice(0, effectiveLimit).map((article, index) => (
       <motion.div 
         key={article.id} 
         className="article-card" 
@@ -516,7 +679,7 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
 
   // 骨架屏加载中
   const renderSkeleton = () => {
-    return Array(limit).fill(null).map((_, index) => (
+    return Array(effectiveLimit).fill(null).map((_, index) => (
       <motion.div 
         key={`skeleton-${index}`} 
         className="article-card skeleton"
@@ -550,12 +713,12 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <span>{title}</span>
+          <span>{effectiveTitle}</span>
         </motion.div>
         {/* 查看更多按钮 */}
-        {showMoreButton && (
+        {effectiveShowMoreButton && (
           <motion.a 
-            href={moreButtonLink} 
+            href={effectiveShowMoreLink} 
             className="view-more-btn desktop-only" 
             target="_blank" 
             rel="noopener noreferrer"
@@ -647,9 +810,9 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
       )}
       
       {/* 移动端底部的查看更多按钮 */}
-      {showMoreButton && (
+      {effectiveShowMoreButton && (
         <div className="mobile-view-more">
-          <a href={moreButtonLink} className="mobile-view-more-btn" target="_blank" rel="noopener noreferrer">
+          <a href={effectiveShowMoreLink} className="mobile-view-more-btn" target="_blank" rel="noopener noreferrer">
             查看更多 {'>'}
           </a>
         </div>

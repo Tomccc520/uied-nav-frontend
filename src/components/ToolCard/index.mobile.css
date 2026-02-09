@@ -7,34 +7,81 @@
  * @version 1.2.0 - 性能优化版本
  */
 
-/* 移动端专用样式 - 仅在750px以下设备生效，与Home页面保持一致 */
+/* 移动端专用样式 - 仅在750px以下设备生效 */
 @media (max-width: 750px) {
-  /* ===== 移动端工具卡片 - 与Home页面保持PC端风格但适配移动端 ===== */
+  /* ===== 移动端工具卡片 - 紧凑布局，适配双列 ===== */
   .tool-item-card {
-    background: var(--white) !important; /* 与Home页面一致 */
-    border-radius: 0.5rem !important; /* 与Home页面一致 */
-    padding: 0.75rem !important; /* 与Home页面一致 */
-    border: 1px solid #e1e5e9 !important; /* 与Home页面一致 */
-    transition: border-color 0.3s ease !important; /* 与Home页面一致 */
+    background: var(--card-background, #ffffff) !important;
+    border-radius: 0.5rem !important;
+    padding: 0.5rem !important;
+    border: 1px solid var(--border-color, #e5e7eb) !important;
+    transition: border-color 0.2s ease !important;
     cursor: pointer !important;
     position: relative !important;
     display: flex !important;
-    flex-direction: column !important; /* 移动端改为纵向布局 */
+    flex-direction: row !important;
+    align-items: center !important;
     gap: 0.5rem !important;
-    height: auto !important; /* 移动端允许自适应高度 */
-    min-height: 120px !important; /* 最小高度保证内容显示 */
+    height: 60px !important; /* 固定高度 */
+    min-height: 60px !important;
+    max-height: 60px !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
-    box-shadow: none !important; /* 移除阴影 */
+    box-shadow: none !important;
+    width: 100% !important; /* 确保宽度不溢出 */
+    max-width: 100% !important; /* 防止溢出 */
   }
 
   .tool-item-card:hover {
-    border-color: var(--primary-color) !important; /* 与Home页面一致 */
-    transform: translateY(-1px) !important; /* 与Home页面一致 */
-    box-shadow: none !important; /* 移除阴影 */
+    border-color: var(--primary-color) !important;
+    border-width: 2px !important;
+    padding: calc(0.5rem - 1px) !important;
+    box-shadow: none !important;
+    transform: none !important;
   }
 
-  /* ===== 移动端卡片内部布局 - 与Home页面一致 ===== */
+  /* 移动端图标 - 小尺寸无背景 */
+  .tool-item-icon-large {
+    width: 32px !important;
+    min-width: 32px !important;
+    max-width: 32px !important;
+    height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+  }
+
+  .tool-item-icon-large .tool-icon-img {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    max-width: 32px !important;
+    border-radius: 0.375rem !important;
+    object-fit: cover !important;
+  }
+
+  .tool-item-icon-large .tool-item-icon-fallback {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    max-width: 32px !important;
+    font-size: 0.875rem !important;
+    border-radius: 0.375rem !important;
+  }
+
+  /* 移动端右侧内容区域 */
+  .tool-item-content-right {
+    flex: 1 !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    gap: 0.125rem !important;
+    overflow: hidden !important;
+  }
+
+  /* ===== 移动端卡片内部布局 - 旧版兼容 ===== */
   .tool-item-header {
     display: flex !important;
     align-items: flex-start !important;
@@ -42,12 +89,14 @@
     margin-bottom: 0.25rem !important;
   }
 
-  /* 移动端图标 - 保持PC端风格 */
+  /* 移动端图标 - 旧版兼容 */
   .tool-item-icon,
   .tool-item-icon img {
-    width: 2rem !important; /* 与Home页面一致 */
-    height: 2rem !important; /* 与Home页面一致 */
-    border-radius: 0.375rem !important; /* 与Home页面一致 */
+    width: 2rem !important;
+    height: 2rem !important;
+    min-width: 2rem !important;
+    max-width: 2rem !important;
+    border-radius: 0.375rem !important;
     object-fit: cover !important;
     flex-shrink: 0 !important;
   }
@@ -55,61 +104,68 @@
   .tool-item-icon-fallback {
     width: 2rem !important;
     height: 2rem !important;
+    min-width: 2rem !important;
+    max-width: 2rem !important;
     border-radius: 0.375rem !important;
-    font-size: 0.875rem !important; /* 与Home页面一致 */
-    color: var(--text-secondary) !important; /* 与Home页面一致 */
+    font-size: 0.875rem !important;
+    color: var(--text-secondary) !important;
     font-weight: 600 !important;
-    background: var(--background-light) !important; /* 与Home页面一致 */
+    background: var(--background-light) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     flex-shrink: 0 !important;
   }
 
-  /* 移动端内容区域 */
+  /* 移动端内容区域 - 旧版兼容 */
   .tool-item-content {
     flex: 1 !important;
     min-width: 0 !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 0.25rem !important;
+    gap: 0.125rem !important;
+    overflow: hidden !important;
   }
 
   .tool-item-info {
     flex: 1 !important;
     min-width: 0 !important;
+    overflow: hidden !important;
   }
 
   .tool-item-name {
-    font-size: 0.875rem !important; /* 与Home页面一致 */
-    font-weight: 600 !important; /* 与Home页面一致 */
-    color: var(--text-primary) !important; /* 与Home页面一致 */
-    line-height: 1.3 !important;
-    margin: 0 0 0.25rem 0 !important;
-    display: -webkit-box !important;
-    -webkit-line-clamp: 1 !important;
-    -webkit-box-orient: vertical !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    color: var(--text-primary, #1e293b) !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    display: block !important;
   }
 
-  .tool-item-name:hover {
-    text-decoration: underline !important; /* 与Home页面一致 */
+  .tool-item-url {
+    display: none !important;
   }
 
-  /* 移动端描述文本 - 保持PC端样式 */
+  /* 移动端描述文本 */
   .tool-item-description {
-    font-size: 0.75rem !important; /* 与Home页面一致 */
-    color: var(--text-secondary) !important; /* 与Home页面一致 */
-    line-height: 1.4 !important;
-    margin: 0 0 0.5rem 0 !important;
+    font-size: 0.6875rem !important;
+    color: var(--text-secondary, #64748b) !important;
+    line-height: 1.3 !important;
+    margin: 0 !important;
     display: -webkit-box !important;
-    -webkit-line-clamp: 2 !important; /* 与Home页面一致 */
+    -webkit-line-clamp: 1 !important;
+    line-clamp: 1 !important;
     -webkit-box-orient: vertical !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     word-wrap: break-word !important;
     word-break: break-word !important;
+    max-width: 100% !important;
   }
 
   /* 移动端徽章 */
@@ -117,63 +173,78 @@
     display: flex !important;
     gap: 0.25rem !important;
     flex-shrink: 0 !important;
-    margin-left: auto !important; /* 右对齐 */
+    margin-left: auto !important;
     align-self: flex-start !important;
   }
 
-  /* 移动端底部元数据 - 保持PC端风格 */
+  /* 移动端底部元数据 */
   .tool-item-meta {
-    display: flex !important;
-    align-items: center !important;
-    gap: 0.75rem !important;
-    font-size: 0.625rem !important; /* 与Home页面一致 */
-    color: var(--text-light) !important; /* 与Home页面一致 */
-    margin-top: auto !important;
-    flex-shrink: 0 !important;
+    display: none !important;
   }
 
-  /* 移动端标签 - 保持PC端风格但简化 */
+  /* 移动端标签 - 隐藏以节省空间 */
   .tool-item-tags {
-    display: flex !important;
-    gap: 0.25rem !important;
-    flex-wrap: wrap !important;
-    max-height: 1.5rem !important; /* 限制高度避免溢出 */
-    overflow: hidden !important;
+    display: none !important;
   }
 
-  .tool-item-tags .tool-tag {
-    padding: 0.125rem 0.375rem !important; /* 与Home页面一致 */
-    border-radius: 1rem !important; /* 与Home页面一致 */
+  /* 移动端直达箭头 - 绝对定位，始终显示（触摸设备无hover） */
+  .tool-item-direct-arrow {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    width: 26px !important;
+    height: 26px !important;
+    min-width: 26px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    right: 8px !important;
+  }
+
+  .tool-item-direct-arrow svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+
+  /* 移动端隐藏浮窗提示 */
+  .direct-arrow-tooltip {
+    display: none !important;
+  }
+
+  .tool-tag {
     font-size: 0.625rem !important;
-    font-weight: 500 !important; /* 与Home页面一致 */
-    border: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent 60%) !important; /* 与Home页面一致 */
-    background: color-mix(in srgb, var(--background-light) 60%, transparent 40%) !important; /* 与Home页面一致 */
-    color: var(--text-quaternary, #9ca3af) !important; /* 与Home页面一致 */
-    opacity: 0.8 !important; /* 与Home页面一致 */
-    transition: all 0.2s ease !important; /* 与Home页面一致 */
-    white-space: nowrap !important;
-  }
-
-  .tool-item-tags .tool-tag:hover {
-    background: color-mix(in srgb, var(--primary-light) 60%, transparent 40%) !important; /* 与Home页面一致 */
-    color: color-mix(in srgb, var(--primary-color) 80%, transparent 20%) !important; /* 与Home页面一致 */
-    opacity: 1 !important; /* 与Home页面一致 */
+    padding: 0.125rem 0.375rem !important;
+    border-radius: 0.25rem !important;
+    background: var(--tag-background, #f1f5f9) !important;
+    color: var(--text-light, #94a3b8) !important;
   }
 }
 
 /* ===== 小屏幕设备优化 (iPhone SE等) ===== */
 @media (max-width: 375px) {
   .tool-item-card {
+    height: 68px !important;
+    min-height: 68px !important;
+    max-height: 68px !important;
     padding: 0.625rem !important;
-    min-height: 110px !important;
+  }
+
+  .tool-item-icon-large {
+    width: 36px !important;
+    min-width: 36px !important;
+    height: 36px !important;
+  }
+
+  .tool-item-icon-large .tool-icon-img,
+  .tool-item-icon-large .tool-item-icon-fallback {
+    width: 36px !important;
+    height: 36px !important;
   }
 
   .tool-item-name {
-    font-size: 0.8125rem !important;
+    font-size: 0.875rem !important;
   }
 
   .tool-item-description {
-    font-size: 0.6875rem !important;
+    font-size: 0.75rem !important;
   }
 
   .tool-item-icon,
@@ -200,7 +271,6 @@
 /* ===== 触摸设备优化 ===== */
 @media (max-width: 750px) {
   .tool-item-card {
-    min-height: 44px !important; /* iOS触摸目标最小尺寸 */
     -webkit-touch-callout: none !important;
     -webkit-user-select: none !important;
     user-select: none !important;
@@ -310,40 +380,203 @@
   }
 }
 
+/* ===== 直达箭头按钮 - 绝对定位，不占用内容空间 ===== */
+.tool-item-direct-arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--card-background, #ffffff);
+  color: var(--text-secondary, #64748b);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 鼠标移入卡片时显示箭头 */
+.tool-item-card:hover .tool-item-direct-arrow {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.tool-item-direct-arrow:hover {
+  border-color: var(--primary-color, #3373dc);
+  color: var(--white, #fff);
+  background: var(--primary-color, #3373dc);
+}
+
+/* 箭头浮窗提示 - 鼠标移入图标时显示 */
+.direct-arrow-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+/* 浮窗小三角 */
+.direct-arrow-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.75);
+}
+
+/* 鼠标移入箭头图标时显示浮窗 */
+.tool-item-direct-arrow:hover .direct-arrow-tooltip {
+  opacity: 1;
+}
+
 /* 工具卡片容器 */
 .tool-card-wrapper {
   width: 100%;
   height: 100%;
-  transition: transform 0.2s ease-out;
+  max-width: 100%;
+  overflow: hidden;
 }
 
-/* 悬停效果 */
+/* 悬停效果 - 仅描边变化 */
 .tool-card-wrapper:hover {
-  transform: translateY(-0.25rem) scale(1.01);
+  /* 无动画效果 */
 }
 
-/* 工具卡片主体 */
+/* 工具卡片主体 - 紧凑布局：小图标+标题+简介+标签 */
 .tool-item-card {
   position: relative;
   display: flex;
   align-items: center;
-  padding: 1rem;
+  padding: 0.875rem;
   background: var(--card-background, #ffffff);
-  border: 1px solid var(--border-color, #e0e0e0);
-  border-radius: 0.5rem;
-  transition: all 0.2s ease-out;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 0.75rem;
+  transition: border-color 0.2s ease;
   cursor: pointer;
   overflow: hidden;
+  /* 固定高度确保卡片大小一致 */
+  height: 88px;
+  min-height: 88px;
+  max-height: 88px;
+  gap: 0.75rem;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
 }
 
 .tool-item-card:hover {
   border-color: var(--primary-color, #3373dc);
-  box-shadow: 0 0.25rem 1rem rgba(51, 115, 220, 0.1);
+  border-width: 2px;
+  padding: calc(0.875rem - 1px);
 }
 
-/* 工具图标区域 - 修复右边距问题 */
+/* 状态标签容器 */
+.tool-status-badges {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  gap: 0.25rem;
+  z-index: 10;
+}
+
+/* 状态标签基础样式 */
+.status-badge {
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+/* 热门标签 */
+.status-badge.hot {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+}
+
+/* 新增标签 */
+.status-badge.new {
+  background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+}
+
+/* 推荐标签 */
+.status-badge.featured {
+  background: linear-gradient(135deg, #ffa94d 0%, #ff922b 100%);
+}
+
+/* 工具图标区域 - 小图标无背景 */
+.tool-item-icon-large {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tool-item-card:hover .tool-item-icon-large {
+  transform: scale(1.05);
+}
+
+/* 图标样式 - 无背景 */
+.tool-item-icon-large .tool-icon-img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  border-radius: 0.625rem;
+  transition: transform 0.2s ease-out;
+}
+
+.tool-item-card:hover .tool-item-icon-large .tool-icon-img {
+  transform: scale(1.05);
+}
+
+/* 备用图标样式 */
+.tool-item-icon-large .tool-item-icon-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background-color: var(--primary-color, #3373dc);
+  border-radius: 0.625rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+  transition: transform 0.2s ease-out;
+}
+
+.tool-item-card:hover .tool-item-icon-large .tool-item-icon-fallback {
+  transform: scale(1.05);
+}
+
+/* 工具图标区域 - 旧版兼容 */
 .tool-item-icon {
-  margin-right: 12px; /* 使用8的倍数，统一间距 */
+  margin-right: 0.75rem;
   flex-shrink: 0;
   transition: transform 0.2s ease-out;
 }
@@ -354,8 +587,8 @@
 
 /* 工具图标样式 */
 .tool-icon-img {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.25rem;
+  height: 2.25rem;
   object-fit: contain;
   border-radius: 0.5rem;
   transition: transform 0.2s ease-out;
@@ -370,11 +603,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.25rem;
+  height: 2.25rem;
   background-color: var(--primary-color, #3373dc);
   border-radius: 0.5rem;
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 600;
   color: white;
   transition: transform 0.2s ease-out;
@@ -384,53 +617,88 @@
   transform: scale(1.1);
 }
 
-/* 工具内容区域 */
+/* 工具内容区域 - 标题+简介+标签垂直排列 */
+.tool-item-content-right {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.25rem;
+  overflow: hidden;
+}
+
+/* 工具内容区域 - 旧版兼容 */
 .tool-item-content {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  overflow: hidden;
 }
 
-/* 工具标题 */
+/* 标题行 */
+.tool-item-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* 工具标题 - 统一截断处理，固定单行 */
 .tool-item-name {
-  font-size: 1rem;
+  font-size: 0.9375rem;
   font-weight: 600;
-  color: var(--text-primary, #333333);
-  margin: 0 0 0.5rem 0;
-  line-height: 1.4;
-  transition: color 0.2s ease-out;
+  color: var(--text-primary, #1e293b);
+  margin: 0;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  display: block;
+  flex-shrink: 0;
 }
 
 .tool-item-card:hover .tool-item-name {
   color: var(--primary-color, #3373dc);
 }
 
-/* 工具描述 */
+/* 工具描述 - 固定单行 */
 .tool-item-description {
-  font-size: 0.875rem;
-  color: var(--text-secondary, #666666);
-  line-height: 1.5;
-  margin: 0 0 0.75rem 0;
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #64748b);
+  line-height: 1.4;
+  margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
   -webkit-box-orient: vertical;
+  flex-shrink: 0;
 }
 
-/* 工具标签区域 */
+/* 工具标签区域 - 固定高度 */
 .tool-item-tags {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
+  flex-wrap: nowrap;
+  gap: 0.25rem;
+  margin-top: auto;
+  overflow: hidden;
+  height: 1.25rem;
+  flex-shrink: 0;
 }
 
 .tool-tag {
-  font-size: 0.75rem;
-  color: var(--text-secondary, #666666);
-  background: var(--tag-background, #f5f5f5);
-  padding: 0.125rem 0.5rem;
+  font-size: 0.6875rem;
+  color: var(--text-light, #94a3b8);
+  background: var(--tag-background, #f1f5f9);
+  padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
-  transition: all 0.2s ease-out;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .tool-item-card:hover .tool-tag {
@@ -523,7 +791,32 @@
 /* 响应式设计 - 移动端 */
 @media (max-width: 768px) {
   .tool-item-card {
-    padding: 0.875rem;
+    height: 64px;
+    min-height: 64px;
+    max-height: 64px;
+    padding: 0.75rem;
+  }
+  
+  .tool-item-card:hover {
+    border-width: 2px;
+    padding: calc(0.75rem - 1px);
+    transform: none;
+  }
+  
+  .tool-item-icon-large {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+  }
+  
+  .tool-item-icon-large .tool-icon-img,
+  .tool-item-icon-large .tool-item-icon-fallback {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .tool-item-content-right {
+    gap: 0.125rem;
   }
   
   .tool-item-icon {
@@ -537,7 +830,7 @@
   }
   
   .tool-item-name {
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
   }
   
   .tool-item-description {
@@ -588,3 +881,150 @@
     transform: none;
   }
 } 
+
+
+/* ===== 失效网站标识样式 ===== */
+
+/* 失效网站卡片整体样式 */
+.tool-item-card-failed {
+  opacity: 0.7;
+  position: relative;
+}
+
+.tool-item-card-failed::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 77, 79, 0.05) 0%, rgba(255, 77, 79, 0.02) 100%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.tool-item-card-failed:hover {
+  opacity: 0.85;
+}
+
+/* 失效标识徽章 */
+.tool-item-failed-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  background: linear-gradient(135deg, #ff4d4f 0%, #cf1322 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(255, 77, 79, 0.3);
+  cursor: help;
+}
+
+.tool-item-failed-icon {
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* 失效网站图标样式 - 灰度效果 */
+.tool-icon-img-failed {
+  filter: grayscale(60%);
+  opacity: 0.8;
+}
+
+.tool-item-icon-failed {
+  filter: grayscale(60%);
+  opacity: 0.8;
+  background: #d9d9d9 !important;
+  color: #8c8c8c !important;
+}
+
+/* 失效网站标题样式 */
+.tool-item-card-failed .tool-item-name {
+  color: var(--text-secondary, #666666);
+}
+
+.tool-item-card-failed:hover .tool-item-name {
+  color: var(--text-primary, #333333);
+}
+
+/* 移动端失效标识适配 */
+@media (max-width: 750px) {
+  .tool-item-failed-badge {
+    width: 1rem;
+    height: 1rem;
+    top: 0.375rem;
+    right: 0.375rem;
+  }
+
+  .tool-item-failed-icon {
+    font-size: 0.625rem;
+  }
+}
+
+/* 暗色模式失效网站样式 */
+[data-theme="dark"] .tool-item-card-failed::after {
+  background: linear-gradient(135deg, rgba(255, 77, 79, 0.1) 0%, rgba(255, 77, 79, 0.05) 100%);
+}
+
+[data-theme="dark"] .tool-item-card-failed .tool-item-name {
+  color: var(--text-secondary-dark, #999999);
+}
+
+/* ===== 置顶网站标识样式 ===== */
+
+/* 置顶标识徽章 */
+.tool-item-pinned-badge {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: linear-gradient(135deg, #faad14 0%, #d48806 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  box-shadow: 0 2px 6px rgba(250, 173, 20, 0.4);
+  cursor: help;
+  animation: pinned-pulse 2s ease-in-out infinite;
+}
+
+@keyframes pinned-pulse {
+  0%, 100% {
+    box-shadow: 0 2px 6px rgba(250, 173, 20, 0.4);
+  }
+  50% {
+    box-shadow: 0 2px 12px rgba(250, 173, 20, 0.6);
+  }
+}
+
+.tool-item-pinned-icon {
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+/* 移动端置顶标识适配 */
+@media (max-width: 750px) {
+  .tool-item-pinned-badge {
+    width: 1.25rem;
+    height: 1.25rem;
+    top: 0.375rem;
+    left: 0.375rem;
+  }
+
+  .tool-item-pinned-icon {
+    font-size: 0.625rem;
+  }
+}
+
+/* 暗色模式置顶样式 */
+[data-theme="dark"] .tool-item-pinned-badge {
+  background: linear-gradient(135deg, #ffc53d 0%, #faad14 100%);
+}

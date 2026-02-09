@@ -1,22 +1,60 @@
-/* 搜索页面样式 - 使用首页样式 */
+/**
+ * @file Search/index.css
+ * @description 搜索页面样式 - 支持移动端2列布局
+ * @author Tomda
+ * @copyright 版权所有 (c) 2026 UIED技术团队
+ * @website https://fsuied.com
+ * @license MIT
+ * @version 1.0.0
+ */
 
-/* CSS变量定义 */
+/* 搜索页面样式 - UI/UX Pro Max 优化版 */
+
+/* CSS变量定义 - SaaS Dashboard 配色方案 */
 :root {
-  --primary-color: #0066ff;
-  --primary-light: rgba(0, 102, 255, 0.1);
-  --primary-dark: #0052cc;
-  --text-primary: #333;
-  --text-secondary: #666;
-  --text-light: #999;
-  --border-color: #f0f0f0;
-  --background-light: #f6f8fb;
+  /* Primary Colors - Trust Blue */
+  --primary-color: #2563EB;
+  --primary-light: rgba(37, 99, 235, 0.08);
+  --primary-dark: #1D4ED8;
+  --primary-hover: #3B82F6;
+  
+  /* Text Colors - High Contrast */
+  --text-primary: #1E293B;
+  --text-secondary: #475569;
+  --text-light: #64748B;
+  --text-muted: #94A3B8;
+  
+  /* Background & Border */
+  --border-color: #E2E8F0;
+  --background-light: #F8FAFC;
+  --background-card: rgba(255, 255, 255, 0.85);
   --white: #ffffff;
-  --transition-normal: 0.3s ease;
-  --border-radius: 0.75rem;
+  
+  /* Accent Colors */
+  --cta-color: #F97316;
+  --success-color: #10B981;
+  --warning-color: #F59E0B;
+  --info-color: #3B82F6;
+  --ai-purple: #6366F1;
+  
+  /* Animation & Effects */
+  --transition-fast: 150ms ease-out;
+  --transition-normal: 200ms ease-out;
+  --transition-slow: 300ms ease-out;
+  --border-radius: 1rem;
   --border-radius-small: 0.5rem;
-  --success-color: #10b981;
-  --warning-color: #f59e0b;
-  --info-color: #3b82f6;
+  --border-radius-full: 9999px;
+  
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-blur: 12px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-primary: 0 4px 14px rgba(37, 99, 235, 0.25);
 }
 
 /* 全屏搜索容器 - 使用首页背景 */
@@ -33,6 +71,21 @@
   will-change: auto !important;
   perspective: none !important;
   contain: none !important;
+}
+
+/* 搜索页面背景图片 */
+.search-page::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 500px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.2) 100%), var(--bg-image);
+  background-size: cover;
+  background-position: center;
+  z-index: -1;
+  pointer-events: none;
 }
 
 /* 搜索头部区域 - 全屏背景 */
@@ -119,6 +172,7 @@
   width: 100%;
   max-width: 100rem;
   box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 /* 搜索结果统计和筛选区域 */
@@ -131,6 +185,8 @@
   background: var(--white);
   border-radius: 0.5rem;
   border: 1px solid #e1e5e9;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .search-stats h2 {
@@ -144,6 +200,23 @@
   margin: 0.25rem 0 0 0;
   font-size: 0.875rem;
   color: var(--text-secondary);
+}
+
+/* 搜索提示 */
+.search-tips {
+  text-align: center;
+  padding: 1rem;
+  margin-top: 1rem;
+  background: var(--primary-light);
+  border-radius: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+/* 空状态图标 */
+.search-empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
 }
 
 /* 当前搜索关键词显示区域 */
@@ -291,36 +364,57 @@
 /* 搜索结果网格 - 使用统一响应式布局 */
 .search-results {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 280px));
   gap: 0.75rem;
   margin-bottom: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+  justify-content: center; /* 居中对齐，避免卡片过宽 */
 }
 
 /* 超大屏幕最多显示6列 */
 @media (min-width: 1600px) {
   .search-results {
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(6, minmax(220px, 280px));
   }
 }
 
-/* 大屏幕显示4-5列 */
-@media (min-width: 1200px) and (max-width: 1599px) {
+/* 大屏幕显示5列 */
+@media (min-width: 1400px) and (max-width: 1599px) {
   .search-results {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, minmax(220px, 280px));
+  }
+}
+
+/* 中大屏幕显示4列 */
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .search-results {
+    grid-template-columns: repeat(4, minmax(220px, 280px));
   }
 }
 
 /* 中等屏幕显示3列 */
 @media (min-width: 901px) and (max-width: 1199px) {
   .search-results {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(220px, 280px));
   }
 }
 
 /* 小屏幕显示2列 */
-@media (min-width: 769px) and (max-width: 900px) {
+@media (min-width: 601px) and (max-width: 900px) {
+  .search-results {
+    grid-template-columns: repeat(2, minmax(200px, 280px));
+  }
+}
+
+/* 移动端显示2列 */
+@media (max-width: 600px) {
   .search-results {
     grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 
@@ -413,6 +507,12 @@
   line-height: 1.3;
   text-decoration: none;
   color: var(--text-primary);
+  /* 标题截断处理 - 单行省略 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  display: block;
 }
 
 .search-result-title:hover {
@@ -453,6 +553,7 @@
   /* 确保描述文本在固定高度内显示 - 两行省略号 */
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -550,28 +651,15 @@
 
 /* 加载状态 */
 .search-loading {
+  grid-column: 1 / -1;
   text-align: center;
   padding: 3rem;
   color: var(--text-secondary);
 }
 
-.loading {
-  width: 2rem;
-  height: 2rem;
-  border: 0.125rem solid var(--border-color);
-  border-top: 0.125rem solid var(--primary-color);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 1rem;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 /* 空状态 */
 .search-empty {
+  grid-column: 1 / -1;
   text-align: center;
   padding: 3rem;
   color: var(--text-secondary);
@@ -846,3 +934,1217 @@
     min-height: 100px;
   }
 } 
+
+
+/* 加载动画 */
+.loading {
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid #E2E8F0;
+  border-top: 2px solid #2563EB;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ==================== 搜索头部布局 - Glassmorphism ==================== */
+.search-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.search-stats-info {
+  flex: 1;
+  min-width: 200px;
+}
+
+.search-stats-info h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.search-stats-info p {
+  margin: 0.375rem 0 0 0;
+  font-size: 0.875rem;
+  color: var(--text-light);
+}
+
+.search-stats-info strong {
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+/* 搜索操作区域 */
+.search-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* 来源筛选下拉框 */
+.source-filter {
+  min-width: 120px;
+  height: 42px;
+  padding: 0 2.5rem 0 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.625rem;
+  background: var(--white);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748B' d='M6 8.825L1.175 4 2.05 3.125 6 7.075 9.95 3.125 10.825 4z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 12px;
+}
+
+.source-filter:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.source-filter:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+/* ==================== 搜索历史/建议下拉框 - Glassmorphism ==================== */
+.search-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 600px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
+  z-index: 100;
+  margin-top: 0.5rem;
+  overflow: hidden;
+}
+
+.dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1.25rem;
+  background: var(--background-light);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.8125rem;
+  color: var(--text-light);
+  font-weight: 600;
+}
+
+.dropdown-header button {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  transition: all var(--transition-fast);
+}
+
+.dropdown-header button:hover {
+  background: var(--primary-light);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 1.25rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+}
+
+.dropdown-item:hover {
+  background: var(--background-light);
+}
+
+.dropdown-item:not(:last-child) {
+  border-bottom: 1px solid var(--background-light);
+}
+
+.history-icon,
+.suggestion-icon {
+  font-size: 1rem;
+  opacity: 0.5;
+}
+
+/* ==================== 加载更多按钮 ==================== */
+.load-more-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.load-more-btn {
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 0.875rem 2.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-sm);
+}
+
+.load-more-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: var(--primary-light);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-primary);
+}
+
+/* ==================== 相关搜索 - Glassmorphism ==================== */
+.related-search {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+}
+
+.related-search h4 {
+  margin: 0 0 1rem 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.related-search h4::before {
+  content: '🔗';
+  font-size: 1rem;
+}
+
+.related-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+}
+
+.related-tag {
+  background: var(--background-light);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-full);
+  padding: 0.5rem 1.125rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.related-tag:hover {
+  background: var(--primary-light);
+  border-color: rgba(37, 99, 235, 0.2);
+  color: var(--primary-color);
+  transform: translateY(-1px);
+}
+
+/* ==================== 移动端适配 ==================== */
+@media (max-width: 768px) {
+  .search-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.875rem;
+  }
+  
+  .search-stats-info {
+    text-align: center;
+  }
+  
+  .search-stats-info h2 {
+    font-size: 1rem;
+  }
+  
+  .search-actions {
+    justify-content: center;
+  }
+  
+  .source-filter {
+    flex: 1;
+    min-width: 100px;
+  }
+  
+  .search-dropdown {
+    left: 1rem;
+    right: 1rem;
+    transform: none;
+    width: auto;
+    max-width: none;
+  }
+  
+  .load-more-btn {
+    width: 100%;
+    padding: 0.875rem;
+  }
+  
+  .related-search {
+    padding: 1rem;
+  }
+  
+  .related-tag {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* ==================== AI 思考过程动画 V2 - Framer Motion 版本 ==================== */
+.ai-thinking-container-v2 {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(236, 72, 153, 0.06) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: 1.25rem;
+  padding: 1.75rem;
+  margin-bottom: 1.5rem;
+  backdrop-filter: blur(16px);
+  box-shadow: 
+    0 4px 24px rgba(99, 102, 241, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-thinking-container-v2::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  animation: shimmer 2.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(50%); }
+}
+
+.ai-thinking-header-v2 {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.ai-brain-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(236, 72, 153, 0.15) 100%);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+.ai-brain-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.ai-thinking-title-v2 {
+  display: flex;
+  align-items: baseline;
+}
+
+.ai-thinking-title-v2 .title-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #6366F1 0%, #EC4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.ai-thinking-title-v2 .thinking-dots {
+  font-size: 1.25rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #6366F1 0%, #EC4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-left: 2px;
+}
+
+.ai-thinking-steps-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin-bottom: 1.5rem;
+}
+
+.ai-step-v2 {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 1.125rem;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 0.875rem;
+  border: 2px solid transparent;
+  transition: all 0.25s ease;
+  opacity: 0.45;
+}
+
+.ai-step-v2.active {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 
+    0 4px 16px rgba(99, 102, 241, 0.15),
+    0 0 0 1px rgba(99, 102, 241, 0.1);
+  transform: translateX(6px);
+}
+
+.ai-step-v2.done {
+  opacity: 0.75;
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.step-icon-wrapper {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ai-step-v2.active .step-icon-wrapper {
+  background: linear-gradient(135deg, var(--step-color, #6366F1) 0%, rgba(236, 72, 153, 0.8) 100%);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.ai-step-v2.done .step-icon-wrapper {
+  background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+}
+
+.step-emoji {
+  font-size: 1.125rem;
+  filter: grayscale(0.3);
+}
+
+.ai-step-v2.active .step-emoji,
+.ai-step-v2.done .step-emoji {
+  filter: grayscale(0);
+}
+
+.step-label {
+  flex: 1;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+}
+
+.ai-step-v2.active .step-label {
+  color: var(--text-primary);
+}
+
+.ai-step-v2.done .step-label {
+  color: #059669;
+}
+
+.step-status {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-spinner {
+  width: 20px;
+  height: 20px;
+  color: var(--step-color, #6366F1);
+}
+
+.step-spinner svg {
+  width: 100%;
+  height: 100%;
+}
+
+.ai-step-v2 .step-check {
+  width: 20px;
+  height: 20px;
+  color: #10B981;
+}
+
+.ai-step-v2 .step-check svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* 进度条 */
+.ai-progress-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.ai-progress-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.ai-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366F1 0%, #8B5CF6 50%, #EC4899 100%);
+  border-radius: 3px;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+}
+
+.ai-progress-text {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #6366F1;
+  min-width: 40px;
+  text-align: right;
+}
+
+.ai-thinking-hint {
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--text-light);
+  margin: 0;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .ai-thinking-container-v2 {
+    padding: 1.25rem;
+    border-radius: 1rem;
+  }
+  
+  .ai-brain-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+  
+  .ai-brain-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+  
+  .ai-thinking-title-v2 .title-text,
+  .ai-thinking-title-v2 .thinking-dots {
+    font-size: 1.0625rem;
+  }
+  
+  .ai-step-v2 {
+    padding: 0.75rem 1rem;
+    gap: 0.75rem;
+  }
+  
+  .step-icon-wrapper {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+  }
+  
+  .step-emoji {
+    font-size: 1rem;
+  }
+  
+  .step-label {
+    font-size: 0.875rem;
+  }
+  
+  .ai-progress-track {
+    height: 5px;
+  }
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .ai-thinking-container-v2::before {
+    animation: none;
+  }
+  
+  .ai-thinking-container-v2,
+  .ai-step-v2,
+  .step-icon-wrapper,
+  .step-spinner,
+  .ai-progress-fill {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ==================== AI 思考过程动画 - AI-Native UI 风格 (旧版保留) ==================== */
+.ai-thinking-container {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(139, 92, 246, 0.06) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.12);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  animation: fadeInUp 0.3s ease-out;
+  backdrop-filter: blur(var(--glass-blur));
+}
+
+@keyframes fadeInUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(8px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .ai-thinking-container,
+  .ai-thinking-step,
+  .ai-search-btn,
+  .step-loading {
+    animation: none;
+    transition: none;
+  }
+}
+
+.ai-thinking-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.ai-thinking-icon {
+  font-size: 1.5rem;
+  animation: aiPulse 2s ease-out infinite;
+}
+
+@keyframes aiPulse {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+}
+
+.ai-thinking-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, var(--ai-purple) 0%, #8B5CF6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.ai-thinking-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.ai-thinking-step {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--glass-bg);
+  border-radius: 0.75rem;
+  transition: all var(--transition-normal);
+  opacity: 0.4;
+  border: 1px solid transparent;
+  cursor: default;
+}
+
+.ai-thinking-step.active {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(99, 102, 241, 0.2);
+  box-shadow: var(--shadow-md);
+  transform: translateX(4px);
+}
+
+.ai-thinking-step.done {
+  opacity: 0.7;
+  background: rgba(16, 185, 129, 0.06);
+  border-color: rgba(16, 185, 129, 0.12);
+}
+
+.step-icon {
+  font-size: 1.125rem;
+  width: 1.5rem;
+  text-align: center;
+}
+
+.step-text {
+  flex: 1;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.step-loading {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(99, 102, 241, 0.2);
+  border-top-color: var(--ai-purple);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.step-check {
+  color: var(--success-color);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.ai-thinking-progress {
+  height: 3px;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.ai-thinking-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--ai-purple) 0%, #8B5CF6 100%);
+  border-radius: 2px;
+  transition: width 0.5s ease-out;
+}
+
+/* AI 搜索按钮 - AI-Native 风格 */
+.ai-search-btn {
+  border: none;
+  min-width: 140px;
+  height: 42px;
+  border-radius: var(--border-radius-full);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--text-primary) 0%, #334155 100%);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  padding: 0 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-search-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--ai-purple) 0%, #8B5CF6 100%);
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.ai-search-btn .sparkle {
+  fill: var(--text-muted);
+  transition: all var(--transition-normal);
+  width: 18px;
+  height: 18px;
+  position: relative;
+  z-index: 1;
+}
+
+.ai-search-btn .text {
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 14px;
+  position: relative;
+  z-index: 1;
+  transition: color var(--transition-normal);
+}
+
+.ai-search-btn:hover:not(:disabled)::before {
+  opacity: 1;
+}
+
+.ai-search-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
+}
+
+.ai-search-btn:hover:not(:disabled) .text {
+  color: white;
+}
+
+.ai-search-btn:hover:not(:disabled) .sparkle {
+  fill: white;
+  transform: rotate(12deg) scale(1.1);
+}
+
+.ai-search-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* AI 搜索信息提示 - Glassmorphism */
+.ai-search-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.04) 0%, rgba(139, 92, 246, 0.04) 100%);
+  border-radius: 0.75rem;
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  margin-bottom: 1rem;
+  backdrop-filter: blur(4px);
+}
+
+.ai-badge {
+  background: linear-gradient(135deg, var(--ai-purple) 0%, #8B5CF6 100%);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--border-radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.ai-badge-inline {
+  background: linear-gradient(135deg, var(--ai-purple) 0%, #8B5CF6 100%);
+  color: white;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--border-radius-full);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
+.ai-mode-text {
+  font-size: 0.875rem;
+  color: var(--ai-purple);
+  font-weight: 600;
+}
+
+.ai-message {
+  font-size: 0.8125rem;
+  color: var(--text-light);
+  margin-left: auto;
+}
+
+/* 移动端 AI 思考样式 */
+@media (max-width: 768px) {
+  .ai-thinking-container {
+    padding: 1rem;
+  }
+  
+  .ai-thinking-title {
+    font-size: 1rem;
+  }
+  
+  .ai-thinking-step {
+    padding: 0.625rem 0.875rem;
+  }
+  
+  .step-icon {
+    font-size: 1rem;
+  }
+  
+  .step-text {
+    font-size: 0.8125rem;
+  }
+  
+  .ai-search-btn {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .ai-search-info {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .ai-message {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 0.25rem;
+  }
+}
+
+/* ==================== 加载动画 ==================== */
+.loading {
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid var(--border-color);
+  border-top: 2px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ==================== 空状态优化 ==================== */
+.search-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-secondary);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+}
+
+.search-empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.6;
+}
+
+.search-empty-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.search-empty-description {
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+  color: var(--text-light);
+}
+
+/* ==================== 加载状态优化 ==================== */
+.search-loading {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-secondary);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+}
+
+
+/* ==================== AI 搜索切换按钮 ==================== */
+.ai-search-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 42px;
+  padding: 0 1.25rem;
+  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+  border: none;
+  border-radius: 0.625rem;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.ai-search-toggle:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.ai-search-toggle.active {
+  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.5);
+}
+
+.ai-toggle-icon {
+  font-size: 1.125rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-toggle-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ai-toggle-text {
+  white-space: nowrap;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .ai-search-toggle {
+    padding: 0 0.875rem;
+    height: 38px;
+  }
+  
+  .ai-toggle-text {
+    display: none;
+  }
+  
+  .ai-toggle-icon {
+    font-size: 1.25rem;
+  }
+}
+
+/* 侧边栏打开时调整主内容区域 */
+.search-page.sidebar-open .search-content {
+  margin-right: 320px;
+  transition: margin-right 0.25s ease;
+}
+
+@media (max-width: 768px) {
+  .search-page.sidebar-open .search-content {
+    margin-right: 0;
+  }
+}
+
+
+/* ==================== 移动端搜索页面完整适配 ==================== */
+@media (max-width: 750px) {
+  /* 搜索页面容器 */
+  .search-page {
+    padding-top: 56px;
+  }
+
+  /* 搜索内容区域 */
+  .search-content {
+    padding: 0 12px;
+  }
+
+  /* 搜索头部统计区域 */
+  .search-header {
+    padding: 12px;
+    margin-bottom: 12px;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .search-stats-info {
+    text-align: center;
+  }
+
+  .search-stats-info h2 {
+    font-size: 1rem;
+  }
+
+  .search-stats-info p {
+    font-size: 0.8125rem;
+  }
+
+  .search-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .ai-search-toggle {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .source-filter {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* 搜索结果网格 - 移动端双列 */
+  .search-results {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px;
+    max-width: 100%;
+  }
+
+  /* 搜索结果卡片 - 移动端紧凑布局 */
+  .search-result-card {
+    height: auto;
+    min-height: 100px;
+    max-height: none;
+    padding: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  /* 卡片图标 */
+  .search-result-icon {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    align-self: flex-start;
+  }
+
+  .search-result-icon img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .search-result-icon-fallback {
+    width: 36px;
+    height: 36px;
+    font-size: 0.875rem;
+  }
+
+  /* 卡片内容区域 */
+  .search-result-content {
+    flex: 1;
+    min-width: 0;
+    height: auto;
+    gap: 4px;
+  }
+
+  .search-result-header {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .search-result-title {
+    font-size: 0.875rem;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .search-result-badges {
+    flex-shrink: 0;
+  }
+
+  .result-badge {
+    padding: 2px 6px;
+    font-size: 0.625rem;
+  }
+
+  .search-result-description {
+    font-size: 0.75rem;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    margin: 0;
+  }
+
+  /* 隐藏标签和元数据 */
+  .search-result-tags {
+    display: none;
+  }
+
+  .search-result-meta {
+    display: none;
+  }
+
+  /* AI 思考动画移动端 */
+  .ai-thinking-container-v2 {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .ai-thinking-header-v2 {
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .ai-brain-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .ai-thinking-title-v2 .title-text {
+    font-size: 1rem;
+  }
+
+  .ai-step-v2 {
+    padding: 0.625rem 0.875rem;
+  }
+
+  .step-label {
+    font-size: 0.8125rem;
+  }
+
+  /* 加载更多按钮 */
+  .load-more-wrapper {
+    padding: 1rem 0;
+  }
+
+  .load-more-btn {
+    width: 100%;
+    padding: 12px;
+  }
+}
+
+/* 超小屏幕 (iPhone SE 等) */
+@media (max-width: 375px) {
+  .search-content {
+    padding: 0 8px;
+  }
+
+  .search-result-card {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .search-result-icon,
+  .search-result-icon img,
+  .search-result-icon-fallback {
+    width: 40px;
+    height: 40px;
+  }
+
+  .search-result-title {
+    font-size: 0.875rem;
+  }
+
+  .search-result-description {
+    font-size: 0.75rem;
+  }
+}

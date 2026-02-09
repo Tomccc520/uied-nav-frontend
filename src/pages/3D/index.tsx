@@ -4,7 +4,7 @@
  * @copyright 版权所有 (c) 2025 UIED技术团队
  * @website https://fsuied.com
  * @license MIT
- * @version 1.0.0
+ * @version 2.0.0 - 支持API数据源
  */
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
@@ -15,7 +15,8 @@ import {
   IconDigital, 
   IconSystem, 
   IconDesignTeam, 
-  IconCarUI 
+  IconCarUI,
+  WebsiteExitModal
 } from '../../components/UI';
 import CategorySidebar, { type NavItem, type SidebarConfig, type NavSwitchItem } from '../../components/CategorySidebar';
 import { NavMenuType } from '../../types';
@@ -23,19 +24,11 @@ import HeroBanner from '../../components/HeroBanner';
 import ToolCard from '../../components/ToolCard';
 import HotRecommendations from '../../components/HotRecommendations';
 import DesignArticleGrid from '../../components/DesignArticleGrid';
+import AdBanner from '../../components/AdBanner';
 import SEO from '../../components/SEO';
 import { useNavigation, type Tool, type DataService } from '../../hooks/useNavigation';
-import { 
-  threeDCategories,
-  allThreeDTools,
-  getToolsByCategory,
-  getHotTools,
-  getFeaturedTools,
-  searchTools,
-  getToolsBySubCategory,
-  getSubCategoriesByCategory,
-  getSubCategoryStats
-} from '../../data/threeDToolsDatabase';
+import { useAPINavigation } from '../../hooks/useAPINavigation';
+import { usePageConfig } from '../../hooks/usePageConfig';
 import '../../styles/common.css';
 import './index.css';
 import './index.mobile.css';
@@ -92,111 +85,22 @@ const iconMap: Record<string, React.ComponentType<any>> = {
 };
 
 /**
- * 3D工具数据服务类 - 实现DataService接口
- */
-class ThreeDDataService implements DataService {
-  /**
-   * 将分类数据转换为导航项格式
-   */
-  getNavItems(): NavItem[] {
-    return threeDCategories.map(cat => ({
-      id: cat.id,
-      name: cat.name,
-      count: getToolsByCategory(cat.id).length,
-      icon: iconMap[cat.iconUrl] || iconMap.default,
-      color: cat.color,
-      // 添加子分类支持
-      subcategories: cat.subcategories?.map(sub => ({
-        id: sub.id,
-        name: sub.name,
-        count: getToolsBySubCategory(sub.id).length
-      }))
-    }));
-  }
-
-  /**
-   * 获取3D工具数据
-   */
-  getWebsites(params?: {
-    category?: string;
-    subcategory?: string;
-    featured?: boolean;
-    hot?: boolean;
-    limit?: number;
-  }): Tool[] {
-    let tools: Tool[] = [];
-
-    // 按子分类筛选
-    if (params?.subcategory) {
-      tools = getToolsBySubCategory(params.subcategory);
-    }
-    // 按分类筛选
-    else if (params?.category && params.category !== 'all') {
-      tools = getToolsByCategory(params.category);
-    } else if (params?.featured) {
-      tools = getFeaturedTools();
-    } else if (params?.hot) {
-      tools = getHotTools();
-    } else {
-      tools = [...allThreeDTools];
-    }
-
-    // 排序：热门 > 推荐 > 评分
-    tools.sort((a, b) => {
-      if (a.isHot && !b.isHot) return -1;
-      if (!a.isHot && b.isHot) return 1;
-      if (a.isFeatured && !b.isFeatured) return -1;
-      if (!a.isFeatured && b.isFeatured) return 1;
-      return 0;
-    });
-
-    // 限制数量
-    if (params?.limit) {
-      tools = tools.slice(0, params.limit);
-    }
-
-    return tools;
-  }
-
-  /**
-   * 搜索工具
-   */
-  searchWebsites(keyword: string, limit?: number): Tool[] {
-    const results = searchTools(keyword);
-    return limit ? results.slice(0, limit) : results;
-  }
-
-  /**
-   * 获取统计数据
-   */
-  getStats() {
-    return {
-      totalWebsites: allThreeDTools.length,
-      totalCategories: threeDCategories.length,
-      updateDate: new Date().toISOString().split('T')[0]
-    };
-  }
-}
-
-/**
  * 三维导航页面组件
  * 展示3D设计相关工具和资源
+ * 使用API数据源
  */
 const ThreeDPage: React.FC = () => {
   const navigate = useNavigate();
   
-  // 创建数据服务实例
-  const dataService = useMemo(() => new ThreeDDataService(), []);
+  // 使用API导航Hook
+  const apiNavigation = useAPINavigation({
+    slug: '3d',
+    navType: NavMenuType.THREE_D,
+    iconComponents: iconMap,
+    searchPageType: '3d'
+  });
   
-  // 新增：添加全站搜索跳转功能
-  const handleGlobalSearch = useCallback((query: string) => {
-    if (query && query.trim()) {
-      // 跳转到Search页面，并传递搜索查询和类型参数
-      navigate(`/search?q=${encodeURIComponent(query.trim())}&type=3d`);
-    }
-  }, [navigate]);
-  
-  // 使用通用导航Hook
+  // 解构导航结果
   const {
     searchValue,
     setSearchValue,
@@ -209,13 +113,31 @@ const ThreeDPage: React.FC = () => {
     handleKeyPress,
     handleNavItemClick,
     handleExitSearchMode,
+    handleWebsiteClick,
     renderToolCards,
-    setActiveCategory
-  } = useNavigation({
-    navType: NavMenuType.THREE_D,
-    dataService,
-    searchPageType: '3d'
-  });
+    setActiveCategory,
+    // 网站跳转确认弹窗相关
+    isExitModalVisible,
+    currentExitWebsite,
+    hideExitModal,
+    confirmExitVisit,
+    reportExitWebsite,
+    exitModalConfig,
+    // API数据服务
+    apiDataService,
+    dataSource
+  } = apiNavigation;
+
+  // 获取页面配置（用于Hero区域显示模式等）
+  const { pageConfig, heroScrollWebsites } = usePageConfig('3d', true);
+  
+  // 新增：添加全站搜索跳转功能
+  const handleGlobalSearch = useCallback((query: string) => {
+    if (query && query.trim()) {
+      // 跳转到Search页面，并传递搜索查询和类型参数
+      navigate(`/search?q=${encodeURIComponent(query.trim())}&type=3d`);
+    }
+  }, [navigate]);
 
   // 当前导航类型状态
   const [currentNavType, setCurrentNavType] = useState<NavMenuType>(NavMenuType.THREE_D);
@@ -381,11 +303,16 @@ const ThreeDPage: React.FC = () => {
   const renderThreeDToolCards = useCallback((tools: Tool[]) => {
     const toolCardData = renderToolCards(tools);
     
-    return toolCardData.map(({ key, tool, onClick }) => (
+    return toolCardData.map(({ key, tool, onClick, showDirectArrow, onDirectVisit, arrowLabel, arrowIsExternal, directArrowNewWindow }) => (
       <ToolCard
         key={key}
         tool={tool}
         onClick={onClick}
+        showDirectArrow={showDirectArrow}
+        onDirectVisit={onDirectVisit}
+        arrowLabel={arrowLabel}
+        arrowIsExternal={arrowIsExternal}
+        directArrowNewWindow={directArrowNewWindow}
       />
     ));
   }, [renderToolCards]);
@@ -418,6 +345,15 @@ const ThreeDPage: React.FC = () => {
       <HeroBanner 
         pageType="threed"
         showStats={true}
+        customTitle={pageConfig?.heroTitle}
+        customDescription={pageConfig?.heroSubtitle}
+        apiHotSearchTags={pageConfig?.hotSearchTags}
+        searchPlaceholder={pageConfig?.searchPlaceholder}
+        heroBgType={pageConfig?.heroBgType}
+        heroBgValue={pageConfig?.heroBgValue}
+        highlightText={pageConfig?.heroHighlightText}
+        heroDisplayMode={pageConfig?.heroDisplayMode}
+        heroScrollWebsites={heroScrollWebsites}
       />
 
       <div className="main-layout">
@@ -445,9 +381,10 @@ const ThreeDPage: React.FC = () => {
             limit={12}
             title="热门推荐"
             showMoreButton={false}
-            categoryFilter="hot-recommendations"
             enableSubCategories={true}
-            defaultSubCategory="hot-recommendations-hot"
+            useApi={true}
+            pageSlug="3d"
+            onWebsiteClick={handleWebsiteClick}
           />
 
           {/* 设计文章网格组件 - 显示最新设计文章 */}
@@ -457,7 +394,12 @@ const ThreeDPage: React.FC = () => {
             enableSubCategories={true}
             defaultSubCategory="3D"
             showMoreButton={false}
+            pageSlug="3d"
+            position="main"
           />
+
+          {/* 广告位 - 放在设计文章下方 */}
+          <AdBanner pageSlug="3d" position="top" limit={1} />
 
           {/* 搜索结果区域 */}
           {isSearchMode && (
@@ -479,12 +421,14 @@ const ThreeDPage: React.FC = () => {
             </section>
           )}
 
-          {/* 所有分类区域 - 只在非搜索模式下显示 */}
+          {/* 所有分类区域 - 只在非搜索模式下显示，支持子分类切换 */}
           {!isSearchMode && navItems.map(navItem => {
+            // 获取该分类的子分类（使用API数据）
+            const subCategories = apiDataService?.getSubCategories(navItem.id) || [];
+            const hasSubCategories = subCategories.length > 0;
+            
             // 确保ID唯一性，使用具体页面前缀避免不同页面间的ID冲突
             const uniqueElementId = `category-${navItem.id}`;
-            const subCategories = getSubCategoriesByCategory(navItem.id);
-            const hasSubCategories = subCategories && subCategories.length > 0;
             
             return (
               <section 
@@ -495,35 +439,57 @@ const ThreeDPage: React.FC = () => {
               >
                 <div className="section-header-simple">
                   <h2 data-category={navItem.id}>{navItem.name}</h2>
+                  {/* 显示数据源标识（开发模式） */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <span style={{ fontSize: '12px', color: '#999', marginLeft: '8px' }}>
+                      [{dataSource}]
+                    </span>
+                  )}
                 </div>
                 
-                {/* 如果有子分类，使用HotRecommendations组件来显示子分类切换 */}
+                {/* 如果有子分类，使用HotRecommendations组件来显示子分类切换（带分页功能） */}
                 {hasSubCategories ? (
                   <HotRecommendations 
                     limit={0}
                     title=""
-                    showTitle={false} /* 不显示标题，避免重复 */
+                    showTitle={false}
                     showMoreButton={false}
                     categoryFilter={navItem.id}
                     enableSubCategories={true}
                     defaultSubCategory={subCategories[0]?.id}
-                    customDataSource={{
-                      getBySubCategory: (subCategoryId) => getToolsBySubCategory(subCategoryId),
-                      getSubCategories: (categoryId) => getSubCategoriesByCategory(categoryId),
-                      getSubCategoryStats: (categoryId) => getSubCategoryStats(categoryId)
-                    }}
+                    customDataSource={apiDataService ? {
+                      getBySubCategory: (subCategoryId) => apiDataService.getWebsitesBySubCategory(subCategoryId),
+                      getSubCategories: (categoryId) => apiDataService.getSubCategories(categoryId),
+                      getSubCategoryStats: (categoryId) => apiDataService.getSubCategoryStats(categoryId)
+                    } : undefined}
+                    onWebsiteClick={handleWebsiteClick}
                   />
                 ) : (
                   // 如果没有子分类，直接显示工具网格
                   <div className="tools-grid">
-                    {renderThreeDToolCards(dataService.getWebsites({ category: navItem.id }))}
+                    {renderThreeDToolCards(
+                      apiDataService?.getWebsites({ category: navItem.id }) || []
+                    )}
                   </div>
                 )}
               </section>
             );
           })}
+          
+          {/* 底部广告位 */}
+          <AdBanner pageSlug="3d" position="bottom" limit={3} />
         </main>
       </div>
+
+      {/* 网站跳转确认弹窗 */}
+      <WebsiteExitModal
+        visible={isExitModalVisible}
+        website={currentExitWebsite}
+        onClose={hideExitModal}
+        onConfirm={confirmExitVisit}
+        onReport={reportExitWebsite}
+        config={exitModalConfig}
+      />
     </div>
   );
 };

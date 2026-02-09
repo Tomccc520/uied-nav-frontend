@@ -10,18 +10,12 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
     "@types/jest": "^27.5.2",
-    "@types/matter-js": "^0.19.8",
     "@types/node": "^16.18.126",
     "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.5",
-    "axios": "^1.9.0",
+    "axios": "^1.6.8",
     "framer-motion": "^12.17.0",
     "lodash": "^4.17.21",
-    "lottie-react": "^2.4.1",
-    "lottie-web": "^5.13.0",
-    "matter-js": "^0.20.0",
-    "motion": "^12.17.0",
-    "node-fetch": "^3.3.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-icons": "^5.5.0",
@@ -45,6 +39,11 @@
       "react-app/jest"
     ]
   },
+  "jest": {
+    "transformIgnorePatterns": [
+      "node_modules/(?!(fast-check|pure-rand|axios)/)"
+    ]
+  },
   "browserslist": {
     "production": [
       ">0.2%",
@@ -56,5 +55,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "fast-check": "^4.5.3"
   }
 }

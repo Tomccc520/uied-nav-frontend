@@ -32,6 +32,11 @@
   color: var(--text-primary);
   line-height: 1.5;
   position: relative;
+  /* 标题截断处理 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .hot-recommendations-title::before {
@@ -224,6 +229,14 @@
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* 自适应布局 */
   gap: 0.75rem; /* 与Home页面一致 */
   margin: 0;
+  overflow: hidden; /* 防止子元素溢出 */
+}
+
+/* 确保卡片容器不溢出 */
+.hot-recommendations-grid > * {
+  min-width: 0; /* 允许flex/grid子元素收缩 */
+  max-width: 100%;
+  overflow: hidden;
 }
 
 /* 超大屏幕最多显示6列 */
@@ -257,7 +270,7 @@
 /* 移动端显示1列 */
 @media (max-width: 768px) {
   .hot-recommendations-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr); /* 移动端双列 */
     gap: 0.5rem; /* 与Home页面移动端一致 */
   }
   
@@ -392,27 +405,9 @@
   color: var(--text-light);
 }
 
-/* 优化工具卡片在推荐组件中的显示 - 与Home页面保持一致 */
-.hot-recommendations .tool-item-card {
-  background: var(--white);
-  border-radius: 0.5rem;
-  padding: 0.875rem;
-  border: 0.0625rem solid #e1e5e9;
-  transition: border-color 0.3s ease;
-  cursor: pointer;
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  /* 统一卡片大小 - 固定高度和宽度，与Home页面一致 */
-  height: 120px;
-  overflow: hidden;
-  /* 确保卡片不会被内容撑大 */
-  box-sizing: border-box;
-}
-
-.hot-recommendations .tool-item-card:hover {
-  border-color: var(--primary-color);
-}
+/* 
+ * 注意：tool-item-card 的样式统一由 ToolCard/index.mobile.css 定义
+ * 这里不再重复定义，避免样式冲突
+ */
 
 /* 暗色模式适配 */

@@ -1,4 +1,14 @@
 /**
+ * @file Modal.css
+ * @description 前端用户界面组件
+ * @author Tomda
+ * @copyright 版权所有 (c) 2026 UIED技术团队
+ * @website https://fsuied.com
+ * @license MIT
+ * @version 1.0.0
+ */
+
+/**
  * Modal 模态框组件样式
  * 提供现代化的弹窗样式和动画效果
  */
@@ -16,6 +26,7 @@
   justify-content: center;
   padding: 20px;
   animation: modalFadeIn 0.2s ease-out;
+  z-index: 9999;
 }
 
 /* 模态框包装器 */
@@ -27,15 +38,15 @@
   height: 100%;
 }
 
-/* 模态框容器 */
+/* 模态框容器 - 简洁设计，无阴影 */
 .modal-container {
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color, #f0f0f0);
   max-height: 90vh;
   overflow: auto;
   position: relative;
-  animation: modalSlideIn 0.3s ease-out;
+  animation: modalSlideIn 0.2s ease-out;
 }
 
 /* 模态框头部 */
