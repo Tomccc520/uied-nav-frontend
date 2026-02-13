@@ -9,39 +9,7 @@
  */
 
 import React, { useState } from 'react';
-
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
-const BACKEND_BASE = API_BASE.replace('/api', '');
-
-/**
- * 获取完整的图片 URL
- * 处理相对路径和错误的端口，统一指向后端服务器
- */
-const getFullImageUrl = (url: string): string => {
-  if (!url) return '';
-  
-  // 如果是相对路径，添加后端服务器地址
-  if (url.startsWith('/uploads/')) {
-    return `${BACKEND_BASE}${url}`;
-  }
-  
-  // 如果是完整 URL，检查是否需要修正端口
-  // 处理 localhost:5173 (admin) 或其他错误端口的情况
-  if (url.includes('localhost:5173/uploads/') || url.includes('localhost:3000/uploads/')) {
-    const uploadPath = url.match(/\/uploads\/.+$/)?.[0];
-    if (uploadPath) {
-      return `${BACKEND_BASE}${uploadPath}`;
-    }
-  }
-  
-  // 其他完整 URL 直接返回
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
-  
-  // 其他相对路径
-  return `${BACKEND_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
-};
+import { getFullImageUrl, processContentImageUrls } from '../../utils/urlUtils';
 
 /**
  * 获取默认图标
@@ -166,11 +134,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ website, detailPageConfig }) => {
   const renderMarkdown = (content: string): string => {
     if (!content) return '';
     
-    // 先修复 HTML 中的图片 URL（处理错误的端口）
-    let processed = content
-      .replace(/src="http:\/\/localhost:5173\/uploads\//g, `src="${BACKEND_BASE}/uploads/`)
-      .replace(/src="http:\/\/localhost:3000\/uploads\//g, `src="${BACKEND_BASE}/uploads/`)
-      .replace(/src="\/uploads\//g, `src="${BACKEND_BASE}/uploads/`);
+    // 使用统一的工具函数处理图片路径
+    let processed = processContentImageUrls(content);
     
     return processed
       // 标题

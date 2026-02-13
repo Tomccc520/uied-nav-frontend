@@ -1,10 +1,11 @@
 /**
+ * @copyright Tomda (https://www.tomda.top)
+ * @copyright UIED技术团队 (https://fsuied.com)
+ * @author UIED技术团队
+ * @createDate 2026.1.27
+ * 
  * @file useNavigation.ts
- * @description 通用导航页面Hook - 处理搜索、图标获取、数据管理等共通逻辑
- * @copyright 版权所有 (c) 2025 UIED技术团队
- * @website https://fsuied.com
- * @license MIT
- * @version 1.0.0
+ * @description 通用导航页面 Hook - 处理搜索、图标获取、数据管理等共通逻辑
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -491,32 +492,22 @@ export const useNavigation = (config: NavigationConfig): NavigationHookReturn =>
   }, [navItems]);
 
   /**
-   * 处理网址点击 - 根据配置决定跳转行为
-   * 逻辑：
-   * - websiteClickMode = 'detail': 跳转到详情页
-   * - websiteClickMode = 'direct': 显示弹窗确认后跳转外部链接
-   * - websiteClickMode = 'directExternal': 直接打开外部网站（不经过弹窗）
+   * 处理网址点击 - 根据后台配置决定跳转行为
    */
   const handleWebsiteClick = useCallback((tool: Tool) => {
-    const websiteClickMode = frontendConfig?.pageGlobalConfig?.websiteClickMode ?? 'detail';
-    const detailPageNewWindow = frontendConfig?.pageGlobalConfig?.detailPageNewWindow ?? false;
+    // 从全局配置中读取网站点击模式
+    const websiteClickMode = frontendConfig?.pageGlobalConfig?.websiteClickMode || 'detail';
+    const detailPageNewWindow = frontendConfig?.pageGlobalConfig?.detailPageNewWindow || false;
     
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[handleWebsiteClick] 网站:', tool.name, '| 模式:', websiteClickMode);
-    }
-    
-    if (websiteClickMode === 'directExternal') {
-      // 直达网站模式：卡片点击直接打开外部网站
-      window.open(tool.url, '_blank', 'noopener,noreferrer');
-    } else if (websiteClickMode === 'direct') {
-      // 弹窗确认模式：显示弹窗确认后跳转外部链接
+    if (websiteClickMode === 'direct') {
+      // 直接跳转到外部网站
       showExitModal({
         name: tool.name,
         url: tool.url,
         description: tool.description
       });
     } else {
-      // 详情页模式（默认）：跳转到网站详情页
+      // 跳转到网站详情页
       const detailUrl = generateWebsiteUrl(permalinkConfig, { 
         id: tool.id, 
         slug: tool.slug 
@@ -528,7 +519,7 @@ export const useNavigation = (config: NavigationConfig): NavigationHookReturn =>
         navigate(detailUrl);
       }
     }
-  }, [showExitModal, permalinkConfig, navigate, frontendConfig]);
+  }, [frontendConfig, permalinkConfig, navigate, showExitModal]);
 
   /**
    * 处理热门标签点击
@@ -539,49 +530,27 @@ export const useNavigation = (config: NavigationConfig): NavigationHookReturn =>
   }, [handleSearch]);
 
   /**
-   * 处理直达箭头点击 - 根据模式决定行为
-   * - detail/direct 模式：箭头直达外部网址
-   * - directExternal 模式：箭头跳转到详情页（因为卡片已经直达外部网址）
+   * 处理直达箭头点击 - 强制打开外部网站
    */
   const handleDirectVisit = useCallback((tool: Tool, e: React.MouseEvent) => {
-    const websiteClickMode = frontendConfig?.pageGlobalConfig?.websiteClickMode ?? 'detail';
-    const directArrowNewWindow = frontendConfig?.pageGlobalConfig?.directArrowNewWindow ?? true;
-    
-    if (websiteClickMode === 'directExternal') {
-      // 直达网站模式下，箭头跳转到详情页
-      const detailUrl = generateWebsiteUrl(permalinkConfig, { 
-        id: tool.id, 
-        slug: tool.slug 
-      });
-      if (directArrowNewWindow) {
-        window.open(detailUrl, '_blank');
-      } else {
-        navigate(detailUrl);
-        // 跳转详情页后滚动到顶部
-        window.scrollTo(0, 0);
-      }
-    } else {
-      // 其他模式下，箭头直达外部网址
-      if (directArrowNewWindow) {
-        window.open(tool.url, '_blank', 'noopener,noreferrer');
-      } else {
-        window.location.href = tool.url;
-      }
-    }
-  }, [frontendConfig, permalinkConfig, navigate]);
+    // 强制在新窗口打开外部网站
+    window.open(tool.url, '_blank', 'noopener,noreferrer');
+  }, []);
 
   /**
    * 渲染工具卡片数据
    */
   const renderToolCards = useCallback((tools: Tool[]): ToolCardData[] => {
-    // 从后台配置读取是否显示直达箭头
-    const showDirectArrow = frontendConfig?.pageGlobalConfig?.showDirectArrow ?? false;
-    const websiteClickMode = frontendConfig?.pageGlobalConfig?.websiteClickMode ?? 'detail';
+    // 从全局配置中读取设置
+    const showDirectArrow = frontendConfig?.pageGlobalConfig?.showDirectArrow ?? true;
+    const websiteClickMode = frontendConfig?.pageGlobalConfig?.websiteClickMode || 'detail';
     const directArrowNewWindow = frontendConfig?.pageGlobalConfig?.directArrowNewWindow ?? true;
     
-    // 根据模式决定箭头文案和方向
-    const arrowLabel = websiteClickMode === 'directExternal' ? '查看详情' : '直达网站';
-    const arrowIsExternal = websiteClickMode !== 'directExternal';
+    // 根据点击模式决定箭头行为
+    // detail 模式：卡片跳详情页，箭头直达网站
+    // direct 模式：卡片直达网站，箭头也直达网站（或隐藏箭头）
+    const arrowLabel = websiteClickMode === 'detail' ? '直达网站' : '访问网站';
+    const arrowIsExternal = true;
 
     return tools.map((tool, index) => ({
       key: tool.id,
@@ -594,7 +563,7 @@ export const useNavigation = (config: NavigationConfig): NavigationHookReturn =>
       arrowIsExternal,
       directArrowNewWindow,
     }));
-  }, [handleWebsiteClick, handleDirectVisit, frontendConfig]);
+  }, [frontendConfig, handleWebsiteClick, handleDirectVisit]);
 
   // 监听URL hash变化，更新当前选中的导航项
   useEffect(() => {

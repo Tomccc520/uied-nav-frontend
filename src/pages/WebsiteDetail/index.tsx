@@ -20,30 +20,8 @@ import RatingWidget from './RatingWidget';
 import CommentsSection from './CommentsSection';
 import FavoriteButton from './FavoriteButton';
 import ShareButtons from './ShareButtons';
+import { getFullImageUrl, processContentImageUrls } from '../../utils/urlUtils';
 import './index.css';
-
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
-const BACKEND_BASE = API_BASE.replace('/api', '');
-
-/**
- * 获取完整的图片 URL
- */
-const getFullImageUrl = (url: string): string => {
-  if (!url) return '';
-  if (url.startsWith('/uploads/')) {
-    return `${BACKEND_BASE}${url}`;
-  }
-  if (url.includes('localhost:5173/uploads/') || url.includes('localhost:3000/uploads/')) {
-    const uploadPath = url.match(/\/uploads\/.+$/)?.[0];
-    if (uploadPath) {
-      return `${BACKEND_BASE}${uploadPath}`;
-    }
-  }
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
-  return `${BACKEND_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
-};
 
 /**
  * 网站详情数据类型
@@ -258,10 +236,8 @@ const WebsiteDetail: React.FC = () => {
   const renderContent = (content: string): string => {
     if (!content) return '';
     
-    let processed = content
-      .replace(/src="http:\/\/localhost:5173\/uploads\//g, `src="${BACKEND_BASE}/uploads/`)
-      .replace(/src="http:\/\/localhost:3000\/uploads\//g, `src="${BACKEND_BASE}/uploads/`)
-      .replace(/src="\/uploads\//g, `src="${BACKEND_BASE}/uploads/`);
+    // 使用统一的工具函数处理图片路径
+    let processed = processContentImageUrls(content);
     
     return processed
       .replace(/^### (.*$)/gim, '<h3>$1</h3>')

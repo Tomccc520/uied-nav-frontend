@@ -9,10 +9,9 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import api from '../../services/api';
+import { getBackendBaseUrl } from '../../utils/urlUtils';
 import './index.css';
-
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
-const BACKEND_BASE = API_BASE.replace('/api', '');
 
 /** Favicon API 配置项 */
 interface FaviconApiItem {
@@ -90,10 +89,9 @@ const fetchFaviconApis = async (): Promise<FaviconApiItem[]> => {
   // 防止并发请求
   if (faviconApisPromise) return faviconApisPromise;
 
-  faviconApisPromise = fetch(`${API_BASE}/settings/favicon-apis`)
-    .then(res => res.json())
-    .then(data => {
-      const apis = data?.data || [];
+  faviconApisPromise = api.get('/settings/favicon-apis')
+    .then(res => {
+      const apis = res.data?.data || res.data || [];
       cachedFaviconApis = apis;
       saveToStorage(apis); // 持久化到 localStorage
       return apis;
@@ -122,13 +120,16 @@ const fetchFaviconApis = async (): Promise<FaviconApiItem[]> => {
  */
 const getFullImageUrl = (url: string): string => {
   if (!url) return '';
-  if (url.startsWith('/uploads/')) return `${BACKEND_BASE}${url}`;
+  
+  const backendBase = getBackendBaseUrl();
+  
+  if (url.startsWith('/uploads/')) return `${backendBase}${url}`;
   if (url.includes('localhost:5173/uploads/') || url.includes('localhost:3000/uploads/')) {
     const uploadPath = url.match(/\/uploads\/.+$/)?.[0];
-    if (uploadPath) return `${BACKEND_BASE}${uploadPath}`;
+    if (uploadPath) return `${backendBase}${uploadPath}`;
   }
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
-  return `${BACKEND_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
+  return `${backendBase}${url.startsWith('/') ? '' : '/'}${url}`;
 };
 
 /**

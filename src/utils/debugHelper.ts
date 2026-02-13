@@ -103,6 +103,9 @@ export class FrontendDebugHelper {
     categoryId?: string;
     subCategoryId?: string;
   }) {
+    // 已禁用分页调试日志
+    return;
+    
     if (!isDevelopment) return;
     
     console.group('📄 分页控制器调试');

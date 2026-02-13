@@ -119,23 +119,8 @@ const HotRecommendations: React.FC<HotRecommendationsProps> = ({
     }
   }, [websiteClickMode, directArrowNewWindow, permalinkConfig, navigate]);
 
-  // 热门推荐点击行为配置（独立配置）
-  const [hotRecommendationClickMode, setHotRecommendationClickMode] = useState<'direct' | 'modal'>('direct');
-  
-  // 获取热门推荐点击行为配置
-  useEffect(() => {
-    const fetchClickConfig = async () => {
-      try {
-        const res = await api.get('/settings/hot-recommendation-click');
-        const data = res.data.data || res.data;
-        setHotRecommendationClickMode(data.clickMode || 'direct');
-      } catch (error) {
-        // 默认直接跳转
-        setHotRecommendationClickMode('direct');
-      }
-    };
-    fetchClickConfig();
-  }, []);
+  // 热门推荐点击行为配置（从全局配置中读取独立配置）
+  const hotRecommendationClickMode = frontendConfig?.pageGlobalConfig?.hotRecommendationClickMode || 'direct';
   
   // 判断是否应该使用 API（没有自定义数据源时使用 API）
   const shouldUseApi = useApi && !customDataSource;
@@ -493,29 +478,37 @@ const HotRecommendations: React.FC<HotRecommendationsProps> = ({
               }
               
               // 如果没有匹配的网站记录，直接打开外部链接（无法跳转详情页）
-              if (!(tool as any)._hasWebsiteMatch) {
+              const hasWebsiteMatch = (tool as any)._hasWebsiteMatch !== false;
+              if (!hasWebsiteMatch) {
                 window.open(tool.url, '_blank', 'noopener,noreferrer');
                 return;
               }
               
-              // 如果有外部点击回调（由页面传入），优先使用它
-              // 这样页面可以统一控制跳转行为（详情页/弹窗/直接跳转）
-              if (onWebsiteClick) {
-                onWebsiteClick(tool);
+              // 🔥 热门推荐使用独立配置，不受全局配置影响
+              // 优先使用热门推荐的独立点击行为配置
+              if (hotRecommendationClickMode === 'modal') {
+                // 弹窗模式：如果有外部回调，使用回调显示弹窗
+                if (onWebsiteClick) {
+                  onWebsiteClick(tool);
+                } else {
+                  // 没有回调时直接打开
+                  window.open(tool.url, '_blank', 'noopener,noreferrer');
+                }
                 return;
               }
               
-              // 没有外部回调时，根据热门推荐点击模式配置决定行为
-              switch (hotRecommendationClickMode) {
-                case 'modal':
-                  // 显示跳转确认弹窗（无回调时直接打开）
-                  window.open(tool.url, '_blank');
-                  break;
-                case 'direct':
-                default:
-                  // 直接打开外部链接
-                  window.open(tool.url, '_blank');
-                  break;
+              if (hotRecommendationClickMode === 'direct') {
+                // 直达模式：直接打开外部网站
+                window.open(tool.url, '_blank', 'noopener,noreferrer');
+                return;
+              }
+              
+              // 🔥 如果热门推荐没有配置，才使用页面传入的回调（全局配置）
+              if (onWebsiteClick) {
+                onWebsiteClick(tool);
+              } else {
+                // 兜底：直接打开外部链接
+                window.open(tool.url, '_blank', 'noopener,noreferrer');
               }
             }}
             index={index}

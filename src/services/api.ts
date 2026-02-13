@@ -1,19 +1,18 @@
 /**
+ * @copyright Tomda (https://www.tomda.top)
+ * @copyright UIED技术团队 (https://fsuied.com)
+ * @author UIED技术团队
+ * @createDate 2026.1.27
+ * 
  * @file api.ts
- * @description 前端用户界面组件
- * @author Tomda
- * @copyright 版权所有 (c) 2026 UIED技术团队
- * @website https://fsuied.com
- * @license MIT
- * @version 1.0.0
+ * @description 统一的 API 服务 - 提供 axios 实例和请求拦截器
  */
 
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { getApiBaseUrl } from '../utils/urlUtils';
 
-// Vite 使用 import.meta.env，Create React App 使用 process.env
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 
-                     process.env.REACT_APP_API_URL || 
-                     'http://localhost:3001/api';
+// 使用统一的 URL 工具获取 API 地址
+const API_BASE_URL = getApiBaseUrl();
 
 // 重试配置
 const RETRY_CONFIG = {

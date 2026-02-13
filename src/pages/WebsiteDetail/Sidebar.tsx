@@ -11,8 +11,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import WebsiteFavicon from '../../components/WebsiteFavicon';
-
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+import api from '../../services/api';
 
 /**
  * 侧边栏配置接口
@@ -77,8 +76,8 @@ const Sidebar: React.FC<SidebarProps> = ({ relatedWebsites, tags, websiteTags, l
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const res = await fetch(`${API_BASE}/public/detail-sidebar-config`);
-        const data = await res.json();
+        const res = await api.get('/public/detail-sidebar-config');
+        const data = res.data;
         if (data.success && data.data) {
           setConfig(data.data);
         }

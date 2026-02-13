@@ -9,7 +9,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import api from '../services/api';
+import publicSettingService from '../services/publicSettingService';
 
 // ==================== 接口定义 ====================
 
@@ -56,6 +56,7 @@ interface PageGlobalConfig {
   detailPageNewWindow?: boolean;
   showDirectArrow?: boolean;
   directArrowNewWindow?: boolean;
+  hotRecommendationClickMode?: 'direct' | 'modal'; // 热门推荐独立配置
 }
 
 /** 外观配置 */
@@ -168,6 +169,7 @@ const defaultPageGlobalConfig: PageGlobalConfig = {
   detailPageNewWindow: false,
   showDirectArrow: false,
   directArrowNewWindow: true,
+  hotRecommendationClickMode: 'direct', // 热门推荐默认直达
 };
 
 const defaultAppearanceConfig: AppearanceConfig = {
@@ -289,14 +291,23 @@ export const useFrontendConfig = () => {
     }
 
     setLoading(true);
-    configPromise = api.get('/settings/frontend-config')
-      .then(res => {
-        const newConfig = buildConfig(res.data);
+    configPromise = publicSettingService.getPublicSettings()
+      .then(settings => {
+        const newConfig = buildConfig({
+          pageGlobalConfig: settings.pageGlobal,
+          appearanceConfig: settings.appearance,
+          homepageConfig: settings.homepage,
+          cardStyleConfig: settings.cardStyle,
+          sidebarConfig: settings.sidebar,
+          searchConfig: settings.search,
+          exitModalConfig: settings.exitModal,
+        });
         cachedConfig = newConfig;
         cacheTimestamp = Date.now();
         return newConfig;
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('加载前端配置失败，使用默认配置:', err);
         cachedConfig = defaultConfig;
         cacheTimestamp = Date.now();
         return defaultConfig;
@@ -327,8 +338,16 @@ export const getFrontendConfig = async (forceRefresh = false): Promise<FrontendC
   }
 
   try {
-    const res = await api.get('/settings/frontend-config');
-    cachedConfig = buildConfig(res.data);
+    const settings = await publicSettingService.getPublicSettings();
+    cachedConfig = buildConfig({
+      pageGlobalConfig: settings.pageGlobal,
+      appearanceConfig: settings.appearance,
+      homepageConfig: settings.homepage,
+      cardStyleConfig: settings.cardStyle,
+      sidebarConfig: settings.sidebar,
+      searchConfig: settings.search,
+      exitModalConfig: settings.exitModal,
+    });
     cacheTimestamp = Date.now();
     return cachedConfig;
   } catch {

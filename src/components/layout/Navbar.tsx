@@ -448,7 +448,7 @@ const Navbar = () => {
     const initNavbarConfig = async () => {
       try {
         // 从API获取导航菜单 - 使用环境变量配置的API地址
-        const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+        const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8002/api';
         const response = await fetch(`${apiBaseUrl}/settings/nav-menus`);
         const apiMenus = await response.json();
         
