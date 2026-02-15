@@ -10,6 +10,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import publicSettingService from '../services/publicSettingService';
+import {
+  normalizeWebsiteClickMode,
+  normalizeHotRecommendationClickMode,
+} from '../utils/clickMode';
+import { DEFAULT_NAV_SWITCH_ITEMS } from '../config/navModel';
 
 // ==================== 接口定义 ====================
 
@@ -52,11 +57,11 @@ interface PageGlobalConfig {
   searchPlaceholder: string;
   defaultThemeColor: string;
   enableDarkMode: boolean;
-  websiteClickMode: 'detail' | 'direct' | 'directExternal';
+  websiteClickMode: 'detail' | 'direct';
   detailPageNewWindow?: boolean;
   showDirectArrow?: boolean;
   directArrowNewWindow?: boolean;
-  hotRecommendationClickMode?: 'direct' | 'modal'; // 热门推荐独立配置
+  hotRecommendationClickMode?: 'detail' | 'direct'; // 热门推荐独立配置
 }
 
 /** 外观配置 */
@@ -85,6 +90,17 @@ interface HomepageConfig {
   hotRecommendationsTitle: string;
   topAdEnabled: boolean;
   topAdCode: string;
+  homeCarouselEnabled: boolean;
+  homeCarouselSort: number;
+  homeRecommendationEnabled: boolean;
+  homeRecommendationSort: number;
+  navSwitchItems: Array<{
+    slug: string;
+    name: string;
+    icon: string;
+    visible: boolean;
+    sort: number;
+  }>;
 }
 
 /** 卡片样式配置 */
@@ -131,6 +147,17 @@ interface FrontendConfig {
   searchConfig: SearchConfig;
 }
 
+interface FrontendConfigData {
+  exitModalEnabled?: boolean;
+  exitModalConfig?: Partial<ExitModalConfig>;
+  pageGlobalConfig?: Partial<PageGlobalConfig>;
+  appearanceConfig?: Partial<AppearanceConfig>;
+  homepageConfig?: Partial<HomepageConfig>;
+  cardStyleConfig?: Partial<CardStyleConfig>;
+  sidebarConfig?: Partial<SidebarConfig>;
+  searchConfig?: Partial<SearchConfig>;
+}
+
 // ==================== 默认值 ====================
 
 const defaultExitModalConfig: ExitModalConfig = {
@@ -169,7 +196,7 @@ const defaultPageGlobalConfig: PageGlobalConfig = {
   detailPageNewWindow: false,
   showDirectArrow: false,
   directArrowNewWindow: true,
-  hotRecommendationClickMode: 'direct', // 热门推荐默认直达
+  hotRecommendationClickMode: 'detail', // 热门推荐默认跳转详情页
 };
 
 const defaultAppearanceConfig: AppearanceConfig = {
@@ -196,6 +223,11 @@ const defaultHomepageConfig: HomepageConfig = {
   hotRecommendationsTitle: '热门推荐',
   topAdEnabled: false,
   topAdCode: '',
+  homeCarouselEnabled: true,
+  homeCarouselSort: 10,
+  homeRecommendationEnabled: true,
+  homeRecommendationSort: 20,
+  navSwitchItems: [...DEFAULT_NAV_SWITCH_ITEMS],
 };
 
 const defaultCardStyleConfig: CardStyleConfig = {
@@ -255,12 +287,54 @@ export const clearConfigCache = () => {
 
 // ==================== 构建配置 ====================
 
-const buildConfig = (data: any): FrontendConfig => ({
+/**
+ * 规范化页面全局配置，确保分类区域与热门推荐配置语义一致且独立
+ */
+const normalizePageGlobalConfig = (config: unknown): PageGlobalConfig => {
+  const mergedConfig = { ...defaultPageGlobalConfig, ...((config as Partial<PageGlobalConfig>) || {}) };
+  return {
+    ...mergedConfig,
+    websiteClickMode: normalizeWebsiteClickMode(mergedConfig.websiteClickMode),
+    hotRecommendationClickMode: normalizeHotRecommendationClickMode(mergedConfig.hotRecommendationClickMode),
+  };
+};
+
+/**
+ * 规范化首页配置，确保轮播/推荐区和导航切换项结构稳定
+ */
+const normalizeHomepageConfig = (config: unknown): HomepageConfig => {
+  const mergedConfig = { ...defaultHomepageConfig, ...((config as Partial<HomepageConfig>) || {}) };
+  const items = Array.isArray(mergedConfig.navSwitchItems)
+    ? mergedConfig.navSwitchItems
+    : defaultHomepageConfig.navSwitchItems;
+  return {
+    ...mergedConfig,
+    homeCarouselEnabled: mergedConfig.homeCarouselEnabled !== false,
+    homeRecommendationEnabled: mergedConfig.homeRecommendationEnabled !== false,
+    homeCarouselSort: Number.isFinite(Number(mergedConfig.homeCarouselSort))
+      ? Number(mergedConfig.homeCarouselSort)
+      : defaultHomepageConfig.homeCarouselSort,
+    homeRecommendationSort: Number.isFinite(Number(mergedConfig.homeRecommendationSort))
+      ? Number(mergedConfig.homeRecommendationSort)
+      : defaultHomepageConfig.homeRecommendationSort,
+    navSwitchItems: items
+      .map((item, index) => ({
+        slug: String(item?.slug || defaultHomepageConfig.navSwitchItems[index % defaultHomepageConfig.navSwitchItems.length].slug),
+        name: String(item?.name || defaultHomepageConfig.navSwitchItems[index % defaultHomepageConfig.navSwitchItems.length].name),
+        icon: String(item?.icon || defaultHomepageConfig.navSwitchItems[index % defaultHomepageConfig.navSwitchItems.length].icon),
+        visible: item?.visible !== false,
+        sort: Number.isFinite(Number(item?.sort)) ? Number(item.sort) : (index + 1) * 10,
+      }))
+      .sort((a, b) => a.sort - b.sort),
+  };
+};
+
+const buildConfig = (data: FrontendConfigData): FrontendConfig => ({
   exitModalEnabled: data.exitModalEnabled ?? true,
   exitModalConfig: { ...defaultExitModalConfig, ...(data.exitModalConfig || {}) },
-  pageGlobalConfig: { ...defaultPageGlobalConfig, ...(data.pageGlobalConfig || {}) },
+  pageGlobalConfig: normalizePageGlobalConfig(data.pageGlobalConfig),
   appearanceConfig: { ...defaultAppearanceConfig, ...(data.appearanceConfig || {}) },
-  homepageConfig: { ...defaultHomepageConfig, ...(data.homepageConfig || {}) },
+  homepageConfig: normalizeHomepageConfig(data.homepageConfig),
   cardStyleConfig: { ...defaultCardStyleConfig, ...(data.cardStyleConfig || {}) },
   sidebarConfig: { ...defaultSidebarConfig, ...(data.sidebarConfig || {}) },
   searchConfig: { ...defaultSearchConfig, ...(data.searchConfig || {}) },

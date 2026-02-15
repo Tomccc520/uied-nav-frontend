@@ -9,16 +9,21 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import HeroBanner from '../../components/HeroBanner';
 import ToolCard from '../../components/ToolCard';
-import { WebsiteExitModal } from '../../components/UI';
 import AISearchSidebar from '../../components/AISearchSidebar';
 import api from '../../services/api';
 import { useFrontendConfig } from '../../hooks/useFrontendConfig';
+import { usePermalinkConfig, generateWebsiteUrl } from '../../hooks/usePermalinkConfig';
+import { getArrowConfigByWebsiteClickMode } from '../../utils/clickMode';
+import { unwrapApiResponse } from '../../utils/apiResponse';
+import { debugLog } from '../../utils/debugHelper';
+import { FIXED_DYNAMIC_NAV_SLUGS, SEARCH_SOURCE_LABELS } from '../../config/navModel';
 import './index.css';
 
 const bgImage = '/bg.jpg';
 const SEARCH_HISTORY_KEY = 'search_history';
 const MAX_HISTORY = 10;
 const PAGE_SIZE = 24;
+const HOT_SEARCH_TAGS = ['AI绘画', 'ChatGPT', 'Figma', '免费工具', 'UI设计', 'Midjourney', '字体', '图标库', 'SVG'];
 
 // 搜索结果接口
 interface SearchResult {
@@ -26,6 +31,7 @@ interface SearchResult {
   name: string;
   description: string;
   url: string;
+  slug?: string;
   iconUrl?: string;
   category?: string;
   tags: string[];
@@ -36,18 +42,82 @@ interface SearchResult {
   isAiResult?: boolean;
 }
 
-// 页面配置
-const PAGE_SLUGS = ['uiux', 'ai', 'design', '3d', 'ecommerce', 'interior', 'font'];
-const SOURCE_LABELS: Record<string, string> = {
-  all: '全部来源',
-  uiux: 'UI/UX',
-  ai: 'AI工具',
-  design: '平面设计',
-  '3d': '3D设计',
-  ecommerce: '电商',
-  interior: '室内设计',
-  font: '字体'
+interface BackendSearchItem {
+  id?: string | number;
+  name?: string;
+  description?: string;
+  url?: string;
+  slug?: string;
+  iconUrl?: string;
+  category?: { name?: string } | string;
+  tags?: string[] | string;
+  isNew?: boolean;
+  isHot?: boolean;
+  isFeatured?: boolean;
+}
+
+interface BackendSearchPayload {
+  results?: BackendSearchItem[];
+  mode?: string;
+  reason?: string;
+}
+
+/**
+ * 统一解析后端标签字段，兼容 string / string[] 两种结构。
+ */
+const normalizeTags = (tags: BackendSearchItem['tags']): string[] => {
+  if (Array.isArray(tags)) return tags.filter(Boolean);
+  if (typeof tags === 'string') {
+    return tags
+      .split(',')
+      .map(tag => tag.trim())
+      .filter(Boolean);
+  }
+  return [];
 };
+
+/**
+ * 将后端搜索结果转换为前端统一结构。
+ */
+const mapBackendSearchItem = (
+  item: BackendSearchItem,
+  source: string,
+  isAiResult: boolean = false
+): SearchResult => {
+  const normalizedId = item.id !== undefined && item.id !== null ? String(item.id) : '';
+  const categoryName = typeof item.category === 'string'
+    ? item.category
+    : item.category?.name || '';
+
+  return {
+    id: normalizedId,
+    name: item.name || '',
+    description: item.description || '',
+    url: item.url || '',
+    slug: item.slug,
+    iconUrl: item.iconUrl,
+    category: categoryName,
+    tags: normalizeTags(item.tags),
+    isNew: Boolean(item.isNew),
+    isHot: Boolean(item.isHot),
+    isFeatured: Boolean(item.isFeatured),
+    source,
+    isAiResult,
+  };
+};
+
+/**
+ * 解包搜索接口响应，兼容 {code,data,message} 与直出数据。
+ */
+const unwrapSearchPayload = (payload: unknown): BackendSearchPayload => {
+  const data = unwrapApiResponse<BackendSearchPayload>(payload, {});
+  if (!data || typeof data !== 'object') return {};
+  return data;
+};
+
+// 页面配置
+const PAGE_SLUGS = [...FIXED_DYNAMIC_NAV_SLUGS];
+const SOURCE_LABELS: Record<string, string> = { ...SEARCH_SOURCE_LABELS };
 
 // AI 思考步骤
 const AI_THINKING_STEPS = [
@@ -280,21 +350,26 @@ const SearchPage: React.FC = () => {
   // 相关搜索
   const [relatedKeywords, setRelatedKeywords] = useState<string[]>([]);
   
-  // 网站跳转弹窗状态
-  const [isExitModalVisible, setIsExitModalVisible] = useState(false);
-  const [currentExitWebsite, setCurrentExitWebsite] = useState<SearchResult | null>(null);
-  
   // 获取前端配置（跳转弹窗自定义文案）
   const { config: frontendConfig } = useFrontendConfig();
+  const { config: permalinkConfig } = usePermalinkConfig();
   const showDirectArrow = frontendConfig?.pageGlobalConfig?.showDirectArrow ?? false;
   const websiteClickMode = frontendConfig?.pageGlobalConfig?.websiteClickMode ?? 'detail';
   const directArrowNewWindow = frontendConfig?.pageGlobalConfig?.directArrowNewWindow ?? true;
-  // 根据模式决定箭头文案和方向
-  const arrowLabel = websiteClickMode === 'directExternal' ? '查看详情' : '直达网站';
-  const arrowIsExternal = websiteClickMode !== 'directExternal';
+  const detailPageNewWindow = frontendConfig?.pageGlobalConfig?.detailPageNewWindow ?? false;
+  const { isDirectMode, arrowLabel, arrowIsExternal } = getArrowConfigByWebsiteClickMode(websiteClickMode);
 
   // 直达箭头点击回调
-  const handleDirectVisit = useCallback((tool: any, e: React.MouseEvent) => {
+  const handleDirectVisit = useCallback((tool: SearchResult, _event: React.MouseEvent) => {
+    if (isDirectMode) {
+      const detailUrl = generateWebsiteUrl(permalinkConfig, { id: tool?.id, slug: tool?.slug });
+      if (detailPageNewWindow) {
+        window.open(detailUrl, '_blank');
+      } else {
+        navigate(detailUrl);
+      }
+      return;
+    }
     const url = tool?.url;
     if (url) {
       if (directArrowNewWindow) {
@@ -303,13 +378,10 @@ const SearchPage: React.FC = () => {
         window.location.href = url;
       }
     }
-  }, [directArrowNewWindow]);
+  }, [isDirectMode, permalinkConfig, detailPageNewWindow, navigate, directArrowNewWindow]);
   
   // AI 侧边栏状态
   const [showAiSidebar, setShowAiSidebar] = useState(false);
-
-  // 热门搜索标签
-  const hotTags = ['AI绘画', 'ChatGPT', 'Figma', '免费工具', 'UI设计', 'Midjourney', '字体', '图标库', 'SVG'];
 
   // AI 思考动画
   useEffect(() => {
@@ -329,7 +401,7 @@ const SearchPage: React.FC = () => {
       try {
         setSearchHistory(JSON.parse(history));
       } catch (e) {
-        console.error('加载搜索历史失败');
+        debugLog.error('加载搜索历史失败', e);
       }
     }
   }, []);
@@ -355,11 +427,12 @@ const SearchPage: React.FC = () => {
   const fetchTotalCount = useCallback(async () => {
     try {
       const response = await api.get('/websites', { params: { pageSize: 1 } });
-      if (response.data?.pagination?.total) {
-        setTotalWebsites(response.data.pagination.total);
+      const data = unwrapApiResponse<{ pagination?: { total?: number } }>(response.data, {});
+      if (data.pagination?.total) {
+        setTotalWebsites(data.pagination.total);
       }
     } catch (error) {
-      console.error('获取网站总数失败:', error);
+      debugLog.error('获取网站总数失败:', error);
     }
   }, []);
 
@@ -372,13 +445,13 @@ const SearchPage: React.FC = () => {
     
     try {
       // 从热门标签和历史中生成建议
-      const allSuggestions = [...hotTags, ...searchHistory];
+      const allSuggestions = [...HOT_SEARCH_TAGS, ...searchHistory];
       const filtered = allSuggestions
         .filter(s => s.toLowerCase().includes(query.toLowerCase()) && s !== query)
         .slice(0, 5);
       setSuggestions(filtered);
     } catch (error) {
-      console.error('获取搜索建议失败:', error);
+      debugLog.error('获取搜索建议失败:', error);
     }
   }, [searchHistory]);
 
@@ -405,189 +478,6 @@ const SearchPage: React.FC = () => {
     setRelatedKeywords(Array.from(keywords).slice(0, 8));
   }, []);
 
-  // AI 智能搜索
-  const performAiSearch = useCallback(async (query: string) => {
-    if (!query.trim()) return;
-    
-    setAiLoading(true);
-    setIsAiMode(true);
-    setShowThinking(true);
-    setAiThinkingStep(0);
-    setAiMessage('');
-    saveSearchHistory(query);
-    
-    try {
-      // 使用公开的 AI 搜索接口
-      const response = await api.post('/ai-search', {
-        query,
-        limit: 100
-      });
-      
-      setShowThinking(false);
-      
-      if (response.data?.results) {
-        const results = response.data.results.map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          description: item.description || '',
-          url: item.url,
-          iconUrl: item.iconUrl,
-          category: '',
-          tags: item.tags ? (typeof item.tags === 'string' ? item.tags.split(',') : item.tags) : [],
-          isNew: false,
-          isHot: false,
-          isFeatured: false,
-          source: 'ai',
-          isAiResult: true
-        }));
-        
-        setAllResults(results);
-        setSearchResults(results.slice(0, PAGE_SIZE));
-        setTotalResults(results.length);
-        setHasMore(results.length > PAGE_SIZE);
-        setCurrentPage(1);
-        
-        // 显示 AI 的推荐理由
-        const modeText = response.data.mode === 'ai' ? 'AI 智能推荐' : '关键词匹配';
-        const reasonText = response.data.reason ? ` - ${response.data.reason}` : '';
-        setAiMessage(`${modeText}找到 ${results.length} 个结果${reasonText}`);
-        
-        generateRelatedKeywords(results, query);
-      } else {
-        setAllResults([]);
-        setSearchResults([]);
-        setTotalResults(0);
-        setHasMore(false);
-        setAiMessage('AI 未找到相关结果，请尝试其他描述');
-      }
-    } catch (error: any) {
-      console.error('AI 搜索失败:', error);
-      setShowThinking(false);
-      setAiMessage('AI 搜索暂时不可用，已切换到普通搜索');
-      setIsAiMode(false);
-      performSearch(query);
-    } finally {
-      setAiLoading(false);
-    }
-  }, [saveSearchHistory, generateRelatedKeywords]);
-
-  // 普通搜索 - 优化版本，支持名称、描述、标签多维度匹配
-  const performSearch = useCallback(async (query: string) => {
-    if (!query.trim()) {
-      performDefaultSearch();
-      return;
-    }
-    
-    setLoading(true);
-    setIsAiMode(false);
-    saveSearchHistory(query);
-    
-    try {
-      const searchAllResults: SearchResult[] = [];
-      const queryLower = query.toLowerCase();
-      const queryWords = queryLower.split(/\s+/).filter(w => w.length > 0);
-      
-      const searchPromises = PAGE_SLUGS.map(async (slug) => {
-        try {
-          const response = await api.get(`/pages/${slug}/search`, {
-            params: { q: query, limit: 100 }
-          });
-          
-          if (response.data?.results) {
-            return response.data.results.map((item: any) => ({
-              id: item.id,
-              name: item.name,
-              description: item.description || '',
-              url: item.url,
-              iconUrl: item.iconUrl,
-              category: item.category?.name || '',
-              tags: Array.isArray(item.tags) ? item.tags : [],
-              isNew: item.isNew,
-              isHot: item.isHot,
-              isFeatured: item.isFeatured,
-              source: slug
-            }));
-          }
-          return [];
-        } catch (error) {
-          return [];
-        }
-      });
-      
-      const results = await Promise.all(searchPromises);
-      results.forEach(r => searchAllResults.push(...r));
-      
-      // 去重
-      const uniqueResults = searchAllResults.filter((item, index, self) => 
-        index === self.findIndex(t => t.url === item.url)
-      );
-      
-      // 计算相关性得分并排序
-      const scoredResults = uniqueResults.map(item => {
-        let score = 0;
-        const nameLower = item.name.toLowerCase();
-        const descLower = item.description.toLowerCase();
-        const tagsLower = item.tags.map(t => t.toLowerCase());
-        
-        // 名称完全匹配 +100
-        if (nameLower === queryLower) score += 100;
-        // 名称开头匹配 +50
-        else if (nameLower.startsWith(queryLower)) score += 50;
-        // 名称包含完整关键词 +30
-        else if (nameLower.includes(queryLower)) score += 30;
-        
-        // 每个查询词在名称中出现 +15
-        queryWords.forEach(word => {
-          if (nameLower.includes(word)) score += 15;
-        });
-        
-        // 描述包含完整关键词 +10
-        if (descLower.includes(queryLower)) score += 10;
-        
-        // 每个查询词在描述中出现 +5
-        queryWords.forEach(word => {
-          if (descLower.includes(word)) score += 5;
-        });
-        
-        // 标签匹配 +20
-        tagsLower.forEach(tag => {
-          if (tag === queryLower) score += 20;
-          else if (tag.includes(queryLower) || queryLower.includes(tag)) score += 10;
-          queryWords.forEach(word => {
-            if (tag.includes(word)) score += 5;
-          });
-        });
-        
-        // 热门/推荐/新增加分
-        if (item.isHot) score += 3;
-        if (item.isFeatured) score += 2;
-        if (item.isNew) score += 1;
-        
-        return { ...item, _score: score };
-      });
-      
-      // 按得分排序
-      scoredResults.sort((a, b) => b._score - a._score);
-      
-      // 移除临时得分字段
-      const finalResults = scoredResults.map(({ _score, ...rest }) => rest);
-      
-      setAllResults(finalResults);
-      setSearchResults(finalResults.slice(0, PAGE_SIZE));
-      setTotalResults(finalResults.length);
-      setHasMore(finalResults.length > PAGE_SIZE);
-      setCurrentPage(1);
-      generateRelatedKeywords(finalResults, query);
-    } catch (error) {
-      setAllResults([]);
-      setSearchResults([]);
-      setTotalResults(0);
-      setHasMore(false);
-    } finally {
-      setLoading(false);
-    }
-  }, [saveSearchHistory, generateRelatedKeywords]);
-
   // 默认搜索
   const performDefaultSearch = useCallback(async () => {
     setLoading(true);
@@ -599,20 +489,10 @@ const SearchPage: React.FC = () => {
       const hotPromises = PAGE_SLUGS.map(async (slug) => {
         try {
           const response = await api.get(`/pages/${slug}/hot`, { params: { limit: 15 } });
-          if (response.data) {
-            return response.data.map((item: any) => ({
-              id: item.id,
-              name: item.name,
-              description: item.description || '',
-              url: item.url,
-              iconUrl: item.iconUrl,
-              category: item.category?.name || '',
-              tags: Array.isArray(item.tags) ? item.tags : [],
-              isNew: item.isNew,
-              isHot: item.isHot,
-              isFeatured: item.isFeatured,
-              source: slug
-            }));
+          const raw = unwrapApiResponse<BackendSearchItem[] | { websites?: BackendSearchItem[] }>(response.data, []);
+          const list = Array.isArray(raw) ? raw : (raw.websites || []);
+          if (Array.isArray(list)) {
+            return list.map(item => mapBackendSearchItem(item, slug));
           }
           return [];
         } catch (error) {
@@ -644,6 +524,173 @@ const SearchPage: React.FC = () => {
       setLoading(false);
     }
   }, []);
+
+  // 普通搜索 - 优化版本，支持名称、描述、标签多维度匹配
+  const performSearch = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      performDefaultSearch();
+      return;
+    }
+
+    setLoading(true);
+    setIsAiMode(false);
+    saveSearchHistory(query);
+
+    try {
+      const searchAllResults: SearchResult[] = [];
+      const queryLower = query.toLowerCase();
+      const queryWords = queryLower.split(/\s+/).filter(w => w.length > 0);
+
+      const searchPromises = PAGE_SLUGS.map(async (slug) => {
+        try {
+          const response = await api.get(`/pages/${slug}/search`, {
+            params: { q: query, limit: 100 }
+          });
+
+          const payload = unwrapSearchPayload(response.data);
+          if (Array.isArray(payload.results)) {
+            return payload.results.map(item => mapBackendSearchItem(item, slug));
+          }
+          return [];
+        } catch (error) {
+          return [];
+        }
+      });
+
+      const results = await Promise.all(searchPromises);
+      results.forEach(r => searchAllResults.push(...r));
+
+      // 去重
+      const uniqueResults = searchAllResults.filter((item, index, self) =>
+        index === self.findIndex(t => t.url === item.url)
+      );
+
+      // 计算相关性得分并排序
+      const scoredResults = uniqueResults.map(item => {
+        let score = 0;
+        const nameLower = item.name.toLowerCase();
+        const descLower = item.description.toLowerCase();
+        const tagsLower = item.tags.map(t => t.toLowerCase());
+
+        // 名称完全匹配 +100
+        if (nameLower === queryLower) score += 100;
+        // 名称开头匹配 +50
+        else if (nameLower.startsWith(queryLower)) score += 50;
+        // 名称包含完整关键词 +30
+        else if (nameLower.includes(queryLower)) score += 30;
+
+        // 每个查询词在名称中出现 +15
+        queryWords.forEach(word => {
+          if (nameLower.includes(word)) score += 15;
+        });
+
+        // 描述包含完整关键词 +10
+        if (descLower.includes(queryLower)) score += 10;
+
+        // 每个查询词在描述中出现 +5
+        queryWords.forEach(word => {
+          if (descLower.includes(word)) score += 5;
+        });
+
+        // 标签匹配 +20
+        tagsLower.forEach(tag => {
+          if (tag === queryLower) score += 20;
+          else if (tag.includes(queryLower) || queryLower.includes(tag)) score += 10;
+          queryWords.forEach(word => {
+            if (tag.includes(word)) score += 5;
+          });
+        });
+
+        // 热门/推荐/新增加分
+        if (item.isHot) score += 3;
+        if (item.isFeatured) score += 2;
+        if (item.isNew) score += 1;
+
+        return { ...item, _score: score };
+      });
+
+      // 按得分排序
+      scoredResults.sort((a, b) => b._score - a._score);
+
+      // 移除临时得分字段
+      const finalResults = scoredResults.map(({ _score, ...rest }) => rest);
+
+      setAllResults(finalResults);
+      setSearchResults(finalResults.slice(0, PAGE_SIZE));
+      setTotalResults(finalResults.length);
+      setHasMore(finalResults.length > PAGE_SIZE);
+      setCurrentPage(1);
+      generateRelatedKeywords(finalResults, query);
+    } catch (error) {
+      setAllResults([]);
+      setSearchResults([]);
+      setTotalResults(0);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+    }
+  }, [performDefaultSearch, saveSearchHistory, generateRelatedKeywords]);
+
+  // AI 智能搜索
+  const performAiSearch = useCallback(async (query: string) => {
+    if (!query.trim()) return;
+
+    setAiLoading(true);
+    setIsAiMode(true);
+    setShowThinking(true);
+    setAiThinkingStep(0);
+    setAiMessage('');
+    saveSearchHistory(query);
+
+    try {
+      // 使用公开的 AI 搜索接口
+      const response = await api.post('/ai-search', {
+        query,
+        limit: 100
+      });
+
+      setShowThinking(false);
+
+      const payload = unwrapSearchPayload(response.data);
+      if (Array.isArray(payload.results) && payload.results.length > 0) {
+        const results = payload.results.map(item => mapBackendSearchItem(item, 'ai', true));
+
+        setAllResults(results);
+        setSearchResults(results.slice(0, PAGE_SIZE));
+        setTotalResults(results.length);
+        setHasMore(results.length > PAGE_SIZE);
+        setCurrentPage(1);
+
+        // 显示 AI 的推荐理由
+        const modeText = payload.mode === 'ai' ? 'AI 智能推荐' : '关键词匹配';
+        const reasonText = payload.reason ? ` - ${payload.reason}` : '';
+        setAiMessage(`${modeText}找到 ${results.length} 个结果${reasonText}`);
+
+        generateRelatedKeywords(results, query);
+      } else {
+        setAllResults([]);
+        setSearchResults([]);
+        setTotalResults(0);
+        setHasMore(false);
+        setAiMessage('AI 未找到相关结果，请尝试其他描述');
+      }
+    } catch (error: unknown) {
+      debugLog.error('AI 搜索失败:', error);
+      setShowThinking(false);
+      setAiMessage('AI 搜索暂时不可用，已切换到普通搜索');
+      setIsAiMode(false);
+      performSearch(query);
+    } finally {
+      setAiLoading(false);
+    }
+  }, [performSearch, saveSearchHistory, generateRelatedKeywords]);
+
+  /**
+   * 预留 AI 搜索处理器引用，便于后续与侧边栏联动时复用。
+   */
+  useEffect(() => {
+    // no-op
+  }, [performAiSearch]);
 
   // 筛选后的结果
   const filteredResults = useMemo(() => {
@@ -682,7 +729,7 @@ const SearchPage: React.FC = () => {
     } else {
       performDefaultSearch();
     }
-  }, [location.search]);
+  }, [location.search, fetchTotalCount, performSearch, performDefaultSearch]);
 
   // 处理搜索 - 使用普通关键词搜索
   const handleSearch = useCallback((value: string) => {
@@ -728,23 +775,17 @@ const SearchPage: React.FC = () => {
 
   // 处理网站点击
   const handleWebsiteClick = (website: SearchResult) => {
-    setCurrentExitWebsite(website);
-    setIsExitModalVisible(true);
-  };
-
-  // 确认访问网站
-  const confirmExitVisit = () => {
-    if (currentExitWebsite) {
-      api.post(`/websites/${currentExitWebsite.id}/click`).catch(() => {});
-      window.open(currentExitWebsite.url, '_blank');
+    api.post(`/websites/${website.id}/click`).catch(() => {});
+    if (isDirectMode) {
+      window.open(website.url, '_blank', 'noopener,noreferrer');
+      return;
     }
-    setIsExitModalVisible(false);
-    setCurrentExitWebsite(null);
-  };
-
-  const hideExitModal = () => {
-    setIsExitModalVisible(false);
-    setCurrentExitWebsite(null);
+    const detailUrl = generateWebsiteUrl(permalinkConfig, { id: website.id, slug: website.slug });
+    if (detailPageNewWindow) {
+      window.open(detailUrl, '_blank');
+    } else {
+      navigate(detailUrl);
+    }
   };
 
   const isLoading = loading || aiLoading;
@@ -755,7 +796,7 @@ const SearchPage: React.FC = () => {
         pageType="search"
         searchValue={searchQuery}
         onSearchChange={handleSearchChange}
-        hotTags={hotTags}
+        hotTags={HOT_SEARCH_TAGS}
         onTagClick={handleTagClick}
         searchPlaceholder="搜索网站名称、描述、标签..."
         searchPageType="all"
@@ -925,33 +966,18 @@ const SearchPage: React.FC = () => {
         )}
       </div>
 
-      <WebsiteExitModal
-        visible={isExitModalVisible}
-        website={currentExitWebsite ? {
-          name: currentExitWebsite.name,
-          url: currentExitWebsite.url,
-          description: currentExitWebsite.description
-        } : null}
-        onConfirm={confirmExitVisit}
-        onClose={hideExitModal}
-        config={frontendConfig.exitModalConfig}
-      />
-      
       {/* AI 搜索侧边栏 */}
       <AISearchSidebar
         visible={showAiSidebar}
         onClose={() => setShowAiSidebar(false)}
-        onWebsiteClick={(website) => {
-          setCurrentExitWebsite({
-            id: website.id,
-            name: website.name,
-            description: website.description,
-            url: website.url,
-            iconUrl: website.iconUrl,
-            tags: [],
-          });
-          setIsExitModalVisible(true);
-        }}
+        onWebsiteClick={(website) => handleWebsiteClick({
+          id: website.id,
+          name: website.name,
+          description: website.description,
+          url: website.url,
+          iconUrl: website.iconUrl,
+          tags: [],
+        })}
       />
     </div>
   );

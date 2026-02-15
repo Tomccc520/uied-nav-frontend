@@ -9,6 +9,13 @@
  */
 
 import api from './api';
+import { unwrapApiResponse } from '../utils/apiResponse';
+import {
+  normalizeWebsiteClickMode,
+  normalizeHotRecommendationClickMode,
+} from '../utils/clickMode';
+import { debugLog } from '../utils/debugHelper';
+import { DEFAULT_NAV_SWITCH_ITEMS } from '../config/navModel';
 
 // ==================== 类型定义 ====================
 
@@ -52,15 +59,27 @@ export interface HomepageConfig {
   hotRecommendationsTitle: string;
   topAdEnabled: boolean;
   topAdCode: string;
+  homeCarouselEnabled: boolean;
+  homeCarouselSort: number;
+  homeRecommendationEnabled: boolean;
+  homeRecommendationSort: number;
+  navSwitchItems: Array<{
+    slug: string;
+    name: string;
+    icon: string;
+    visible: boolean;
+    sort: number;
+  }>;
 }
 
 // 页面配置
 export interface PageGlobalConfig {
-  websiteClickMode: 'detail' | 'direct' | 'directExternal';
+  websiteClickMode: 'detail' | 'direct';
   showDirectArrow: boolean;
   detailPageNewWindow: boolean;
   directArrowNewWindow: boolean;
   pageSize: number;
+  hotRecommendationClickMode: 'detail' | 'direct';
 }
 
 // 卡片样式配置
@@ -141,6 +160,18 @@ export interface PublicSettings {
   detailPage: DetailPageConfig;
 }
 
+interface PublicSettingsPayload {
+  siteInfo?: SiteInfo;
+  appearance?: AppearanceConfig;
+  homepage?: HomepageConfig;
+  pageGlobal?: PageGlobalConfig;
+  cardStyle?: CardStyleConfig;
+  sidebar?: SidebarConfig;
+  search?: SearchConfig;
+  exitModal?: ExitModalConfig;
+  detailPage?: DetailPageConfig;
+}
+
 // ==================== 默认配置 ====================
 
 export const DEFAULT_SITE_INFO: SiteInfo = {
@@ -180,6 +211,11 @@ export const DEFAULT_HOMEPAGE: HomepageConfig = {
   hotRecommendationsTitle: '热门推荐',
   topAdEnabled: false,
   topAdCode: '',
+  homeCarouselEnabled: true,
+  homeCarouselSort: 10,
+  homeRecommendationEnabled: true,
+  homeRecommendationSort: 20,
+  navSwitchItems: [...DEFAULT_NAV_SWITCH_ITEMS],
 };
 
 export const DEFAULT_PAGE_GLOBAL: PageGlobalConfig = {
@@ -188,6 +224,7 @@ export const DEFAULT_PAGE_GLOBAL: PageGlobalConfig = {
   detailPageNewWindow: false,
   directArrowNewWindow: true,
   pageSize: 20,
+  hotRecommendationClickMode: 'detail',
 };
 
 export const DEFAULT_CARD_STYLE: CardStyleConfig = {
@@ -254,14 +291,87 @@ export const DEFAULT_DETAIL_PAGE: DetailPageConfig = {
 
 export const publicSettingService = {
   /**
+   * 统一解包后端响应
+   * 兼容 `{ code, data, message }` 与直接返回数据两种结构
+   */
+  unwrapResponseData: <T>(payload: unknown, fallback: T): T => {
+    return unwrapApiResponse<T>(payload, fallback);
+  },
+
+  /**
+   * 规范化分类区域点击模式
+   * 兼容历史值：directExternal -> direct
+   */
+  normalizeWebsiteClickMode: (mode: unknown): 'detail' | 'direct' => {
+    return normalizeWebsiteClickMode(mode);
+  },
+
+  /**
+   * 规范化热门推荐点击模式
+   * 兼容历史值：modal -> detail
+   */
+  normalizeHotRecommendationClickMode: (mode: unknown): 'detail' | 'direct' => {
+    return normalizeHotRecommendationClickMode(mode);
+  },
+
+  /**
+   * 规范化页面全局配置，确保分类区域与热门推荐配置语义一致且独立
+   */
+  normalizePageGlobalConfig: (config: unknown): PageGlobalConfig => {
+    const mergedConfig = { ...DEFAULT_PAGE_GLOBAL, ...((config as Partial<PageGlobalConfig>) || {}) };
+    return {
+      ...mergedConfig,
+      websiteClickMode: publicSettingService.normalizeWebsiteClickMode(mergedConfig.websiteClickMode),
+      hotRecommendationClickMode: publicSettingService.normalizeHotRecommendationClickMode(mergedConfig.hotRecommendationClickMode),
+    };
+  },
+
+  /**
+   * 规范化首页配置，确保轮播/推荐区和导航切换配置结构稳定
+   */
+  normalizeHomepageConfig: (config: unknown): HomepageConfig => {
+    const merged = { ...DEFAULT_HOMEPAGE, ...((config as Partial<HomepageConfig>) || {}) };
+    const normalizedItems = Array.isArray(merged.navSwitchItems)
+      ? merged.navSwitchItems
+      : DEFAULT_HOMEPAGE.navSwitchItems;
+    return {
+      ...merged,
+      homeCarouselEnabled: merged.homeCarouselEnabled !== false,
+      homeRecommendationEnabled: merged.homeRecommendationEnabled !== false,
+      homeCarouselSort: Number.isFinite(Number(merged.homeCarouselSort)) ? Number(merged.homeCarouselSort) : DEFAULT_HOMEPAGE.homeCarouselSort,
+      homeRecommendationSort: Number.isFinite(Number(merged.homeRecommendationSort)) ? Number(merged.homeRecommendationSort) : DEFAULT_HOMEPAGE.homeRecommendationSort,
+      navSwitchItems: normalizedItems
+        .map((item, index) => ({
+          slug: String(item?.slug || DEFAULT_HOMEPAGE.navSwitchItems[index % DEFAULT_HOMEPAGE.navSwitchItems.length].slug),
+          name: String(item?.name || DEFAULT_HOMEPAGE.navSwitchItems[index % DEFAULT_HOMEPAGE.navSwitchItems.length].name),
+          icon: String(item?.icon || DEFAULT_HOMEPAGE.navSwitchItems[index % DEFAULT_HOMEPAGE.navSwitchItems.length].icon),
+          visible: item?.visible !== false,
+          sort: Number.isFinite(Number(item?.sort)) ? Number(item.sort) : (index + 1) * 10,
+        }))
+        .sort((a, b) => a.sort - b.sort),
+    };
+  },
+
+  /**
    * 获取所有公开设置
    */
   getPublicSettings: async (): Promise<PublicSettings> => {
     try {
       const response = await api.get('/uied/setting/public');
-      return response.data;
+      const data = publicSettingService.unwrapResponseData<PublicSettingsPayload>(response.data, {});
+      return {
+        siteInfo: data.siteInfo || DEFAULT_SITE_INFO,
+        appearance: data.appearance || DEFAULT_APPEARANCE,
+        homepage: publicSettingService.normalizeHomepageConfig(data.homepage),
+        pageGlobal: publicSettingService.normalizePageGlobalConfig(data.pageGlobal),
+        cardStyle: data.cardStyle || DEFAULT_CARD_STYLE,
+        sidebar: data.sidebar || DEFAULT_SIDEBAR,
+        search: data.search || DEFAULT_SEARCH,
+        exitModal: data.exitModal || DEFAULT_EXIT_MODAL,
+        detailPage: data.detailPage || DEFAULT_DETAIL_PAGE,
+      };
     } catch (error) {
-      console.error('获取公开设置失败，使用默认配置:', error);
+      debugLog.error('获取公开设置失败，使用默认配置:', error);
       // 返回默认配置
       return {
         siteInfo: DEFAULT_SITE_INFO,
@@ -283,9 +393,9 @@ export const publicSettingService = {
   getSiteInfo: async (): Promise<SiteInfo> => {
     try {
       const response = await api.get('/uied/setting/siteInfo');
-      return response.data;
+      return publicSettingService.unwrapResponseData<SiteInfo>(response.data, DEFAULT_SITE_INFO);
     } catch (error) {
-      console.error('获取站点信息失败，使用默认配置:', error);
+      debugLog.error('获取站点信息失败，使用默认配置:', error);
       return DEFAULT_SITE_INFO;
     }
   },
@@ -298,9 +408,9 @@ export const publicSettingService = {
       const response = await api.get('/uied/setting/get', {
         params: { key: 'appearanceConfig' }
       });
-      return response.data || DEFAULT_APPEARANCE;
+      return publicSettingService.unwrapResponseData<AppearanceConfig>(response.data, DEFAULT_APPEARANCE);
     } catch (error) {
-      console.error('获取外观配置失败，使用默认配置:', error);
+      debugLog.error('获取外观配置失败，使用默认配置:', error);
       return DEFAULT_APPEARANCE;
     }
   },
@@ -313,9 +423,10 @@ export const publicSettingService = {
       const response = await api.get('/uied/setting/get', {
         params: { key: 'homepageConfig' }
       });
-      return response.data || DEFAULT_HOMEPAGE;
+      const config = publicSettingService.unwrapResponseData<HomepageConfig>(response.data, DEFAULT_HOMEPAGE);
+      return publicSettingService.normalizeHomepageConfig(config);
     } catch (error) {
-      console.error('获取首页配置失败，使用默认配置:', error);
+      debugLog.error('获取首页配置失败，使用默认配置:', error);
       return DEFAULT_HOMEPAGE;
     }
   },
@@ -328,9 +439,10 @@ export const publicSettingService = {
       const response = await api.get('/uied/setting/get', {
         params: { key: 'pageGlobalConfig' }
       });
-      return response.data || DEFAULT_PAGE_GLOBAL;
+      const config = publicSettingService.unwrapResponseData<Partial<PageGlobalConfig>>(response.data, DEFAULT_PAGE_GLOBAL);
+      return publicSettingService.normalizePageGlobalConfig(config);
     } catch (error) {
-      console.error('获取页面配置失败，使用默认配置:', error);
+      debugLog.error('获取页面配置失败，使用默认配置:', error);
       return DEFAULT_PAGE_GLOBAL;
     }
   },
@@ -343,9 +455,9 @@ export const publicSettingService = {
       const response = await api.get('/uied/setting/get', {
         params: { key: 'cardStyleConfig' }
       });
-      return response.data || DEFAULT_CARD_STYLE;
+      return publicSettingService.unwrapResponseData<CardStyleConfig>(response.data, DEFAULT_CARD_STYLE);
     } catch (error) {
-      console.error('获取卡片样式配置失败，使用默认配置:', error);
+      debugLog.error('获取卡片样式配置失败，使用默认配置:', error);
       return DEFAULT_CARD_STYLE;
     }
   },
@@ -358,9 +470,9 @@ export const publicSettingService = {
       const response = await api.get('/uied/setting/get', {
         params: { key: 'sidebarConfig' }
       });
-      return response.data || DEFAULT_SIDEBAR;
+      return publicSettingService.unwrapResponseData<SidebarConfig>(response.data, DEFAULT_SIDEBAR);
     } catch (error) {
-      console.error('获取侧边栏配置失败，使用默认配置:', error);
+      debugLog.error('获取侧边栏配置失败，使用默认配置:', error);
       return DEFAULT_SIDEBAR;
     }
   },
@@ -373,9 +485,9 @@ export const publicSettingService = {
       const response = await api.get('/uied/setting/get', {
         params: { key: 'searchConfig' }
       });
-      return response.data || DEFAULT_SEARCH;
+      return publicSettingService.unwrapResponseData<SearchConfig>(response.data, DEFAULT_SEARCH);
     } catch (error) {
-      console.error('获取搜索配置失败，使用默认配置:', error);
+      debugLog.error('获取搜索配置失败，使用默认配置:', error);
       return DEFAULT_SEARCH;
     }
   },
@@ -388,9 +500,9 @@ export const publicSettingService = {
       const response = await api.get('/uied/setting/get', {
         params: { key: 'exitModalConfig' }
       });
-      return response.data || DEFAULT_EXIT_MODAL;
+      return publicSettingService.unwrapResponseData<ExitModalConfig>(response.data, DEFAULT_EXIT_MODAL);
     } catch (error) {
-      console.error('获取跳转提醒配置失败，使用默认配置:', error);
+      debugLog.error('获取跳转提醒配置失败，使用默认配置:', error);
       return DEFAULT_EXIT_MODAL;
     }
   },
@@ -403,13 +515,12 @@ export const publicSettingService = {
       const response = await api.get('/uied/setting/get', {
         params: { key: 'detailPageConfig' }
       });
-      return response.data || DEFAULT_DETAIL_PAGE;
+      return publicSettingService.unwrapResponseData<DetailPageConfig>(response.data, DEFAULT_DETAIL_PAGE);
     } catch (error) {
-      console.error('获取详情页配置失败，使用默认配置:', error);
+      debugLog.error('获取详情页配置失败，使用默认配置:', error);
       return DEFAULT_DETAIL_PAGE;
     }
   },
 };
 
 export default publicSettingService;
-

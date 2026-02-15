@@ -7,34 +7,31 @@
  * @version 1.5.0
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Button, Chip, DesignIcons } from '../UI';
-import { useNavigate } from 'react-router-dom'; // 导入useNavigate钩子
+import { useLocation, useNavigate } from 'react-router-dom'; // 导入路由钩子
 import { useSiteInfo } from '../../hooks/useSiteInfo'; // 导入站点信息Hook
 import { usePages } from '../../hooks/usePages'; // 导入页面列表Hook
+import { useFrontendConfig } from '../../hooks/useFrontendConfig';
+import { unwrapApiList } from '../../utils/apiResponse';
+import { IconComponent } from '../../types/icon';
+import {
+  DEFAULT_NAV_SWITCH_ITEMS,
+  getNavSwitchDescription,
+  isFixedDynamicNavSlug,
+} from '../../config/navModel';
 import './Navbar.css';
 import './Navbar.mobile.css'; // 引入独立的移动端样式
-
-/**
- * 导航菜单类型枚举
- */
-enum NavMenuType {
-  DESIGN = 'design',
-  AI = 'ai',
-  UIUX = 'uiux',
-  THREE_D = '3d',
-  ECOMMERCE = 'ecommerce',
-  INTERIOR = 'interior',
-  FONT = 'font'
-}
 
 /**
  * 导航切换选项接口
  */
 interface NavSwitchItem {
-  type: NavMenuType;
+  type: string;
   name: string;
-  icon: React.ComponentType<any>;
+  icon: IconComponent;
+  iconKey: string;
+  description: string;
 }
 
 /**
@@ -73,6 +70,18 @@ interface MenuItem {
 interface NavbarConfig {
   logo: string;
   menuItems: MenuItem[];
+}
+
+interface ApiNavMenu {
+  id?: string | number;
+  text?: string;
+  link?: string | null;
+  external?: boolean;
+  label?: string | null;
+  labelType?: 'info' | 'shop' | 'warning' | 'success' | null;
+  order?: number;
+  visible?: boolean;
+  children?: ApiNavMenu[];
 }
 
 /**
@@ -221,6 +230,60 @@ const IconMap: { [key: string]: React.FC<{ size?: number; className?: string }> 
 };
 
 /**
+ * 导航切换图标映射表。
+ */
+const NAV_SWITCH_ICON_MAPPING: Record<string, IconComponent> = {
+  'Figma': DesignIcons.Figma,
+  'AI': DesignIcons.AI,
+  'Design': DesignIcons.Design,
+  '3D': DesignIcons['3D'],
+  'Ecommerce': DesignIcons.Ecommerce,
+  'Font': DesignIcons.Font,
+  'Tool': DesignIcons.Tool,
+  'Video': DesignIcons.Video,
+  'Photo': DesignIcons.Photo,
+  'Code': DesignIcons.Code,
+  'Image': DesignIcons.Image,
+  'Tutorial': DesignIcons.Tutorial,
+  'UI': DesignIcons.UI,
+  'Inspiration': DesignIcons.Inspiration,
+  'Material': DesignIcons.Material,
+  'Color': DesignIcons.Color,
+  'Audio': DesignIcons.Audio,
+  'Web': DesignIcons.Web,
+  'Mobile': DesignIcons.Mobile,
+  'Animation': DesignIcons.Animation,
+  'Community': DesignIcons.Community,
+  'Specs': DesignIcons.Specs,
+  'Data': DesignIcons.Data,
+  'Blog': DesignIcons.Blog,
+  'Template': DesignIcons.Template,
+  'Graphic': DesignIcons.Graphic,
+  'Icons': DesignIcons.Icons,
+  'Kit': DesignIcons.Kit,
+  'Prototype': DesignIcons.Prototype,
+  'Brand': DesignIcons.Brand,
+  'Plugin': DesignIcons.Plugin,
+  'Developer': DesignIcons.Developer,
+  'Learn': DesignIcons.Learn,
+  'Art': DesignIcons.Art,
+  'Print': DesignIcons.Print,
+  'Analytics': DesignIcons.Analytics,
+  'figma': DesignIcons.Figma,
+  'ai': DesignIcons.AI,
+  'design': DesignIcons.Design,
+  '3d': DesignIcons['3D'],
+  'ecommerce': DesignIcons.Ecommerce,
+  'font': DesignIcons.Font,
+  'tool': DesignIcons.Tool,
+  'video': DesignIcons.Video,
+  'photo': DesignIcons.Photo,
+  'code': DesignIcons.Code,
+  'image': DesignIcons.Image,
+  'interior': DesignIcons.Design,
+};
+
+/**
  * 顶部导航栏组件
  * 负责站点顶部的主要导航，支持后台配置和二级下拉菜单
  * 
@@ -229,136 +292,109 @@ const IconMap: { [key: string]: React.FC<{ size?: number; className?: string }> 
  */
 const Navbar = () => {
   const navigate = useNavigate(); // 使用React Router的导航钩子
+  const location = useLocation();
   const { siteInfo } = useSiteInfo(); // 获取站点信息
   const { pages: apiPages } = usePages(); // 获取页面列表
+  const { config: frontendConfig } = useFrontendConfig();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [visible, setVisible] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [navConfig, setNavConfig] = useState<NavbarConfig | null>(null);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null); // 激活的二级菜单
-  const [currentNavType, setCurrentNavType] = useState<NavMenuType>(NavMenuType.UIUX); // 当前选中的导航类型，默认为UIUX
+  const [currentNavType, setCurrentNavType] = useState<string>('uiux'); // 当前选中的导航类型，默认为UIUX
 
-  // 根据当前路径设置导航类型
-  useEffect(() => {
-    const path = window.location.pathname;
-    if (path.includes('/ai')) {
-      setCurrentNavType(NavMenuType.AI);
-    } else if (path.includes('/design')) {
-      setCurrentNavType(NavMenuType.DESIGN);
-    } else if (path.includes('/3d')) {
-      setCurrentNavType(NavMenuType.THREE_D);
-    } else if (path.includes('/ecommerce')) {
-      setCurrentNavType(NavMenuType.ECOMMERCE);
-    } else if (path.includes('/interior')) {
-      setCurrentNavType(NavMenuType.INTERIOR);
-    } else if (path.includes('/font')) {
-      setCurrentNavType(NavMenuType.FONT);
-    } else {
-      // 根路径 "/" 和 "/uiux" 都显示为UIUX导航
-      setCurrentNavType(NavMenuType.UIUX);
+  /**
+   * 统一组装导航切换项，优先使用后台 homepageConfig.navSwitchItems。
+   */
+  const navSwitchItems: NavSwitchItem[] = useMemo(() => {
+    const homepageItems = frontendConfig?.homepageConfig?.navSwitchItems;
+    const normalizedHomepageItems = Array.isArray(homepageItems)
+      ? homepageItems
+          .filter((item) => item?.visible !== false && item?.slug)
+          .sort((a, b) => Number(a?.sort || 0) - Number(b?.sort || 0))
+      : [];
+
+    if (normalizedHomepageItems.length > 0) {
+      return normalizedHomepageItems.map((item) => ({
+        type: String(item.slug).toLowerCase(),
+        name: String(item.name || item.slug),
+        iconKey: String(item.icon || 'Design'),
+        icon: NAV_SWITCH_ICON_MAPPING[item.icon || 'Design'] || DesignIcons.Design,
+        description: getNavSwitchDescription(String(item.slug).toLowerCase()),
+      }));
     }
-  }, []);
 
-  // 导航切换选项配置 - 支持从API动态获取
-  // 图标映射表 - 支持所有 DesignIcons 图标
-  const iconMapping: Record<string, React.ComponentType<any>> = {
-    'Figma': DesignIcons.Figma,
-    'AI': DesignIcons.AI,
-    'Design': DesignIcons.Design,
-    '3D': DesignIcons['3D'],
-    'Ecommerce': DesignIcons.Ecommerce,
-    'Font': DesignIcons.Font,
-    'Tool': DesignIcons.Tool,
-    'Video': DesignIcons.Video,
-    'Photo': DesignIcons.Photo,
-    'Code': DesignIcons.Code,
-    'Image': DesignIcons.Image,
-    'Tutorial': DesignIcons.Tutorial,
-    'UI': DesignIcons.UI,
-    'Inspiration': DesignIcons.Inspiration,
-    'Material': DesignIcons.Material,
-    'Color': DesignIcons.Color,
-    'Audio': DesignIcons.Audio,
-    'Web': DesignIcons.Web,
-    'Mobile': DesignIcons.Mobile,
-    'Animation': DesignIcons.Animation,
-    'Community': DesignIcons.Community,
-    'Specs': DesignIcons.Specs,
-    'Data': DesignIcons.Data,
-    'Blog': DesignIcons.Blog,
-    'Template': DesignIcons.Template,
-    'Graphic': DesignIcons.Graphic,
-    'Icons': DesignIcons.Icons,
-    'Kit': DesignIcons.Kit,
-    'Prototype': DesignIcons.Prototype,
-    'Brand': DesignIcons.Brand,
-    'Plugin': DesignIcons.Plugin,
-    'Developer': DesignIcons.Developer,
-    'Learn': DesignIcons.Learn,
-    'Art': DesignIcons.Art,
-    'Print': DesignIcons.Print,
-    'Analytics': DesignIcons.Analytics,
-    // 小写版本兼容
-    'figma': DesignIcons.Figma,
-    'ai': DesignIcons.AI,
-    'design': DesignIcons.Design,
-    '3d': DesignIcons['3D'],
-    'ecommerce': DesignIcons.Ecommerce,
-    'font': DesignIcons.Font,
-    'tool': DesignIcons.Tool,
-    'video': DesignIcons.Video,
-    'photo': DesignIcons.Photo,
-    'code': DesignIcons.Code,
-    'image': DesignIcons.Image,
-    'interior': DesignIcons.Design, // 室内设计使用 Design 图标
-  };
+    if (apiPages.length > 0) {
+      return apiPages.map((page) => {
+        const slug = String(page.slug || '').toLowerCase();
+        return {
+          type: slug,
+          name: page.name,
+          iconKey: String(page.icon || 'Design'),
+          icon: NAV_SWITCH_ICON_MAPPING[page.icon || 'Design'] || DesignIcons.Design,
+          description: getNavSwitchDescription(slug),
+        };
+      });
+    }
 
-  // 固定页面的slug到路由映射
-  const fixedPageRoutes: Record<string, string> = {
-    'uiux': '/',
-    'ai': '/ai',
-    'design': '/design',
-    '3d': '/3d',
-    'ecommerce': '/ecommerce',
-    'interior': '/interior',
-    'font': '/font',
-  };
+    return DEFAULT_NAV_SWITCH_ITEMS.map((item) => ({
+      type: item.slug,
+      name: item.name,
+      iconKey: item.icon,
+      icon: NAV_SWITCH_ICON_MAPPING[item.icon] || DesignIcons.Design,
+      description: getNavSwitchDescription(item.slug),
+    }));
+  }, [apiPages, frontendConfig?.homepageConfig?.navSwitchItems]);
 
-  // 从API数据生成导航切换选项
-  const navSwitchItems: NavSwitchItem[] = apiPages.length > 0 
-    ? apiPages.map(page => ({
-        type: page.slug as NavMenuType,
-        name: page.name,
-        icon: iconMapping[page.icon || 'Design'] || DesignIcons.Design,
-      }))
-    : [
-        // 默认配置（API加载前或失败时使用）
-        { type: NavMenuType.UIUX, name: 'UI导航', icon: DesignIcons.Figma },
-        { type: NavMenuType.AI, name: 'AI导航', icon: DesignIcons.AI },
-        { type: NavMenuType.DESIGN, name: '平面导航', icon: DesignIcons.Design },
-        { type: NavMenuType.THREE_D, name: '三维导航', icon: DesignIcons['3D'] },
-        { type: NavMenuType.ECOMMERCE, name: '电商导航', icon: DesignIcons.Ecommerce },
-        { type: NavMenuType.INTERIOR, name: '室内导航', icon: DesignIcons.Design },
-        { type: NavMenuType.FONT, name: '字体导航', icon: DesignIcons.Font },
-      ];
+  const currentNavItem = useMemo(() => {
+    return navSwitchItems.find((item) => item.type === currentNavType) || navSwitchItems[0];
+  }, [navSwitchItems, currentNavType]);
 
-  // 切换导航类型
-  const handleNavSwitch = (navType: NavMenuType) => {
-    // 如果已经是当前类型，不做任何操作
-    if (navType === currentNavType) {
+  /**
+   * 根据当前路由同步导航高亮。
+   */
+  useEffect(() => {
+    if (navSwitchItems.length === 0) {
       return;
     }
-    
-    setCurrentNavType(navType);
-    
-    // 检查是否是固定页面
-    const fixedRoute = fixedPageRoutes[navType];
-    if (fixedRoute) {
-      navigate(fixedRoute);
+
+    const pathname = location.pathname.toLowerCase();
+    let slug = '';
+    if (pathname === '/') {
+      slug = 'uiux';
+    } else if (pathname.startsWith('/p/')) {
+      slug = pathname.replace('/p/', '').split('/')[0];
     } else {
-      // 动态页面使用 /p/ 前缀
-      navigate(`/p/${navType}`);
+      slug = pathname.replace(/^\//, '').split('/')[0];
     }
+
+    if (navSwitchItems.some((item) => item.type === slug)) {
+      setCurrentNavType(slug);
+      return;
+    }
+
+    if (pathname === '/') {
+      setCurrentNavType(navSwitchItems[0].type);
+    }
+  }, [location.pathname, navSwitchItems]);
+
+  /**
+   * 切换导航类型并跳转到对应页面。
+   */
+  const handleNavSwitch = (navType: string) => {
+    const normalizedType = String(navType || '').toLowerCase();
+    if (!normalizedType) return;
+
+    setCurrentNavType(normalizedType);
+    if (normalizedType === 'uiux') {
+      navigate('/');
+      return;
+    }
+    if (isFixedDynamicNavSlug(normalizedType)) {
+      navigate(`/${normalizedType}`);
+      return;
+    }
+    navigate(`/p/${normalizedType}`);
   };
 
   // 检测屏幕尺寸
@@ -445,32 +481,38 @@ const Navbar = () => {
 
   // 加载导航配置（从API获取）
   useEffect(() => {
+    /**
+     * 加载页头菜单配置并统一解包后端响应结构。
+     */
     const initNavbarConfig = async () => {
       try {
         // 从API获取导航菜单 - 使用环境变量配置的API地址
         const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8002/api';
         const response = await fetch(`${apiBaseUrl}/settings/nav-menus`);
-        const apiMenus = await response.json();
+        const payload = await response.json();
+        const apiMenus = unwrapApiList<ApiNavMenu>(payload);
         
         // 转换API数据格式为组件需要的格式
         const menuItems: MenuItem[] = apiMenus
-          .filter((menu: any) => menu.visible)
-          .sort((a: any, b: any) => a.order - b.order)
-          .map((menu: any) => ({
-            id: menu.id,
-            text: menu.text,
+          .filter((menu) => menu.visible !== false)
+          .sort((a, b) => Number(a.order || 0) - Number(b.order || 0))
+          .map((menu) => ({
+            id: menu.id ? String(menu.id) : undefined,
+            text: String(menu.text || ''),
             link: menu.link || undefined,
-            external: menu.external,
+            external: menu.external === true,
             label: menu.label || undefined,
-            labelType: menu.labelType as 'info' | 'shop' | 'warning' | 'success' | undefined,
-            order: menu.order,
-            visible: menu.visible,
-            hasSubmenu: menu.children && menu.children.length > 0,
-            submenu: menu.children?.filter((child: any) => child.visible).map((child: any) => ({
-              id: child.id,
-              text: child.text,
-              link: child.link,
-              external: child.external,
+            labelType: menu.labelType || undefined,
+            order: Number(menu.order || 0),
+            visible: menu.visible !== false,
+            hasSubmenu: Array.isArray(menu.children) && menu.children.length > 0,
+            submenu: (Array.isArray(menu.children) ? menu.children : [])
+              .filter((child) => child.visible !== false)
+              .map((child) => ({
+              id: child.id ? String(child.id) : '',
+              text: String(child.text || ''),
+              link: String(child.link || ''),
+              external: child.external === true,
             }))
           }));
 
@@ -506,12 +548,6 @@ const Navbar = () => {
   };
 
   const handleMenu = (event?: React.MouseEvent<HTMLButtonElement>) => {
-    console.log('移动端菜单按钮被点击', {
-      navConfig,
-      visibleMenuItems: getVisibleMenuItems(),
-      anchorEl,
-      isMobile
-    }); // 详细调试日志
     if (event) {
       setAnchorEl(event.currentTarget);
     } else {
@@ -525,7 +561,6 @@ const Navbar = () => {
   };
 
   const handleNavItemClick = (link: string, external: boolean) => {
-    console.log('点击菜单项:', link, external); // 调试信息
     if (external) {
       window.open(link, '_blank', 'noopener,noreferrer');
     } else {
@@ -585,18 +620,18 @@ const Navbar = () => {
           <div className="nav-switch-container">
             <button 
               className="nav-switch-trigger"
-              onClick={(e) => setActiveSubmenu(activeSubmenu === 'nav-switch' ? null : 'nav-switch')}
+              onClick={() => setActiveSubmenu(activeSubmenu === 'nav-switch' ? null : 'nav-switch')}
               aria-expanded={activeSubmenu === 'nav-switch'}
               aria-controls="nav-switch-dropdown"
             >
               <div className="nav-switch-current">
-                {navSwitchItems.find(item => item.type === currentNavType) && (
+                {currentNavItem && (
                   <>
                     <div className="nav-switch-icon">
-                      {React.createElement(navSwitchItems.find(item => item.type === currentNavType)!.icon, { size: 16 })}
+                      {React.createElement(currentNavItem.icon, { size: 16 })}
                     </div>
                     <span className="nav-switch-name">
-                      {navSwitchItems.find(item => item.type === currentNavType)!.name}
+                      {currentNavItem.name}
                     </span>
                     {/* 显示导航类型标签 */}
                     <div className="nav-switch-type-badge" data-type={currentNavType}>
@@ -632,22 +667,14 @@ const Navbar = () => {
                         handleNavSwitch(item.type);
                         setActiveSubmenu(null);
                       }}
-                      aria-selected={currentNavType === item.type}
+                      aria-pressed={currentNavType === item.type}
                     >
                       <div className="nav-switch-option-icon">
                         <IconComponent size={16} />
                       </div>
                       <div className="nav-switch-option-content">
                         <div className="nav-switch-option-name">{item.name}</div>
-                        <div className="nav-switch-option-desc">
-                          {item.type === NavMenuType.DESIGN ? '平面设计资源导航' : 
-                           item.type === NavMenuType.AI ? 'AI工具和资源导航' : 
-                           item.type === NavMenuType.UIUX ? 'UI/UX设计资源导航' :
-                           item.type === NavMenuType.THREE_D ? '3D设计工具导航' :
-                           item.type === NavMenuType.ECOMMERCE ? '电商设计工具导航' :
-                           item.type === NavMenuType.INTERIOR ? '室内设计工具导航' :
-                           item.type === NavMenuType.FONT ? '字体设计资源导航' : '设计资源导航'}
-                        </div>
+                        <div className="nav-switch-option-desc">{item.description}</div>
                       </div>
                       {/* 为每个选项显示类型标签 */}
                       <div className="nav-switch-option-badge" data-type={item.type}>

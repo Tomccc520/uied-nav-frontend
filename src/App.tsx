@@ -21,19 +21,13 @@ import TagPage from './pages/Tag';
 import SitePage from './pages/Site';
 import SearchPage from './pages/Search';
 import ProfilePage from './pages/Profile';
-import AIPage from './pages/AI';
-import UIUXPage from './pages/UIUX';
-import DesignPage from './pages/Design';
-import ThreeDPage from './pages/3D';
-import EcommercePage from './pages/Ecommerce';
-import InteriorPage from './pages/Interior';
-import FontPage from './pages/Font';
 import SubmitPage from './pages/Submit';
 import ChangelogPage from './pages/Changelog';
 import NotFoundPage from './pages/NotFound';
 import WebsiteDetail from './pages/WebsiteDetail';
 import Layout from './components/layout/Layout';
 import DynamicPage from './components/DynamicPage';
+import { FIXED_DYNAMIC_ROUTES } from './config/navModel';
 
 // @pro-feature-start: articles
 import { ArticleList, ArticleDetail } from './pages/Articles';
@@ -46,22 +40,28 @@ const DynamicPageRoute: React.FC = () => {
   return <DynamicPage slug={slug || ''} />;
 };
 
+/**
+ * 固定导航 slug 的动态页面路由组件。
+ */
+const FixedDynamicPageRoute: React.FC<{ slug: string }> = ({ slug }) => {
+  return <DynamicPage slug={slug} />;
+};
+
 function App() {
   return (
     <SiteProvider>
       <Router>
         <Layout>
           <Routes>
-            {/* 固定页面路由 - 使用静态数据的页面 */}
-            <Route path="/" element={<UIUXPage />} />
+            {/* 固定页面路由 - 统一走动态页模型 */}
+            {FIXED_DYNAMIC_ROUTES.map((routeItem) => (
+              <Route
+                key={`fixed-dynamic-${routeItem.path}-${routeItem.slug}`}
+                path={routeItem.path}
+                element={<FixedDynamicPageRoute slug={routeItem.slug} />}
+              />
+            ))}
             <Route path="/home" element={<HomePage />} />
-            <Route path="/ai" element={<AIPage />} />
-            <Route path="/uiux" element={<UIUXPage />} />
-            <Route path="/design" element={<DesignPage />} />
-            <Route path="/3d" element={<ThreeDPage />} />
-            <Route path="/ecommerce" element={<EcommercePage />} />
-            <Route path="/interior" element={<InteriorPage />} />
-            <Route path="/font" element={<FontPage />} />
             <Route path="/category" element={<CategoryPage />} />
             <Route path="/category/:slug" element={<CategoryPage />} />
             <Route path="/tag" element={<TagPage />} />
