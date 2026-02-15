@@ -14,6 +14,7 @@ import { useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 import SEO from '../../components/SEO';
 import ArticleCard from './ArticleCard';
+import { unwrapApiList, unwrapApiResponse } from '../../utils/apiResponse';
 import './ArticleList.css';
 
 /** 文章标签 */
@@ -51,6 +52,14 @@ interface ArticleListProps {
   pageTitle?: string;
 }
 
+interface ArticleListPayload {
+  lists?: Article[];
+  total?: number;
+  page?: number;
+  pageSize?: number;
+  totalPages?: number;
+}
+
 /**
  * 文章列表页组件
  */
@@ -70,8 +79,27 @@ const ArticleList: React.FC<ArticleListProps> = ({ pageTitle = '文章' }) => {
   const currentTag = searchParams.get('tag') || '';
 
   /**
+   * 统一解析文章列表响应，兼容数组直出与分页对象。
+   */
+  const parseArticleListResponse = useCallback((payload: unknown) => {
+    const unwrapped = unwrapApiResponse<Article[] | ArticleListPayload>(payload as ArticleListPayload, []);
+    if (Array.isArray(unwrapped)) {
+      return {
+        lists: unwrapped,
+        total: unwrapped.length,
+        totalPages: 1,
+      };
+    }
+
+    const lists = Array.isArray(unwrapped?.lists) ? unwrapped.lists : [];
+    const total = Number(unwrapped?.total ?? lists.length) || 0;
+    const fallbackTotalPages = Math.ceil(total / 12) || 1;
+    const totalPages = Number(unwrapped?.totalPages ?? fallbackTotalPages) || 1;
+    return { lists, total, totalPages };
+  }, []);
+
+  /**
    * 获取文章列表
-   * 后端 publicList 返回格式: { success, data: Article[], total, page, pageSize, totalPages }
    */
   const fetchArticles = useCallback(async (pageNum: number = 1) => {
     try {
@@ -87,30 +115,24 @@ const ArticleList: React.FC<ArticleListProps> = ({ pageTitle = '文章' }) => {
       if (currentTag) params.tag = currentTag;
 
       const response = await api.get('/api/articles', { params });
-
-      if (response.data?.success) {
-        const data = response.data.data ?? [];
-        setArticles(data);
-        setTotal(response.data.total ?? 0);
-        setTotalPages(response.data.totalPages ?? 1);
-        setPage(pageNum);
-      } else {
-        setArticles([]);
-        setTotal(0);
-        setTotalPages(1);
-      }
-    } catch (err: any) {
+      const normalized = parseArticleListResponse(response.data);
+      setArticles(normalized.lists);
+      setTotal(normalized.total);
+      setTotalPages(normalized.totalPages);
+      setPage(pageNum);
+    } catch (err: unknown) {
       console.error('获取文章列表失败:', err);
       setError('获取文章列表失败');
+      setArticles([]);
+      setTotal(0);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
-  }, [currentCategory, currentTag]);
+  }, [currentCategory, currentTag, parseArticleListResponse]);
 
   /**
    * 获取分类和标签元数据
-   * 分类接口: GET /api/articles/meta/categories → { success, data: string[] }
-   * 标签接口: GET /api/articles/meta/tags → { success, data: TagMeta[] }
    */
   const fetchMeta = useCallback(async () => {
     try {
@@ -118,13 +140,8 @@ const ArticleList: React.FC<ArticleListProps> = ({ pageTitle = '文章' }) => {
         api.get('/api/articles/meta/categories'),
         api.get('/api/articles/meta/tags'),
       ]);
-
-      if (categoriesRes.data?.success) {
-        setCategories(categoriesRes.data.data ?? []);
-      }
-      if (tagsRes.data?.success) {
-        setTags(tagsRes.data.data ?? []);
-      }
+      setCategories(unwrapApiList<string>(categoriesRes.data));
+      setTags(unwrapApiList<TagMeta>(tagsRes.data));
     } catch (err) {
       console.error('获取分类标签失败:', err);
     }

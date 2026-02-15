@@ -171,7 +171,7 @@ export const isRetryableError = (error: unknown): boolean => {
   ].includes(parsed.code);
 };
 
-export default {
+const errorHandler = {
   parseApiError,
   getErrorMessage,
   isNetworkError,
@@ -179,3 +179,5 @@ export default {
   isRetryableError,
   ApiErrorCode,
 };
+
+export default errorHandler;

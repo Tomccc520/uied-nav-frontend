@@ -11,6 +11,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../../services/api';
 import { getBackendBaseUrl } from '../../utils/urlUtils';
+import { unwrapApiList } from '../../utils/apiResponse';
 import './index.css';
 
 /** Favicon API 配置项 */
@@ -91,7 +92,7 @@ const fetchFaviconApis = async (): Promise<FaviconApiItem[]> => {
 
   faviconApisPromise = api.get('/settings/favicon-apis')
     .then(res => {
-      const apis = res.data?.data || res.data || [];
+      const apis = unwrapApiList<FaviconApiItem>(res.data);
       cachedFaviconApis = apis;
       saveToStorage(apis); // 持久化到 localStorage
       return apis;

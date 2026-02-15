@@ -3,8 +3,10 @@
  * @description 热门推荐数据 Hook - 从 API 获取热门推荐
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import api from '../services/api';
+import { unwrapApiList } from '../utils/apiResponse';
+import { debugLog } from '../utils/debugHelper';
 
 export interface HotRecommendation {
   id: string;
@@ -58,6 +60,16 @@ export const useHotRecommendations = (
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  /**
+   * 统一解包热门推荐列表响应，兼容旧结构与 { code, data, message } 结构。
+   */
+  const unwrapHotRecommendationList = useCallback((payload: unknown): HotRecommendation[] => {
+    return unwrapApiList<HotRecommendation>(payload);
+  }, []);
+
+  /**
+   * 获取热门推荐数据。
+   */
   const fetchData = useCallback(async () => {
     if (!enabled) return;
     
@@ -65,20 +77,22 @@ export const useHotRecommendations = (
       setLoading(true);
       setError(null);
       
-      const params: Record<string, any> = { limit };
+      const params: Record<string, string | number> = { limit };
       if (pageSlug) params.pageSlug = pageSlug;
       // 如果 position 是 'all' 或未指定，不传 position 参数，获取所有
       if (position && position !== 'all') params.position = position;
       
       const response = await api.get('/hot-recommendations/active', { params });
-      setItems(response.data);
-    } catch (err) {
-      setError(err as Error);
-      console.error('Failed to fetch hot recommendations:', err);
+      const normalizedItems = unwrapHotRecommendationList(response.data);
+      setItems(Array.isArray(normalizedItems) ? normalizedItems : []);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err : new Error('获取热门推荐失败'));
+      setItems([]);
+      debugLog.error('Failed to fetch hot recommendations:', err);
     } finally {
       setLoading(false);
     }
-  }, [pageSlug, position, limit, enabled]);
+  }, [enabled, limit, pageSlug, position, unwrapHotRecommendationList]);
 
   useEffect(() => {
     fetchData();
@@ -89,22 +103,25 @@ export const useHotRecommendations = (
     try {
       await api.post(`/hot-recommendations/${id}/click`);
     } catch (err) {
-      console.error('Failed to record click:', err);
+      debugLog.error('Failed to record click:', err);
     }
   }, []);
 
   // 按位置筛选
+  const safeItems = useMemo(() => (Array.isArray(items) ? items : []), [items]);
+
+  // 按位置筛选
   const getByPosition = useCallback((pos: 'hot' | 'featured' | 'ad') => {
-    return items.filter(item => item.position === pos);
-  }, [items]);
+    return safeItems.filter(item => item.position === pos);
+  }, [safeItems]);
 
   // 计算位置统计
-  const positionStats = useCallback(() => {
+  const positionStats = useMemo(() => {
     const stats: { position: string; name: string; count: number }[] = [];
     const positions = ['hot', 'featured', 'ad'] as const;
     
     positions.forEach(pos => {
-      const count = items.filter(item => item.position === pos).length;
+      const count = safeItems.filter(item => item.position === pos).length;
       if (count > 0) {
         stats.push({
           position: pos,
@@ -115,7 +132,7 @@ export const useHotRecommendations = (
     });
     
     return stats;
-  }, [items])();
+  }, [safeItems]);
 
   return {
     items,

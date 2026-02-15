@@ -82,10 +82,8 @@ describe('API Service - Property Tests', () => {
             expect(actualDelay).toBe(expectedDelay);
             
             // 验证延迟随重试次数增加
-            if (retryCount > 0) {
-              const previousDelay = RETRY_CONFIG.retryDelay * Math.pow(2, retryCount - 1);
-              expect(actualDelay).toBeGreaterThan(previousDelay);
-            }
+            const previousDelay = RETRY_CONFIG.retryDelay * Math.pow(2, Math.max(retryCount - 1, 0));
+            expect(retryCount === 0 || actualDelay > previousDelay).toBe(true);
           }
         ),
         { numRuns: 100 }

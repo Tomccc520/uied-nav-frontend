@@ -49,12 +49,13 @@ import {
   IconVR,
   Icon3D
 } from '../components/UI/Icons';
+import { IconComponent } from '../types/icon';
 
 /**
  * 统一的图标映射表
  * key 与后台 admin/src/config/icons.tsx 中的 availableIcons 保持一致
  */
-export const iconMap: Record<string, React.ComponentType<any>> = {
+export const iconMap: Record<string, IconComponent> = {
   // ============ 设计相关 ============
   'inspiration': IconInspiration,
   'ui': DesignIcons.UI,

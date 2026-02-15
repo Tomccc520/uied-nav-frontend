@@ -15,8 +15,8 @@ import ToolCard from '../../components/ToolCard';
 import SEO from '../../components/SEO';
 import { useFrontendConfig } from '../../hooks/useFrontendConfig';
 import { usePermalinkConfig, generateWebsiteUrl } from '../../hooks/usePermalinkConfig';
-import { WebsiteExitModal } from '../../components/UI';
-import { useWebsiteExit } from '../../hooks/useWebsiteExit';
+import { getArrowConfigByWebsiteClickMode } from '../../utils/clickMode';
+import { unwrapApiResponse, unwrapApiList } from '../../utils/apiResponse';
 import './index.css';
 import '../../styles/common.css';
 
@@ -85,7 +85,7 @@ const TagListView: React.FC = () => {
     const fetchTags = async () => {
       try {
         const res = await api.get('/tags');
-        const data = res.data?.data || res.data || [];
+        const data = unwrapApiList<TagItem>(res.data);
         setTags(data);
       } catch (error) {
         console.error('获取标签列表失败:', error);
@@ -168,19 +168,7 @@ const TagDetailView: React.FC<{ slug: string }> = ({ slug }) => {
   const websiteClickMode = frontendConfig?.pageGlobalConfig?.websiteClickMode ?? 'detail';
   const directArrowNewWindow = frontendConfig?.pageGlobalConfig?.directArrowNewWindow ?? true;
   const detailPageNewWindow = frontendConfig?.pageGlobalConfig?.detailPageNewWindow ?? false;
-  const arrowLabel = websiteClickMode === 'directExternal' ? '查看详情' : '直达网站';
-  const arrowIsExternal = websiteClickMode !== 'directExternal';
-
-  // 跳转弹窗
-  const {
-    isModalVisible,
-    currentWebsite,
-    showExitModal,
-    hideExitModal,
-    confirmVisit,
-    reportWebsite,
-    modalConfig,
-  } = useWebsiteExit();
+  const { isDirectMode, arrowLabel, arrowIsExternal } = getArrowConfigByWebsiteClickMode(websiteClickMode);
 
   // 获取标签详情
   useEffect(() => {
@@ -188,7 +176,7 @@ const TagDetailView: React.FC<{ slug: string }> = ({ slug }) => {
       setLoading(true);
       try {
         const res = await api.get(`/tags/${slug}`, { params: { page, pageSize } });
-        const data = res.data?.data || res.data;
+        const data = unwrapApiResponse<TagDetail | null>(res.data, null);
         setDetail(data);
       } catch (error) {
         console.error('获取标签详情失败:', error);
@@ -202,10 +190,8 @@ const TagDetailView: React.FC<{ slug: string }> = ({ slug }) => {
 
   // 处理网站点击
   const handleWebsiteClick = useCallback((website: WebsiteItem) => {
-    if (websiteClickMode === 'directExternal') {
+    if (isDirectMode) {
       window.open(website.url, '_blank', 'noopener,noreferrer');
-    } else if (websiteClickMode === 'direct') {
-      showExitModal({ name: website.name, url: website.url, description: website.description });
     } else {
       const detailUrl = generateWebsiteUrl(permalinkConfig, { id: website.id, slug: website.slug });
       if (detailPageNewWindow) {
@@ -214,13 +200,13 @@ const TagDetailView: React.FC<{ slug: string }> = ({ slug }) => {
         navigate(detailUrl);
       }
     }
-  }, [websiteClickMode, permalinkConfig, navigate, showExitModal, detailPageNewWindow]);
+  }, [isDirectMode, permalinkConfig, navigate, detailPageNewWindow]);
 
   // 直达箭头点击
-  const handleDirectVisit = useCallback((tool: any, e: React.MouseEvent) => {
-    if (websiteClickMode === 'directExternal') {
+  const handleDirectVisit = useCallback((tool: { id: string; slug?: string; url: string }, e: React.MouseEvent) => {
+    if (isDirectMode) {
       const detailUrl = generateWebsiteUrl(permalinkConfig, { id: tool.id, slug: tool.slug });
-      if (directArrowNewWindow) {
+      if (detailPageNewWindow) {
         window.open(detailUrl, '_blank');
       } else {
         navigate(detailUrl);
@@ -233,7 +219,7 @@ const TagDetailView: React.FC<{ slug: string }> = ({ slug }) => {
         window.location.href = tool.url;
       }
     }
-  }, [websiteClickMode, directArrowNewWindow, permalinkConfig, navigate]);
+  }, [isDirectMode, directArrowNewWindow, detailPageNewWindow, permalinkConfig, navigate]);
 
   const totalPages = detail ? Math.ceil(detail.total / pageSize) : 0;
 
@@ -349,15 +335,6 @@ const TagDetailView: React.FC<{ slug: string }> = ({ slug }) => {
         )}
       </div>
 
-      {/* 跳转弹窗 */}
-      <WebsiteExitModal
-        visible={isModalVisible}
-        website={currentWebsite}
-        onClose={hideExitModal}
-        onConfirm={confirmVisit}
-        onReport={reportWebsite}
-        config={modalConfig}
-      />
     </div>
   );
 };

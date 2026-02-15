@@ -10,6 +10,7 @@
 
 import api from './api';
 import { Category } from './categoryService';
+import { unwrapApiResponse } from '../utils/apiResponse';
 
 export interface Website {
   id: string;
@@ -35,29 +36,37 @@ export interface WebsiteQueryParams {
   search?: string;
 }
 
+/**
+ * 统一解包网站列表接口，兼容数组直出与 { websites } 包装结构。
+ */
+const unwrapWebsiteList = (payload: unknown): Website[] => {
+  const data = unwrapApiResponse<Website[] | { websites?: Website[] }>(payload, []);
+  return Array.isArray(data) ? data : (data.websites || []);
+};
+
 export const websiteService = {
   // 获取所有网站
   getAll: async (params?: WebsiteQueryParams): Promise<Website[]> => {
     const response = await api.get('/websites', { params });
-    return response.data;
+    return unwrapWebsiteList(response.data);
   },
 
   // 获取单个网站
   getById: async (id: string): Promise<Website> => {
     const response = await api.get(`/websites/${id}`);
-    return response.data;
+    return unwrapApiResponse<Website>(response.data, {} as Website);
   },
 
   // 获取推荐网站
   getFeatured: async (): Promise<Website[]> => {
     const response = await api.get('/websites/featured/list');
-    return response.data;
+    return unwrapWebsiteList(response.data);
   },
 
   // 获取热门网站
   getHot: async (): Promise<Website[]> => {
     const response = await api.get('/websites/hot/list');
-    return response.data;
+    return unwrapWebsiteList(response.data);
   },
 
   // 搜索网站
@@ -65,7 +74,7 @@ export const websiteService = {
     const response = await api.get('/websites', {
       params: { search: keyword }
     });
-    return response.data;
+    return unwrapWebsiteList(response.data);
   },
 };
 

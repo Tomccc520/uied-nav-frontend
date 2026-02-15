@@ -8,31 +8,35 @@
  * @version 1.0.0
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { websiteService, Website, WebsiteQueryParams } from '../services/websiteService';
+import { debugLog } from '../utils/debugHelper';
 
 export const useWebsites = (params?: WebsiteQueryParams) => {
   const [websites, setWebsites] = useState<Website[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const paramsKey = useMemo(() => JSON.stringify(params ?? {}), [params]);
 
   useEffect(() => {
+    const requestParams = JSON.parse(paramsKey) as WebsiteQueryParams;
+
     const fetchWebsites = async () => {
       try {
         setLoading(true);
-        const data = await websiteService.getAll(params);
+        const data = await websiteService.getAll(requestParams);
         setWebsites(data);
         setError(null);
       } catch (err) {
         setError(err as Error);
-        console.error('Failed to fetch websites:', err);
+        debugLog.error('Failed to fetch websites:', err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchWebsites();
-  }, [JSON.stringify(params)]);
+  }, [paramsKey]);
 
   return { websites, loading, error };
 };
@@ -51,7 +55,7 @@ export const useFeaturedWebsites = () => {
         setError(null);
       } catch (err) {
         setError(err as Error);
-        console.error('Failed to fetch featured websites:', err);
+        debugLog.error('Failed to fetch featured websites:', err);
       } finally {
         setLoading(false);
       }
@@ -77,7 +81,7 @@ export const useHotWebsites = () => {
         setError(null);
       } catch (err) {
         setError(err as Error);
-        console.error('Failed to fetch hot websites:', err);
+        debugLog.error('Failed to fetch hot websites:', err);
       } finally {
         setLoading(false);
       }

@@ -23,7 +23,6 @@
  */
 export const importFromCSV = (csvData) => {
   const lines = csvData.trim().split('\n');
-  const headers = lines[0].split(',');
   const websites = [];
 
   for (let i = 1; i < lines.length; i++) {
@@ -240,7 +239,7 @@ export const JSON_TEMPLATE = [
  * console.log(code);
  */
 
-export default {
+const dataImporter = {
   importFromCSV,
   importFromJSON,
   generateWebsiteId,
@@ -250,4 +249,6 @@ export default {
   generateJavaScriptCode,
   CSV_TEMPLATE,
   JSON_TEMPLATE
-}; 
+};
+
+export default dataImporter;

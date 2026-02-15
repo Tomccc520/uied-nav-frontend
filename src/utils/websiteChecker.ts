@@ -30,6 +30,14 @@ class WebsiteChecker {
   private readonly cacheExpiry = 5 * 60 * 1000; // 5分钟缓存
 
   /**
+   * 将未知异常转换为标准 Error 对象。
+   */
+  private normalizeError(error: unknown): Error {
+    if (error instanceof Error) return error;
+    return new Error(String(error));
+  }
+
+  /**
    * 检测单个网站是否可访问
    * @param url 网站URL
    * @param timeout 超时时间（毫秒），默认5秒
@@ -71,20 +79,21 @@ class WebsiteChecker {
       result.status = response.status;
       result.accessible = response.status < 400 || response.type === 'opaque'; // no-cors模式下type为opaque
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const normalizedError = this.normalizeError(error);
       result.responseTime = Date.now() - startTime;
-      result.error = error.message;
+      result.error = normalizedError.message;
       
       // 特殊处理：CORS错误通常表示网站存在但有CORS限制
-      if (error.name === 'TypeError' && error.message.includes('CORS')) {
+      if (normalizedError.name === 'TypeError' && normalizedError.message.includes('CORS')) {
         result.accessible = true;
         result.error = 'CORS限制，但网站可访问';
       }
       // 网络错误或超时
-      else if (error.name === 'AbortError') {
+      else if (normalizedError.name === 'AbortError') {
         result.error = '请求超时';
       }
-      else if (error.name === 'TypeError') {
+      else if (normalizedError.name === 'TypeError') {
         result.error = '网络错误或网站不可访问';
       }
     }
@@ -139,8 +148,9 @@ class WebsiteChecker {
         // 尝试加载网站favicon
         img.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=16`;
         
-      } catch (error: any) {
-        result.error = error.message;
+      } catch (error: unknown) {
+        const normalizedError = this.normalizeError(error);
+        result.error = normalizedError.message;
         result.responseTime = Date.now() - startTime;
         resolve(result);
       }

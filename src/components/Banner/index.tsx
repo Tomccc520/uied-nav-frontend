@@ -7,8 +7,10 @@
  * @version 1.0.0
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { DesignIcons } from '../UI';
+import { useBanners, type Banner as BackendBanner } from '../../hooks/useBanners';
+import { IconComponent } from '../../types/icon';
 import './index.css';
 import './index.mobile.css';
 
@@ -17,7 +19,7 @@ interface BannerCard {
   id: string;
   title: string;
   description: string;
-  icon: React.ComponentType<any>;
+  icon: IconComponent;
   color: string;
   link?: string;
   badge?: string;
@@ -28,6 +30,8 @@ interface BannerProps {
   title?: string;
   subtitle?: string;
   cards?: BannerCard[];
+  useBackend?: boolean;
+  backendPosition?: string;
   className?: string;
 }
 
@@ -77,6 +81,31 @@ const defaultCards: BannerCard[] = [
   }
 ];
 
+const backendCardColors = ['#8B5DFF', '#22D3EE', '#10a37f', '#FF6B6B', '#6366f1', '#f59e0b'];
+const backendCardIcons: IconComponent[] = [
+  DesignIcons.AI,
+  DesignIcons.Material,
+  DesignIcons.Image,
+  DesignIcons.Analytics,
+  DesignIcons.Design,
+  DesignIcons.Tool,
+];
+
+/**
+ * 将后台 Banner 映射为前端卡片格式
+ */
+const mapBackendBannerToCard = (banner: BackendBanner, index: number): BannerCard => {
+  return {
+    id: String(banner.id || `backend-card-${index}`),
+    title: banner.title || `推荐内容 ${index + 1}`,
+    description: banner.description || '精选推荐内容',
+    icon: backendCardIcons[index % backendCardIcons.length],
+    color: backendCardColors[index % backendCardColors.length],
+    link: banner.linkUrl || '',
+    badge: index === 0 ? '推荐' : undefined,
+  };
+};
+
 /**
  * Banner组件
  * @param props 组件属性
@@ -85,9 +114,25 @@ const defaultCards: BannerCard[] = [
 const Banner: React.FC<BannerProps> = ({
   title,
   subtitle,
-  cards = defaultCards,
+  cards,
+  useBackend = true,
+  backendPosition = 'home',
   className = ''
 }) => {
+  const { banners: backendBanners } = useBanners({
+    position: backendPosition,
+    limit: 6,
+  });
+
+  const displayCards = useMemo(() => {
+    if (cards && cards.length > 0) {
+      return cards;
+    }
+    if (useBackend && backendBanners.length > 0) {
+      return backendBanners.map(mapBackendBannerToCard);
+    }
+    return defaultCards;
+  }, [cards, useBackend, backendBanners]);
   
   /**
    * 处理卡片点击
@@ -109,7 +154,7 @@ const Banner: React.FC<BannerProps> = ({
         
         {/* 卡片网格 */}
         <div className="banner-cards">
-          {cards.map((card, index) => {
+          {displayCards.map((card, index) => {
             const IconComponent = card.icon;
             
             return (

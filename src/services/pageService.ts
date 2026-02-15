@@ -9,6 +9,7 @@
  */
 
 import api from './api';
+import { unwrapApiList, unwrapApiResponse } from '../utils/apiResponse';
 
 // 页面配置类型
 export interface PageConfig {
@@ -79,42 +80,54 @@ export interface PageFullData {
   };
 }
 
+/**
+ * 统一解包页面内网站列表，兼容数组直出与 { websites } 包装结构。
+ */
+const unwrapWebsiteList = (payload: unknown): Website[] => {
+  const data = unwrapApiResponse<Website[] | { websites?: Website[] }>(payload, []);
+  return Array.isArray(data) ? data : (data.websites || []);
+};
+
 // 页面服务
 export const pageService = {
   // 获取所有页面配置
   getAll: async (): Promise<PageConfig[]> => {
     const response = await api.get('/pages');
-    return response.data;
+    return unwrapApiList<PageConfig>(response.data);
   },
 
   // 获取单个页面配置
   getBySlug: async (slug: string): Promise<PageConfig> => {
     const response = await api.get(`/pages/${slug}`);
-    return response.data;
+    return unwrapApiResponse<PageConfig>(response.data, {} as PageConfig);
   },
 
   // 获取页面完整数据（包含分类和网站）
   getFullData: async (slug: string): Promise<PageFullData> => {
     const response = await api.get(`/pages/${slug}/full`);
-    return response.data;
+    return unwrapApiResponse<PageFullData>(response.data, {} as PageFullData);
   },
 
   // 获取页面热门推荐
   getHotWebsites: async (slug: string, limit: number = 12): Promise<Website[]> => {
     const response = await api.get(`/pages/${slug}/hot`, { params: { limit } });
-    return response.data;
+    return unwrapWebsiteList(response.data);
   },
 
   // 获取页面热门搜索标签（按点击量排序）
   getHotTags: async (slug: string, limit: number = 10): Promise<{ tags: string[]; websites: { id: string; name: string; clickCount: number }[] }> => {
     const response = await api.get(`/pages/${slug}/hot-tags`, { params: { limit } });
-    return response.data;
+    return unwrapApiResponse<{ tags: string[]; websites: { id: string; name: string; clickCount: number }[] }>(
+      response.data,
+      { tags: [], websites: [] }
+    );
   },
 
   // 搜索页面内的网站
   search: async (slug: string, query: string, limit: number = 50): Promise<Website[]> => {
     const response = await api.get(`/pages/${slug}/search`, { params: { q: query, limit } });
-    return response.data;
+    const data = unwrapApiResponse<Website[] | { results?: Website[] }>(response.data, []);
+    return Array.isArray(data) ? data : (data.results || []);
   },
 };
 

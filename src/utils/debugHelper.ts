@@ -9,14 +9,28 @@
 
 // 环境判断
 const isDevelopment = process.env.NODE_ENV === 'development';
-const isProduction = process.env.NODE_ENV === 'production';
+type DebugArgs = unknown[];
+
+interface DebugSubCategoryItem {
+  id: string;
+  name: string;
+}
+
+interface DebugToolItem {
+  subcategory?: string;
+}
+
+interface DebugWindow extends Window {
+  FrontendDebugHelper?: typeof FrontendDebugHelper;
+  debugLog?: typeof debugLog;
+}
 
 // 调试日志封装
 export const debugLog = {
   /**
    * 开发环境日志
    */
-  dev: (...args: any[]) => {
+  dev: (...args: DebugArgs) => {
     if (isDevelopment) {
       console.log('[DEV]', ...args);
     }
@@ -25,7 +39,7 @@ export const debugLog = {
   /**
    * 分页调试日志
    */
-  pagination: (...args: any[]) => {
+  pagination: (...args: DebugArgs) => {
     if (isDevelopment) {
       console.log('[PAGINATION]', ...args);
     }
@@ -34,7 +48,7 @@ export const debugLog = {
   /**
    * 数据调试日志
    */
-  data: (...args: any[]) => {
+  data: (...args: DebugArgs) => {
     if (isDevelopment) {
       console.log('[DATA]', ...args);
     }
@@ -43,21 +57,21 @@ export const debugLog = {
   /**
    * 错误日志（生产环境也显示）
    */
-  error: (...args: any[]) => {
+  error: (...args: DebugArgs) => {
     console.error('[ERROR]', ...args);
   },
   
   /**
    * 警告日志（生产环境也显示）
    */
-  warn: (...args: any[]) => {
+  warn: (...args: DebugArgs) => {
     console.warn('[WARN]', ...args);
   },
   
   /**
    * 信息日志（仅开发环境）
    */
-  info: (...args: any[]) => {
+  info: (...args: DebugArgs) => {
     if (isDevelopment) {
       console.info('[INFO]', ...args);
     }
@@ -105,24 +119,12 @@ export class FrontendDebugHelper {
   }) {
     // 已禁用分页调试日志
     return;
-    
-    if (!isDevelopment) return;
-    
-    console.group('📄 分页控制器调试');
-    console.log('总数据量:', data.totalItems);
-    console.log('总页数:', data.totalPages);
-    console.log('当前页:', data.currentPage);
-    console.log('每页大小:', data.pageSize);
-    console.log('分类ID:', data.categoryId || '无');
-    console.log('子分类ID:', data.subCategoryId || '无');
-    console.log('是否显示分页控制器:', data.totalPages > 1 ? '✅ 是' : '❌ 否');
-    console.groupEnd();
   }
 
   /**
    * 子分类数据调试
    */
-  static debugSubCategories(categoryId: string, subCategories: any[], tools: any[]) {
+  static debugSubCategories(categoryId: string, subCategories: DebugSubCategoryItem[], tools: DebugToolItem[]) {
     if (!isDevelopment) return;
     
     console.group(`📂 子分类调试 - ${categoryId}`);
@@ -244,7 +246,8 @@ export class FrontendDebugHelper {
 
 // 挂载到全局对象，方便在控制台使用（仅开发环境）
 if (typeof window !== 'undefined' && isDevelopment) {
-  (window as any).FrontendDebugHelper = FrontendDebugHelper;
-  (window as any).debugLog = debugLog;
+  const debugWindow = window as DebugWindow;
+  debugWindow.FrontendDebugHelper = FrontendDebugHelper;
+  debugWindow.debugLog = debugLog;
   console.log('🔧 调试工具已加载，使用 FrontendDebugHelper.runFullDiagnosis() 开始诊断');
 } 

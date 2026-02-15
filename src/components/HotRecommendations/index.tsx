@@ -7,15 +7,15 @@
  * @version 1.4.0 - 移除静态数据依赖，完全使用 API
  */
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useHotRecommendations, HotRecommendation } from '../../hooks/useHotRecommendations';
 import { Tool } from '../../hooks/useNavigation';
 import ToolCard from '../ToolCard';
 import { ToolGridSkeleton } from '../Skeleton';
 import { useFrontendConfig } from '../../hooks/useFrontendConfig';
 import { usePermalinkConfig, generateWebsiteUrl } from '../../hooks/usePermalinkConfig';
+import { getArrowConfigByWebsiteClickMode } from '../../utils/clickMode';
 import { useNavigate } from 'react-router-dom';
-import api from '../../services/api';
 import './index.css';
 import './index.mobile.css';
 import { debugLog, FrontendDebugHelper } from '../../utils/debugHelper';
@@ -30,11 +30,16 @@ interface SubCategory {
 
 // 自定义数据源接口
 interface CustomDataSource {
-  getBySubCategory?: (subCategoryId: string, limit?: number) => any[];
-  getSubCategories?: (categoryId: string) => any[];
-  getSubCategoryStats?: (categoryId: string) => any;
-  getHotTools?: (limit?: number) => any[];
-  getFeaturedTools?: (limit?: number) => any[];
+  getBySubCategory?: (subCategoryId: string, limit?: number) => Tool[];
+  getSubCategories?: (categoryId: string) => SubCategory[];
+  getSubCategoryStats?: (categoryId: string) => unknown;
+  getHotTools?: (limit?: number) => Tool[];
+  getFeaturedTools?: (limit?: number) => Tool[];
+}
+
+interface RecommendationTool extends Tool {
+  _recommendationId?: string;
+  _hasWebsiteMatch?: boolean;
 }
 
 interface HotRecommendationsProps {
@@ -91,19 +96,40 @@ const HotRecommendations: React.FC<HotRecommendationsProps> = ({
   const showDirectArrow = frontendConfig?.pageGlobalConfig?.showDirectArrow ?? false;
   const websiteClickMode = frontendConfig?.pageGlobalConfig?.websiteClickMode ?? 'detail';
   const directArrowNewWindow = frontendConfig?.pageGlobalConfig?.directArrowNewWindow ?? true;
-  // 根据模式决定箭头文案和方向
-  const arrowLabel = websiteClickMode === 'directExternal' ? '查看详情' : '直达网站';
-  const arrowIsExternal = websiteClickMode !== 'directExternal';
+  const detailPageNewWindow = frontendConfig?.pageGlobalConfig?.detailPageNewWindow ?? false;
+  const { isDirectMode, arrowLabel, arrowIsExternal } = getArrowConfigByWebsiteClickMode(websiteClickMode);
+
+  /**
+   * 提取工具 slug，兼容扩展字段。
+   */
+  const getToolSlug = useCallback((tool: Tool): string | undefined => {
+    return (tool as RecommendationTool).slug;
+  }, []);
+
+  /**
+   * 提取推荐记录 ID，优先使用推荐表主键。
+   */
+  const getRecommendationId = useCallback((tool: Tool): string => {
+    const recommendationId = (tool as RecommendationTool)._recommendationId;
+    return recommendationId || tool.id;
+  }, []);
+
+  /**
+   * 判断工具是否存在网站主记录。
+   */
+  const hasWebsiteMatch = useCallback((tool: Tool): boolean => {
+    return (tool as RecommendationTool)._hasWebsiteMatch !== false;
+  }, []);
 
   // 直达箭头点击回调 - 与 useNavigation.ts 逻辑保持一致
   const handleDirectVisit = useCallback((tool: Tool, e: React.MouseEvent) => {
-    if (websiteClickMode === 'directExternal') {
-      // 直达网站模式下，箭头跳转到详情页
+    if (isDirectMode) {
+      // 分类区域设置为直达时，箭头进入详情页
       const detailUrl = generateWebsiteUrl(permalinkConfig, { 
         id: tool.id, 
-        slug: (tool as any).slug 
+        slug: getToolSlug(tool),
       });
-      if (directArrowNewWindow) {
+      if (detailPageNewWindow) {
         window.open(detailUrl, '_blank');
       } else {
         navigate(detailUrl);
@@ -117,10 +143,15 @@ const HotRecommendations: React.FC<HotRecommendationsProps> = ({
         window.location.href = tool.url;
       }
     }
-  }, [websiteClickMode, directArrowNewWindow, permalinkConfig, navigate]);
+  }, [isDirectMode, directArrowNewWindow, detailPageNewWindow, permalinkConfig, navigate, getToolSlug]);
 
-  // 热门推荐点击行为配置（从全局配置中读取独立配置）
-  const hotRecommendationClickMode = frontendConfig?.pageGlobalConfig?.hotRecommendationClickMode || 'direct';
+  /**
+   * 热门推荐点击行为配置（独立于分类区域）
+   * 兼容历史值：modal -> detail
+   */
+  const hotRecommendationClickMode = frontendConfig?.pageGlobalConfig?.hotRecommendationClickMode === 'direct'
+    ? 'direct'
+    : 'detail';
   
   // 判断是否应该使用 API（没有自定义数据源时使用 API）
   const shouldUseApi = useApi && !customDataSource;
@@ -250,7 +281,7 @@ const HotRecommendations: React.FC<HotRecommendationsProps> = ({
         slug: item.websiteSlug || undefined,
         _recommendationId: String(item.id), // 保留推荐表原始 ID，用于记录点击
         _hasWebsiteMatch: !!item.websiteId, // 是否有匹配的网站记录
-      } as Tool & { _recommendationId: string; _hasWebsiteMatch: boolean }));
+      } as RecommendationTool));
       return limit > 0 && !enableSubCategories ? tools.slice(0, limit) : tools;
     }
     
@@ -473,42 +504,35 @@ const HotRecommendations: React.FC<HotRecommendationsProps> = ({
             onClick={() => {
               // 记录点击（使用推荐表原始 ID）
               if (shouldUseApi) {
-                const recId = (tool as any)._recommendationId || tool.id;
-                recordClick(recId);
+                recordClick(getRecommendationId(tool));
               }
               
               // 如果没有匹配的网站记录，直接打开外部链接（无法跳转详情页）
-              const hasWebsiteMatch = (tool as any)._hasWebsiteMatch !== false;
-              if (!hasWebsiteMatch) {
+              if (!hasWebsiteMatch(tool)) {
                 window.open(tool.url, '_blank', 'noopener,noreferrer');
                 return;
               }
               
-              // 🔥 热门推荐使用独立配置，不受全局配置影响
-              // 优先使用热门推荐的独立点击行为配置
-              if (hotRecommendationClickMode === 'modal') {
-                // 弹窗模式：如果有外部回调，使用回调显示弹窗
-                if (onWebsiteClick) {
-                  onWebsiteClick(tool);
-                } else {
-                  // 没有回调时直接打开
-                  window.open(tool.url, '_blank', 'noopener,noreferrer');
-                }
-                return;
-              }
-              
+              // 热门推荐独立配置：直达模式
               if (hotRecommendationClickMode === 'direct') {
-                // 直达模式：直接打开外部网站
                 window.open(tool.url, '_blank', 'noopener,noreferrer');
                 return;
               }
               
-              // 🔥 如果热门推荐没有配置，才使用页面传入的回调（全局配置）
+              // 热门推荐独立配置：详情页模式
               if (onWebsiteClick) {
                 onWebsiteClick(tool);
               } else {
-                // 兜底：直接打开外部链接
-                window.open(tool.url, '_blank', 'noopener,noreferrer');
+                const detailUrl = generateWebsiteUrl(permalinkConfig, { 
+                  id: tool.id, 
+                  slug: getToolSlug(tool),
+                });
+                if (detailPageNewWindow) {
+                  window.open(detailUrl, '_blank');
+                } else {
+                  navigate(detailUrl);
+                  window.scrollTo(0, 0);
+                }
               }
             }}
             index={index}

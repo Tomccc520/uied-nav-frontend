@@ -4,7 +4,10 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { AxiosError } from 'axios';
 import api from '../../services/api';
+import { unwrapApiList, unwrapApiResponse } from '../../utils/apiResponse';
+import { debugLog } from '../../utils/debugHelper';
 import './index.css';
 
 interface Category {
@@ -27,6 +30,20 @@ interface SubmitFormData {
 interface WebsiteSubmitProps {
   isOpen: boolean;
   onClose: () => void;
+}
+
+interface IconFetchPayload {
+  faviconUrl?: string;
+}
+
+interface AiGeneratePayload {
+  name?: string;
+  description?: string;
+  tags?: string;
+}
+
+interface SubmissionPayload {
+  id?: string;
 }
 
 const WebsiteSubmit: React.FC<WebsiteSubmitProps> = ({ isOpen, onClose }) => {
@@ -66,9 +83,9 @@ const WebsiteSubmit: React.FC<WebsiteSubmitProps> = ({ isOpen, onClose }) => {
   const fetchCategories = async () => {
     try {
       const res = await api.get('/categories?flat=true');
-      setCategories(res.data || []);
+      setCategories(unwrapApiList<Category>(res.data));
     } catch (error) {
-      console.error('获取分类失败:', error);
+      debugLog.error('获取分类失败:', error);
     }
   };
 
@@ -85,9 +102,10 @@ const WebsiteSubmit: React.FC<WebsiteSubmitProps> = ({ isOpen, onClose }) => {
     setFetchingIcon(true);
     try {
       const res = await api.get('/favicon-api/fetch', { params: { url: formData.url } });
-      setIconUrl(res.data.faviconUrl);
+      const data = unwrapApiResponse<IconFetchPayload>(res.data, {});
+      setIconUrl(data.faviconUrl || '');
     } catch (error) {
-      console.error('获取图标失败:', error);
+      debugLog.error('获取图标失败:', error);
       alert('获取图标失败');
     } finally {
       setFetchingIcon(false);
@@ -103,7 +121,8 @@ const WebsiteSubmit: React.FC<WebsiteSubmitProps> = ({ isOpen, onClose }) => {
     setGeneratingAi(true);
     try {
       const res = await api.post('/ai-config/generate-website-info', { url: formData.url });
-      const { name, description, tags } = res.data;
+      const data = unwrapApiResponse<AiGeneratePayload>(res.data, {});
+      const { name, description, tags } = data;
       setFormData(prev => ({
         ...prev,
         name: name || prev.name,
@@ -114,9 +133,10 @@ const WebsiteSubmit: React.FC<WebsiteSubmitProps> = ({ isOpen, onClose }) => {
       if (!iconUrl) {
         handleFetchIcon();
       }
-    } catch (error: any) {
-      console.error('AI 生成失败:', error);
-      alert(error.response?.data?.error || 'AI 生成失败，请手动填写');
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ error?: string }>;
+      debugLog.error('AI 生成失败:', error);
+      alert(axiosError.response?.data?.error || 'AI 生成失败，请手动填写');
     } finally {
       setGeneratingAi(false);
     }
@@ -135,9 +155,11 @@ const WebsiteSubmit: React.FC<WebsiteSubmitProps> = ({ isOpen, onClose }) => {
         ...formData,
         iconUrl: iconUrl || undefined,
       });
-      setSubmitResult({ success: true, message: '提交成功！我们会尽快审核您的网站。', id: res.data.id });
-    } catch (error: any) {
-      setSubmitResult({ success: false, message: error.response?.data?.error || '提交失败，请稍后重试' });
+      const data = unwrapApiResponse<SubmissionPayload>(res.data, {});
+      setSubmitResult({ success: true, message: '提交成功！我们会尽快审核您的网站。', id: data.id });
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ error?: string }>;
+      setSubmitResult({ success: false, message: axiosError.response?.data?.error || '提交失败，请稍后重试' });
     } finally {
       setLoading(false);
     }

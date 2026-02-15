@@ -9,6 +9,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { getFrontendConfig } from './useFrontendConfig';
+import { debugLog } from '../utils/debugHelper';
 
 // 网站信息接口
 interface WebsiteInfo {
@@ -100,9 +101,9 @@ export const useWebsiteExit = (pageSlug?: string) => {
         cacheTimestamp = Date.now();
         setModalConfig(newConfig);
         setConfigLoaded(true);
-        console.log('[useWebsiteExit] 配置已加载:', newConfig.enabled);
+        debugLog.dev('[useWebsiteExit] 配置已加载:', newConfig.enabled);
       } catch (error) {
-        console.error('加载跳转弹窗配置失败:', error);
+        debugLog.error('加载跳转弹窗配置失败:', error);
         setConfigLoaded(true);
       }
     };
@@ -127,15 +128,13 @@ export const useWebsiteExit = (pageSlug?: string) => {
 
   // 显示弹窗
   const showExitModal = useCallback((website: WebsiteInfo) => {
-    const effectiveConfig = getEffectiveConfig();
-    
     // 注意：这里不再处理 enabled=false 的情况
     // enabled=false 的逻辑由 useNavigation.ts 的 handleWebsiteClick 处理
     // 这个函数只在 enabled=true 时被调用，用于显示弹窗
     
     setCurrentWebsite(website);
     setIsModalVisible(true);
-  }, [getEffectiveConfig]);
+  }, []);
 
   // 隐藏弹窗
   const hideExitModal = useCallback(() => {
@@ -149,7 +148,7 @@ export const useWebsiteExit = (pageSlug?: string) => {
       const effectiveConfig = getEffectiveConfig();
       // 调试日志
       if (process.env.NODE_ENV === 'development') {
-        console.log('[confirmVisit] 配置:', { 
+        debugLog.dev('[confirmVisit] 配置:', { 
           openInNewWindow: effectiveConfig.openInNewWindow,
           url: currentWebsite.url 
         });

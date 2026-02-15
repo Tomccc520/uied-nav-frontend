@@ -12,6 +12,8 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import WebsiteFavicon from '../../components/WebsiteFavicon';
 import api from '../../services/api';
+import { unwrapApiResponse } from '../../utils/apiResponse';
+import { debugLog } from '../../utils/debugHelper';
 
 /**
  * 侧边栏配置接口
@@ -77,12 +79,10 @@ const Sidebar: React.FC<SidebarProps> = ({ relatedWebsites, tags, websiteTags, l
     const fetchConfig = async () => {
       try {
         const res = await api.get('/public/detail-sidebar-config');
-        const data = res.data;
-        if (data.success && data.data) {
-          setConfig(data.data);
-        }
+        const data = unwrapApiResponse<Partial<SidebarConfig>>(res.data, {});
+        setConfig(prev => ({ ...prev, ...data }));
       } catch (error) {
-        console.error('获取侧边栏配置失败:', error);
+        debugLog.error('获取侧边栏配置失败:', error);
       }
     };
     fetchConfig();

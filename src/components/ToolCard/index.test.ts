@@ -14,7 +14,6 @@ import {
   getNextIconFallback,
   generateNameBasedIcon,
   validateIconFallback,
-  DEFAULT_ICON,
   IconLoadState,
 } from './index';
 
@@ -61,19 +60,13 @@ describe('ToolCard Icon Fallback - Property Tests', () => {
           const iconUrls = getIconUrlList(tool);
           
           // 如果tool有URL，应该至少有favicon API生成的URL
-          if (tool.url) {
-            expect(iconUrls.length).toBeGreaterThan(0);
-          }
+          expect(!tool.url || iconUrls.length > 0).toBe(true);
           
           // 如果有iconUrl，应该在列表中
-          if (tool.iconUrl) {
-            expect(iconUrls).toContain(tool.iconUrl);
-          }
+          expect(!tool.iconUrl || iconUrls.includes(tool.iconUrl)).toBe(true);
           
           // 如果有icon且不同于iconUrl，应该在列表中
-          if (tool.icon && tool.icon !== tool.iconUrl) {
-            expect(iconUrls).toContain(tool.icon);
-          }
+          expect(!tool.icon || tool.icon === tool.iconUrl || iconUrls.includes(tool.icon)).toBe(true);
         }),
         { numRuns: 100 }
       );
@@ -97,15 +90,11 @@ describe('ToolCard Icon Fallback - Property Tests', () => {
             expect(result.nextIndex).toBeGreaterThanOrEqual(currentIndex);
             expect(['loading', 'loaded', 'fallback', 'error']).toContain(result.state);
             
-            // 如果还有更多URL，状态应该是fallback
-            if (currentIndex + 1 < iconUrls.length) {
-              expect(result.state).toBe('fallback');
-              expect(result.nextSrc).toBe(iconUrls[currentIndex + 1]);
-            } else {
-              // 否则应该是error状态，使用默认图标
-              expect(result.state).toBe('error');
-              expect(result.nextSrc).toContain('data:image/svg+xml');
-            }
+            // 如果还有更多URL，状态应该是fallback；否则应该是error并回退默认图标
+            const hasMoreFallback = currentIndex + 1 < iconUrls.length;
+            const expectedState = hasMoreFallback ? 'fallback' : 'error';
+            expect(result.state).toBe(expectedState);
+            expect(hasMoreFallback ? result.nextSrc === iconUrls[currentIndex + 1] : result.nextSrc.includes('data:image/svg+xml')).toBe(true);
           }
         ),
         { numRuns: 100 }
@@ -177,15 +166,15 @@ describe('ToolCard Icon Fallback - Property Tests', () => {
           const iconUrls = getIconUrlList(tool);
           
           // 场景1: 第一个图标加载成功
-          if (iconUrls.length > 0) {
-            const result1 = validateIconFallback(
-              [iconUrls[0]],
-              iconUrls[0],
-              iconUrls,
-              tool.name
-            );
-            expect(result1.isValid).toBe(true);
-          }
+          const result1 = iconUrls.length > 0
+            ? validateIconFallback(
+                [iconUrls[0]],
+                iconUrls[0],
+                iconUrls,
+                tool.name
+              )
+            : null;
+          expect(iconUrls.length === 0 || result1?.isValid === true).toBe(true);
           
           // 场景2: 所有图标失败，使用默认图标
           const defaultIcon = generateNameBasedIcon(tool.name);
@@ -232,9 +221,7 @@ describe('ToolCard Icon Fallback - Property Tests', () => {
             expect(iconUrls[0]).toBe(tool.iconUrl);
             
             // icon应该在iconUrl之后（如果不同）
-            if (tool.icon !== tool.iconUrl) {
-              expect(iconUrls[1]).toBe(tool.icon);
-            }
+            expect(tool.icon === tool.iconUrl || iconUrls[1] === tool.icon).toBe(true);
           }
         ),
         { numRuns: 100 }

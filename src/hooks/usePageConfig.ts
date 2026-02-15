@@ -5,6 +5,8 @@
 
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import { unwrapApiResponse } from '../utils/apiResponse';
+import { debugLog } from '../utils/debugHelper';
 
 interface PageConfig {
   heroTitle?: string;
@@ -28,6 +30,7 @@ interface ScrollWebsite {
   name: string;
   iconUrl?: string;
   url: string;
+  oldId?: string;
 }
 
 interface UsePageConfigReturn {
@@ -36,6 +39,18 @@ interface UsePageConfigReturn {
   dynamicHotTags: string[];
   loading: boolean;
   error: Error | null;
+}
+
+interface PageFullDataResponse {
+  page?: PageConfig;
+}
+
+interface HotTagsResponse {
+  tags?: string[];
+}
+
+interface WebsiteListResponse {
+  websites?: ScrollWebsite[];
 }
 
 /**
@@ -57,11 +72,12 @@ export const usePageConfig = (slug: string, enabled: boolean = true): UsePageCon
     setLoading(true);
     api.get(`/pages/${slug}/full`)
       .then(res => {
-        setPageConfig(res.data.page);
+        const data = unwrapApiResponse<PageFullDataResponse>(res.data, {});
+        setPageConfig(data.page || null);
         setError(null);
       })
       .catch(err => {
-        console.error('获取页面配置失败:', err);
+        debugLog.error('获取页面配置失败:', err);
         setError(err);
       })
       .finally(() => {
@@ -75,19 +91,20 @@ export const usePageConfig = (slug: string, enabled: boolean = true): UsePageCon
 
     api.get(`/pages/${slug}/hot-tags`, { params: { limit: 10 } })
       .then(res => {
-        const tags = res.data.tags || [];
+        const data = unwrapApiResponse<HotTagsResponse>(res.data, {});
+        const tags = data.tags || [];
         setDynamicHotTags(tags);
       })
       .catch(err => {
-        console.error('获取热门标签失败:', err);
+        debugLog.error('获取热门标签失败:', err);
         // 失败时不影响其他功能
       });
   }, [slug, enabled]);
 
   // 获取滚动图标墙的网站数据
   useEffect(() => {
-    console.log('[usePageConfig] heroDisplayMode:', pageConfig?.heroDisplayMode);
-    console.log('[usePageConfig] heroScrollWebsites:', pageConfig?.heroScrollWebsites);
+    debugLog.dev('[usePageConfig] heroDisplayMode:', pageConfig?.heroDisplayMode);
+    debugLog.dev('[usePageConfig] heroScrollWebsites:', pageConfig?.heroScrollWebsites);
     
     if (!pageConfig?.heroDisplayMode || pageConfig.heroDisplayMode !== 'iconScroll') {
       setHeroScrollWebsites([]);
@@ -101,7 +118,7 @@ export const usePageConfig = (slug: string, enabled: boolean = true): UsePageCon
 
     try {
       const websiteIds = JSON.parse(pageConfig.heroScrollWebsites);
-      console.log('[usePageConfig] Parsed websiteIds:', websiteIds);
+      debugLog.dev('[usePageConfig] Parsed websiteIds:', websiteIds);
       
       if (!Array.isArray(websiteIds) || websiteIds.length === 0) {
         setHeroScrollWebsites([]);
@@ -110,26 +127,28 @@ export const usePageConfig = (slug: string, enabled: boolean = true): UsePageCon
 
       api.get('/websites', { params: { ids: websiteIds.join(','), limit: 100 } })
         .then(res => {
-          console.log('[usePageConfig] Websites API response:', res.data);
-          const websites = res.data.websites || res.data || [];
+          debugLog.dev('[usePageConfig] Websites API response:', res.data);
+          const rawData = unwrapApiResponse<ScrollWebsite[] | WebsiteListResponse>(res.data, []);
+          const websites = Array.isArray(rawData) ? rawData : (rawData.websites || []);
           // 按原顺序排列，支持新数字ID和旧cuid格式匹配，使用字符串比较确保类型匹配
           const sortedWebsites = websiteIds
-            .map((id: string | number) => websites.find((w: any) => String(w.id) === String(id) || w.oldId === String(id)))
-            .filter(Boolean)
-            .map((w: any) => ({
+            .map((id: string | number) => websites.find((w) => String(w.id) === String(id) || String(w.oldId || '') === String(id)))
+            .filter((w): w is ScrollWebsite => Boolean(w && w.id && w.name && w.url))
+            .map((w) => ({
               id: w.id,
               name: w.name,
               iconUrl: w.iconUrl,
-              url: w.url
+              url: w.url,
+              oldId: w.oldId,
             }));
-          console.log('[usePageConfig] Final heroScrollWebsites:', sortedWebsites);
+          debugLog.dev('[usePageConfig] Final heroScrollWebsites:', sortedWebsites);
           setHeroScrollWebsites(sortedWebsites);
         })
         .catch(err => {
-          console.error('获取滚动网站数据失败:', err);
+          debugLog.error('获取滚动网站数据失败:', err);
         });
     } catch (e) {
-      console.error('解析滚动网站ID失败:', e);
+      debugLog.error('解析滚动网站ID失败:', e);
       setHeroScrollWebsites([]);
     }
   }, [pageConfig?.heroDisplayMode, pageConfig?.heroScrollWebsites]);

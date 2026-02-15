@@ -9,7 +9,6 @@
 
 import React, { useState } from 'react';
 import { useFooterGroups, useFriendLinks } from '../../hooks/useSettings';
-import { useSocialMedia, SocialMediaItem } from '../../hooks/useSocialMedia';
 import { useSiteInfo } from '../../hooks/useSiteInfo';
 import SocialMediaSection from '../SocialMediaSection';
 import './Footer.css';
@@ -25,8 +24,7 @@ const Footer: React.FC = () => {
   // 从API获取数据
   const { groups: footerGroups, loading: groupsLoading } = useFooterGroups();
   const { links: friendLinks, loading: linksLoading } = useFriendLinks();
-  const { socialMedia, loading: socialLoading } = useSocialMedia();
-  const { siteInfo, loading: siteLoading } = useSiteInfo();
+  const { siteInfo } = useSiteInfo();
 
   // 切换显示/隐藏详细信息
   const toggleExpanded = () => {
@@ -216,7 +214,7 @@ const Footer: React.FC = () => {
               {siteInfo?.icp && (
                 <>
                   {' · '}
-                  <a rel="nofollow" target="_blank" href={siteInfo.icpLink || 'https://beian.miit.gov.cn'}>
+                  <a rel="nofollow noopener noreferrer" target="_blank" href={siteInfo.icpLink || 'https://beian.miit.gov.cn'}>
                     {siteInfo.icp}
                   </a>
                 </>
@@ -227,7 +225,7 @@ const Footer: React.FC = () => {
               <p>{siteInfo?.copyright || `版权所有 © ${currentYear} UIED设计导航平台`}</p>
               {siteInfo?.icp && (
                 <p>
-                  <a rel="nofollow" target="_blank" href={siteInfo.icpLink || 'https://beian.miit.gov.cn'}>
+                  <a rel="nofollow noopener noreferrer" target="_blank" href={siteInfo.icpLink || 'https://beian.miit.gov.cn'}>
                     {siteInfo.icp}
                   </a>
                 </p>

@@ -9,12 +9,13 @@
  */
 
 import { useState, useEffect } from 'react';
-import { 
-  settingService, 
-  NavMenuItem, 
-  FooterGroup, 
-  FriendLink 
+import {
+  settingService,
+  NavMenuItem,
+  FooterGroup,
+  FriendLink
 } from '../services/settingService';
+import { debugLog } from '../utils/debugHelper';
 
 // 导航菜单 Hook
 export const useNavMenus = () => {
@@ -33,7 +34,7 @@ export const useNavMenus = () => {
         setError(null);
       } catch (err) {
         setError(err as Error);
-        console.error('Failed to fetch nav menus:', err);
+        debugLog.error('Failed to fetch nav menus:', err);
       } finally {
         setLoading(false);
       }
@@ -67,7 +68,7 @@ export const useFooterGroups = () => {
         setError(null);
       } catch (err) {
         setError(err as Error);
-        console.error('Failed to fetch footer groups:', err);
+        debugLog.error('Failed to fetch footer groups:', err);
       } finally {
         setLoading(false);
       }
@@ -94,7 +95,7 @@ export const useFriendLinks = () => {
         setError(null);
       } catch (err) {
         setError(err as Error);
-        console.error('Failed to fetch friend links:', err);
+        debugLog.error('Failed to fetch friend links:', err);
       } finally {
         setLoading(false);
       }

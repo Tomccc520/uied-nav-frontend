@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import { unwrapApiList } from '../utils/apiResponse';
 
 export interface Banner {
   id: string;
@@ -37,17 +38,17 @@ export function useBanners(options: UseBannersOptions = {}) {
     const fetchBanners = async () => {
       setLoading(true);
       try {
-        const params: any = {};
+        const params: Record<string, string | number> = {};
         if (options.pageSlug) params.pageSlug = options.pageSlug;
         if (options.position) params.position = options.position;
         if (options.limit) params.limit = options.limit;
 
         const res = await api.get('/banners/active', { params });
-        setBanners(res.data || []);
+        setBanners(unwrapApiList<Banner>(res.data));
         setError(null);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('获取 Banner 失败:', err);
-        setError(err.message);
+        setError(err instanceof Error ? err.message : '获取 Banner 失败');
         setBanners([]);
       } finally {
         setLoading(false);

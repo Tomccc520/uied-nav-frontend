@@ -24,6 +24,12 @@ interface DynamicIconProps {
   style?: React.CSSProperties;
 }
 
+type DesignIconKey = keyof typeof DesignIcons;
+type IconComponentType = React.ComponentType<{
+  className?: string;
+  style?: React.CSSProperties;
+}>;
+
 // 后台图标 key 到前端 DesignIcons 的映射
 // key 与 admin/src/config/icons.tsx 中的 availableIcons 对应
 const iconKeyMapping: Record<string, keyof typeof DesignIcons | null> = {
@@ -110,6 +116,22 @@ const iconKeyMapping: Record<string, keyof typeof DesignIcons | null> = {
 };
 
 /**
+ * 判断图标 key 是否存在于图标库中。
+ */
+const isDesignIconKey = (key: string): key is DesignIconKey => {
+  return key in DesignIcons;
+};
+
+/**
+ * 根据图标 key 获取组件。
+ */
+const getIconComponentByKey = (key: string): IconComponentType | null => {
+  if (!key) return null;
+  if (!isDesignIconKey(key)) return null;
+  return DesignIcons[key] as IconComponentType;
+};
+
+/**
  * 动态图标组件
  * 根据后台配置的图标 key 渲染对应的前端图标
  */
@@ -124,15 +146,15 @@ export const UntitledIcon: React.FC<DynamicIconProps> = ({
   const mappedKey = iconKeyMapping[name] || iconKeyMapping[name.toLowerCase()];
   
   // 获取图标组件
-  let IconComponent: React.ComponentType<any> | null = null;
-  
-  if (mappedKey && DesignIcons[mappedKey]) {
-    IconComponent = DesignIcons[mappedKey] as React.ComponentType<any>;
-  } else if ((DesignIcons as any)[name]) {
-    // 直接尝试使用 name 作为 key
-    IconComponent = (DesignIcons as any)[name];
-  } else if ((DesignIcons as any)[name.toLowerCase()]) {
-    IconComponent = (DesignIcons as any)[name.toLowerCase()];
+  let IconComponent: IconComponentType | null = null;
+  if (mappedKey) {
+    IconComponent = getIconComponentByKey(mappedKey);
+  }
+  if (!IconComponent) {
+    IconComponent = getIconComponentByKey(name);
+  }
+  if (!IconComponent) {
+    IconComponent = getIconComponentByKey(name.toLowerCase());
   }
   
   if (IconComponent) {
@@ -171,8 +193,8 @@ export const isValidIconKey = (iconKey: string): boolean => {
   return !!(
     iconKeyMapping[iconKey] ||
     iconKeyMapping[iconKey.toLowerCase()] ||
-    (DesignIcons as any)[iconKey] ||
-    (DesignIcons as any)[iconKey.toLowerCase()]
+    isDesignIconKey(iconKey) ||
+    isDesignIconKey(iconKey.toLowerCase())
   );
 };
 

@@ -8,11 +8,13 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigation, type NavigationHookReturn, type DataService } from './useNavigation';
 import { APIDataService, createAPIDataService } from '../services/apiDataService';
 import { NavMenuType } from '../types';
+import { IconComponent } from '../types/icon';
+import { debugLog } from '../utils/debugHelper';
 
 interface UseAPINavigationConfig {
   slug: string;
   navType: NavMenuType;
-  iconComponents: Record<string, React.ComponentType<any>>;
+  iconComponents: Record<string, IconComponent>;
   searchPageType?: string;
   fallbackDataService?: DataService; // 可选的静态数据服务作为后备
 }
@@ -47,10 +49,10 @@ export const useAPINavigation = (config: UseAPINavigationConfig): UseAPINavigati
       if (service.isLoaded() && !service.getError()) {
         // 检查数据是否有效
         const navItems = service.getNavItems();
-        console.log(`[useAPINavigation] ${slug} - API数据加载成功，分类数量: ${navItems.length}`);
-        console.log(`[useAPINavigation] ${slug} - 分类列表:`, navItems.map(item => item.name));
+        debugLog.dev(`[useAPINavigation] ${slug} - API数据加载成功，分类数量: ${navItems.length}`);
+        debugLog.dev(`[useAPINavigation] ${slug} - 分类列表:`, navItems.map(item => item.name));
         if (navItems.length > 0) {
-          console.log(`[useAPINavigation] ${slug} - 第一个分类ID: ${navItems[0].id}`);
+          debugLog.dev(`[useAPINavigation] ${slug} - 第一个分类ID: ${navItems[0].id}`);
           setApiDataService(service);
           setDataSource('api');
           setDataVersion(v => v + 1); // 触发重新初始化

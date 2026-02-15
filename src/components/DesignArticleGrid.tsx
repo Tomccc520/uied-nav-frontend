@@ -6,7 +6,7 @@
  * @license MIT
  * @version 1.4.0 - 集成 WordPress 组件配置控制
  */
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './DesignArticleGrid.css';
 
@@ -21,6 +21,7 @@ import { useWordPressCategories } from '../hooks/useWordPressCategories';
 
 // 导入 WordPress 标签 Hook
 import { useWordPressTags } from '../hooks/useWordPressTags';
+import { debugLog } from '../utils/debugHelper';
 
 // 导入RankItem类型
 interface RankItem {
@@ -52,6 +53,11 @@ interface TagOption {
   description?: string;
 }
 
+interface SessionCachePayload<T> {
+  data: T;
+  expiresAt: number;
+}
+
 // 默认标签选项（作为备用）- 都是分类类型
 const DEFAULT_TAG_OPTIONS: TagOption[] = [
   { key: 'UI', name: 'UI', type: 'category', id: 334 },
@@ -79,18 +85,22 @@ const clearDesignArticlesCache = () => {
       }
     }
     keysToRemove.forEach(key => sessionStorage.removeItem(key));
-    console.log('DesignArticleGrid: 已清除缓存', keysToRemove.length, '个');
+    debugLog.dev('DesignArticleGrid: 已清除缓存', keysToRemove.length, '个');
   } catch (e) {
-    console.warn('清除缓存失败', e);
+    debugLog.warn('清除缓存失败', e);
   }
 };
 
 // 全局缓存 - 组件级别，持久化到sessionStorage
-const getFromSessionStorage = (key: string) => {
+/**
+ * 从会话缓存中读取并校验过期时间。
+ */
+function getFromSessionStorage<T>(key: string): T | null {
   try {
     const storedData = sessionStorage.getItem(key);
     if (storedData) {
-      const { data, expiresAt } = JSON.parse(storedData);
+      const parsed = JSON.parse(storedData) as SessionCachePayload<T>;
+      const { data, expiresAt } = parsed;
       if (expiresAt > Date.now()) {
         return data;
       } else {
@@ -99,22 +109,25 @@ const getFromSessionStorage = (key: string) => {
       }
     }
   } catch (e) {
-    console.warn('从SessionStorage获取缓存失败', e);
+    debugLog.warn('从SessionStorage获取缓存失败', e);
   }
   return null;
-};
+}
 
-const saveToSessionStorage = (key: string, data: any) => {
+/**
+ * 保存数据到会话缓存，并附带过期时间。
+ */
+function saveToSessionStorage<T>(key: string, data: T) {
   try {
-    const cacheData = {
+    const cacheData: SessionCachePayload<T> = {
       data,
       expiresAt: Date.now() + CACHE_EXPIRE_TIME
     };
     sessionStorage.setItem(key, JSON.stringify(cacheData));
   } catch (e) {
-    console.warn('保存到SessionStorage失败', e);
+    debugLog.warn('保存到SessionStorage失败', e);
   }
-};
+}
 
 // 根据环境处理图片URL
 const getImageUrl = (url?: string) => {
@@ -137,20 +150,6 @@ const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
   if (container && container.classList.contains('article-image-container')) {
     container.classList.add('image-error');
   }
-};
-
-// 生成一些本地备用数据（如果API完全不可用）
-const generateFallbackData = (categoryId: number, count: number): RankItem[] => {
-  return Array.from({ length: count }, (_, index) => ({
-    id: `local-${categoryId}-${index}`,
-    name: `设计文章示例 ${index + 1}`,
-    description: '这是一篇设计文章的本地备用数据，当API无法访问时显示',
-    link: 'https://www.uied.cn',
-    thumbnail: 'https://img.uied.cn/wp-content/themes/uied/assets/images/default-thumbnail.jpg',
-    date: new Date().toLocaleDateString(),
-    timeAgo: '刚刚',
-    isNew: true
-  }));
 };
 
 // 案例数据 - 用于样式调试
@@ -260,7 +259,7 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
   position = 'main' // 组件位置
 }) => {
   // 获取 WordPress 组件配置
-  const { widgets, loading: widgetsLoading, getWidgetByPosition } = useWordPressWidgets({
+  const { getWidgetByPosition } = useWordPressWidgets({
     pageSlug,
     enabled: !!pageSlug
   });
@@ -277,7 +276,7 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
   // 调试日志 - 仅在开发环境输出
   useEffect(() => {
     if (process.env.NODE_ENV === 'development' && widgetConfig) {
-      console.log('[DesignArticleGrid] 使用配置:', {
+      debugLog.dev('[DesignArticleGrid] 使用配置:', {
         pageSlug,
         categoryIds: widgetConfig?.categoryIds,
         tagIds: widgetConfig?.tagIds,
@@ -292,7 +291,7 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
   const { tags: backendTags } = useWordPressTags({});
   
   // 根据组件配置筛选要显示的分类和标签
-  const TAG_OPTIONS = React.useMemo(() => {
+  const TAG_OPTIONS = useMemo(() => {
     const configuredOptions: TagOption[] = [];
     
     // 处理分类ID
@@ -343,13 +342,17 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
     }
     
     if (configuredOptions.length > 0) {
-      console.log('[DesignArticleGrid] 使用组件配置:', configuredOptions.map(c => `${c.name}(${c.type})`));
+      debugLog.dev('[DesignArticleGrid] 使用组件配置:', configuredOptions.map(c => `${c.name}(${c.type})`));
       return configuredOptions;
     }
     
     // 否则使用所有默认分类
     return DEFAULT_TAG_OPTIONS;
   }, [widgetConfig?.categoryIds, widgetConfig?.tagIds, backendCategories, backendTags]);
+  const widgetCategoryIdsKey = useMemo(
+    () => (widgetConfig?.categoryIds || []).join(','),
+    [widgetConfig?.categoryIds]
+  );
   
   // 当前选中的子分类 - 初始为空，等待TAG_OPTIONS加载后设置
   const [activeTag, setActiveTag] = useState<string>('');
@@ -364,7 +367,7 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
         opt.name.includes(defaultSubCategory)
       );
       const defaultKey = matchingOption?.key || TAG_OPTIONS[0].key;
-      console.log('[DesignArticleGrid] 设置默认分类:', defaultKey, 'TAG_OPTIONS:', TAG_OPTIONS.map(t => t.key));
+      debugLog.dev('[DesignArticleGrid] 设置默认分类:', defaultKey, 'TAG_OPTIONS:', TAG_OPTIONS.map(t => t.key));
       setActiveTag(defaultKey);
     }
   }, [TAG_OPTIONS, activeTag, defaultSubCategory]);
@@ -403,22 +406,22 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
   const fetchArticles = useCallback(async (forceRefresh = false) => {
     // 如果已经在加载中，则跳过
     if (isLoadingRef.current) {
-      console.log('DesignArticleGrid: 已在加载中，跳过重复请求');
+      debugLog.dev('DesignArticleGrid: 已在加载中，跳过重复请求');
       return;
     }
     
     const currentOption = getCurrentOption();
     const fetchLimit = effectiveLimit;
-    console.log('DesignArticleGrid: 开始获取文章，类型:', currentOption.type, 'ID:', currentOption.id, '当前标签:', activeTag, '强制刷新:', forceRefresh, '数量限制:', fetchLimit);
+    debugLog.dev('DesignArticleGrid: 开始获取文章，类型:', currentOption.type, 'ID:', currentOption.id, '当前标签:', activeTag, '强制刷新:', forceRefresh, '数量限制:', fetchLimit);
     
     // 创建缓存键 - 包含类型信息
     const cacheKey = `design-articles-${currentOption.type}-${currentOption.id}-${fetchLimit}`;
     
     // 如果不是强制刷新，首先尝试从sessionStorage获取缓存
     if (!forceRefresh) {
-      const cachedData = getFromSessionStorage(cacheKey);
+      const cachedData = getFromSessionStorage<RankItem[]>(cacheKey);
       if (cachedData) {
-        console.log('DesignArticleGrid: 使用缓存数据:', cachedData.length, '条');
+        debugLog.dev('DesignArticleGrid: 使用缓存数据:', cachedData.length, '条');
         if (isMountedRef.current) {
           setArticles(cachedData);
           setIsLoading(false);
@@ -436,7 +439,7 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
     isLoadingRef.current = true;
     
     try {
-      console.log('DesignArticleGrid: 调用API获取数据，参数:', {
+      debugLog.dev('DesignArticleGrid: 调用API获取数据，参数:', {
         type: currentOption.type,
         id: currentOption.id,
         page: 1,
@@ -450,7 +453,7 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
       
       // 如果使用模拟数据，直接返回案例数据
       if (useMock) {
-        console.log('DesignArticleGrid: 使用案例数据进行样式调试');
+        debugLog.dev('DesignArticleGrid: 使用案例数据进行样式调试');
         response = generateMockData(fetchLimit);
       } else {
         // 根据类型调用不同的API
@@ -476,16 +479,16 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
         }
       }
       
-      console.log('DesignArticleGrid: 返回数据:', response);
+      debugLog.dev('DesignArticleGrid: 返回数据:', response);
       
       // 组件可能已卸载，检查挂载状态
       if (!isMountedRef.current) {
-        console.log('DesignArticleGrid: 组件已卸载，停止处理');
+        debugLog.dev('DesignArticleGrid: 组件已卸载，停止处理');
         return;
       }
       
       if (Array.isArray(response) && response.length > 0) {
-        console.log('DesignArticleGrid: 成功获取', response.length, '条文章');
+        debugLog.dev('DesignArticleGrid: 成功获取', response.length, '条文章');
         // 保存到sessionStorage
         saveToSessionStorage(cacheKey, response);
         
@@ -494,12 +497,12 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
         setError(null);
         setRetryCount(0);
       } else {
-        console.warn('DesignArticleGrid: 未找到文章数据或数据格式错误');
+        debugLog.warn('DesignArticleGrid: 未找到文章数据或数据格式错误');
         setArticles([]);
         setError('暂无该分类的文章数据');
       }
     } catch (err) {
-      console.error('DesignArticleGrid: 获取设计文章失败:', err);
+      debugLog.error('DesignArticleGrid: 获取设计文章失败:', err);
       
       // 组件可能已卸载，检查挂载状态
       if (!isMountedRef.current) return;
@@ -508,9 +511,9 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
       let foundFallback = false;
       for (const option of TAG_OPTIONS) {
         const fallbackCacheKey = `design-articles-${option.type}-${option.id}-${fetchLimit}`;
-        const fallbackData = getFromSessionStorage(fallbackCacheKey);
+        const fallbackData = getFromSessionStorage<RankItem[]>(fallbackCacheKey);
         if (fallbackData && fallbackData.length > 0) {
-          console.log('DesignArticleGrid: 使用后备缓存数据:', option.name);
+          debugLog.dev('DesignArticleGrid: 使用后备缓存数据:', option.name);
           setArticles(fallbackData);
           setError('获取最新数据失败，显示缓存数据');
           foundFallback = true;
@@ -520,7 +523,7 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
       
       // 如果仍然没有数据，显示错误
       if (!foundFallback) {
-        console.log('DesignArticleGrid: 无可用数据');
+        debugLog.dev('DesignArticleGrid: 无可用数据');
         setArticles([]);
         setError('暂时无法连接到服务器');
       }
@@ -543,17 +546,17 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
     
     // 如果正在加载中，忽略请求
     if (isLoadingRef.current) {
-      console.log('DesignArticleGrid: 正在加载中，忽略切换请求');
+      debugLog.dev('DesignArticleGrid: 正在加载中，忽略切换请求');
       return;
     }
     
-    console.log('DesignArticleGrid: 切换分类', tagKey);
+    debugLog.dev('DesignArticleGrid: 切换分类', tagKey);
     
     // 先检查缓存是否存在，如果有缓存就不显示loading
     const targetOption = TAG_OPTIONS.find(opt => opt.key === tagKey);
     if (targetOption) {
       const cacheKey = `design-articles-${targetOption.type}-${targetOption.id}-${effectiveLimit}`;
-      const cachedData = getFromSessionStorage(cacheKey);
+      const cachedData = getFromSessionStorage<RankItem[]>(cacheKey);
       if (cachedData) {
         // 有缓存，直接切换，不显示loading
         setActiveTag(tagKey);
@@ -588,15 +591,15 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
   // 组件挂载时获取数据 - 等待activeTag设置后再获取
   useEffect(() => {
     if (activeTag) {
-      console.log('DesignArticleGrid: activeTag已设置，获取初始数据', activeTag);
+      debugLog.dev('DesignArticleGrid: activeTag已设置，获取初始数据', activeTag);
       fetchArticles();
     }
-  }, [activeTag]); // 依赖activeTag，当它设置后获取数据
+  }, [activeTag, fetchArticles]);
 
   // 当组件配置变化时，清除缓存并重新获取数据
   useEffect(() => {
     if (widgetConfig) {
-      console.log('DesignArticleGrid: 组件配置变化，清除缓存并重新获取数据', widgetConfig);
+      debugLog.dev('DesignArticleGrid: 组件配置变化，清除缓存并重新获取数据', widgetConfig);
       clearDesignArticlesCache();
       // 延迟获取数据，确保缓存已清除
       setTimeout(() => {
@@ -605,7 +608,7 @@ const DesignArticleGrid: React.FC<DesignArticleGridProps> = ({
         }
       }, 100);
     }
-  }, [widgetConfig?.id, widgetConfig?.categoryIds?.join(','), widgetConfig?.limit]); // 监听配置的关键字段变化
+  }, [widgetConfig, widgetConfig?.id, widgetCategoryIdsKey, widgetConfig?.limit, fetchArticles]);
 
   // 渲染文章卡片 - 优化鼠标移入效果
   const renderArticles = () => {

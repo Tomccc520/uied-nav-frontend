@@ -9,6 +9,7 @@
  */
 
 import api from './api';
+import { unwrapApiList, unwrapApiResponse } from '../utils/apiResponse';
 
 export interface Category {
   id: string;
@@ -30,25 +31,25 @@ export const categoryService = {
   // 获取所有分类（树形结构）
   getAll: async (): Promise<Category[]> => {
     const response = await api.get('/categories');
-    return response.data;
+    return unwrapApiList<Category>(response.data);
   },
 
   // 获取所有分类（扁平列表）
   getAllFlat: async (): Promise<Category[]> => {
     const response = await api.get('/categories', { params: { flat: 'true' } });
-    return response.data;
+    return unwrapApiList<Category>(response.data);
   },
 
   // 获取单个分类
   getById: async (id: string): Promise<Category> => {
     const response = await api.get(`/categories/${id}`);
-    return response.data;
+    return unwrapApiResponse<Category>(response.data, {} as Category);
   },
 
   // 通过 slug 获取分类
   getBySlug: async (slug: string): Promise<Category> => {
     const response = await api.get(`/categories/slug/${slug}`);
-    return response.data;
+    return unwrapApiResponse<Category>(response.data, {} as Category);
   },
 
   // 获取主分类（没有父分类的）

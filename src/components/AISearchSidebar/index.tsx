@@ -65,6 +65,14 @@ interface SearchResult {
   iconUrl?: string;
 }
 
+interface AiSearchApiResult {
+  id?: string | number;
+  name?: string;
+  description?: string;
+  url?: string;
+  iconUrl?: string;
+}
+
 interface AISearchSidebarProps {
   visible: boolean;
   onClose: () => void;
@@ -130,7 +138,7 @@ const AISearchSidebar: React.FC<AISearchSidebarProps> = ({ visible, onClose, onW
         limit: 10,
       });
 
-      const results = response.data?.results || [];
+      const results = (response.data?.results || []) as AiSearchApiResult[];
       const mode = response.data?.mode || 'keyword';
       const reason = response.data?.reason || '';
       const reasoning = response.data?.reasoning || ''; // AI 思考过程
@@ -150,11 +158,11 @@ const AISearchSidebar: React.FC<AISearchSidebarProps> = ({ visible, onClose, onW
         role: 'assistant',
         timestamp: new Date(),
         reasoning: reasoning, // 保存思考过程
-        websites: results.map((item: any) => ({
-          id: item.id,
-          name: item.name,
+        websites: results.map((item, index) => ({
+          id: String(item.id ?? `result-${index}`),
+          name: item.name || '未命名资源',
           description: item.description || '',
-          url: item.url,
+          url: item.url || '#',
           iconUrl: item.iconUrl,
         })),
       };

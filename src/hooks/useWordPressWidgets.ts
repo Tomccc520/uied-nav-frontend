@@ -5,6 +5,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
+import { unwrapApiList } from '../utils/apiResponse';
+import { debugLog } from '../utils/debugHelper';
 
 export interface WordPressWidget {
   id: string;
@@ -19,7 +21,7 @@ export interface WordPressWidget {
   tagIds: number[];
   order: number;
   visible: boolean;
-  settings?: Record<string, any>;
+  settings?: Record<string, unknown>;
 }
 
 interface UseWordPressWidgetsOptions {
@@ -42,7 +44,7 @@ interface UseWordPressWidgetsReturn {
 export const useWordPressWidgets = (
   options: UseWordPressWidgetsOptions = {}
 ): UseWordPressWidgetsReturn => {
-  const { pageSlug, position, enabled = true } = options;
+  const { pageSlug, enabled = true } = options;
   
   const [widgets, setWidgets] = useState<WordPressWidget[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,14 +60,14 @@ export const useWordPressWidgets = (
       setLoading(true);
       setError(null);
       
-      const params: Record<string, any> = {};
+      const params: Record<string, string> = {};
       if (pageSlug) params.pageSlug = pageSlug;
       
-      console.log('[useWordPressWidgets] 请求参数:', { pageSlug, params });
+      debugLog.dev('[useWordPressWidgets] 请求参数:', { pageSlug, params });
       
       const response = await api.get('/wordpress/widgets/active', { params });
       
-      let data = response.data || [];
+      const data = unwrapApiList<WordPressWidget>(response.data);
       
       // 注意：不在这里按 position 筛选，让 getWidgetByPosition 来处理
       // 这样 widgets 数组包含该页面的所有组件
@@ -73,7 +75,7 @@ export const useWordPressWidgets = (
       setWidgets(data);
     } catch (err) {
       setError(err as Error);
-      console.error('Failed to fetch WordPress widgets:', err);
+      debugLog.error('Failed to fetch WordPress widgets:', err);
       setWidgets([]);
     } finally {
       setLoading(false);

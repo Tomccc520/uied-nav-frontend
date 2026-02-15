@@ -4,8 +4,11 @@
  */
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { AxiosError } from 'axios';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
+import { unwrapApiList, unwrapApiResponse } from '../../utils/apiResponse';
+import { debugLog } from '../../utils/debugHelper';
 import SEO from '../../components/SEO';
 import './index.css';
 
@@ -31,6 +34,20 @@ interface SubmitFormData {
 interface DraftData extends SubmitFormData {
   iconUrl: string;
   savedAt: number;
+}
+
+interface IconFetchPayload {
+  faviconUrl?: string;
+}
+
+interface AiGeneratePayload {
+  name?: string;
+  description?: string;
+  tags?: string;
+}
+
+interface SubmissionPayload {
+  id?: string;
 }
 
 // SVG 图标组件
@@ -340,7 +357,7 @@ const SubmitPage: React.FC = () => {
         }
       }
     } catch (e) {
-      console.error('加载草稿失败:', e);
+      debugLog.error('加载草稿失败:', e);
     }
     setDraftLoaded(true);
   }, []);
@@ -355,7 +372,7 @@ const SubmitPage: React.FC = () => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
     } catch (e) {
-      console.error('保存草稿失败:', e);
+      debugLog.error('保存草稿失败:', e);
     }
   }, [formData, iconUrl]);
 
@@ -371,7 +388,7 @@ const SubmitPage: React.FC = () => {
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch (e) {
-      console.error('清除草稿失败:', e);
+      debugLog.error('清除草稿失败:', e);
     }
   };
 
@@ -394,7 +411,7 @@ const SubmitPage: React.FC = () => {
         website: res.data.website,
       });
     } catch (error) {
-      console.error('检查URL失败:', error);
+      debugLog.error('检查URL失败:', error);
       setUrlCheckResult({ checking: false, exists: false });
     }
   }, []);
@@ -415,9 +432,9 @@ const SubmitPage: React.FC = () => {
   const fetchCategories = async () => {
     try {
       const res = await api.get('/categories?flat=true');
-      setCategories(res.data || []);
+      setCategories(unwrapApiList<Category>(res.data));
     } catch (error) {
-      console.error('获取分类失败:', error);
+      debugLog.error('获取分类失败:', error);
     }
   };
 
@@ -439,9 +456,10 @@ const SubmitPage: React.FC = () => {
     setFetchingIcon(true);
     try {
       const res = await api.get('/favicon-api/fetch', { params: { url: formData.url } });
-      setIconUrl(res.data.faviconUrl);
+      const data = unwrapApiResponse<IconFetchPayload>(res.data, {});
+      setIconUrl(data.faviconUrl || '');
     } catch (error) {
-      console.error('获取图标失败:', error);
+      debugLog.error('获取图标失败:', error);
     } finally {
       setFetchingIcon(false);
     }
@@ -452,7 +470,8 @@ const SubmitPage: React.FC = () => {
     setGeneratingAi(true);
     try {
       const res = await api.post('/ai-config/generate-website-info', { url: formData.url });
-      const { name, description, tags } = res.data;
+      const data = unwrapApiResponse<AiGeneratePayload>(res.data, {});
+      const { name, description, tags } = data;
       setFormData(prev => ({
         ...prev,
         name: name || prev.name,
@@ -462,8 +481,8 @@ const SubmitPage: React.FC = () => {
       if (!iconUrl) {
         handleFetchIcon();
       }
-    } catch (error: any) {
-      console.error('AI 生成失败:', error);
+    } catch (error: unknown) {
+      debugLog.error('AI 生成失败:', error as AxiosError<{ error?: string }>);
     } finally {
       setGeneratingAi(false);
     }
@@ -482,11 +501,13 @@ const SubmitPage: React.FC = () => {
         ...formData,
         iconUrl: iconUrl || undefined,
       });
+      const data = unwrapApiResponse<SubmissionPayload>(res.data, {});
       // 提交成功后清除草稿
       clearDraft();
-      setSubmitResult({ success: true, message: '提交成功！我们会尽快审核您的网站。', id: res.data.id });
-    } catch (error: any) {
-      setSubmitResult({ success: false, message: error.response?.data?.error || '提交失败，请稍后重试' });
+      setSubmitResult({ success: true, message: '提交成功！我们会尽快审核您的网站。', id: data.id });
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ error?: string }>;
+      setSubmitResult({ success: false, message: axiosError.response?.data?.error || '提交失败，请稍后重试' });
     } finally {
       setLoading(false);
     }

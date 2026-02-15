@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+import { AxiosError } from 'axios';
 import api from '../../services/api';
 import './index.css';
 
@@ -58,11 +59,12 @@ const AIAssistant: React.FC<AIAssistantProps> = ({
       });
 
       setMessages(prev => [...prev, { role: 'assistant', content: res.data.reply }]);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('AI 对话失败:', error);
+      const axiosError = error as AxiosError<{ error?: string }>;
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: '抱歉，AI 服务暂时不可用，请稍后再试。' 
+        content: axiosError.response?.data?.error || '抱歉，AI 服务暂时不可用，请稍后再试。' 
       }]);
     } finally {
       setLoading(false);

@@ -119,9 +119,6 @@ export const getHighQualityFavicon = (url, size = 64) => {
     // 方法2: Favicon Kit API (高质量备选)
     const faviconkitUrl = `https://api.faviconkit.com/${domain}/${size}`;
     
-    // 方法3: Google Favicon API (稳定备选)
-    const googleFavicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=${size}`;
-    
     return cravatarUrl || faviconkitUrl;
     
   } catch (error) {

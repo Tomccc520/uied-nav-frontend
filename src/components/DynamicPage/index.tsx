@@ -14,13 +14,13 @@ import ToolCard from '../ToolCard';
 import DesignArticleGrid from '../DesignArticleGrid';
 import AdBanner from '../AdBanner';
 import SEO from '../SEO';
-import { WebsiteExitModal } from '../UI';
 import { DesignIcons, IconTool } from '../UI';
 import { useFrontendConfig } from '../../hooks/useFrontendConfig';
 import { usePermalinkConfig, generateWebsiteUrl } from '../../hooks/usePermalinkConfig';
+import { getArrowConfigByWebsiteClickMode } from '../../utils/clickMode';
+import { unwrapApiResponse } from '../../utils/apiResponse';
 import { useNavigate } from 'react-router-dom';
 import { 
-  PageSkeleton, 
   CategorySidebarSkeleton, 
   ToolGridSkeleton,
   HeroBannerSkeleton 
@@ -28,8 +28,33 @@ import {
 import { NavMenuType } from '../../types';
 import '../../styles/common.css';
 
+type HeroPageType = 'home' | 'ai' | 'uiux' | 'design' | 'search' | 'threed' | 'ecommerce' | 'interior' | 'font';
+type IconComponent = React.ElementType;
+type WebsiteWithExtra = Website & { slug?: string; oldId?: string };
+
+interface DirectVisitTarget {
+  id: string;
+  url: string;
+  slug?: string;
+}
+
+/**
+ * 将页面标识统一映射为 HeroBanner 支持的 pageType。
+ */
+const resolveHeroPageType = (input: string | NavMenuType | undefined): HeroPageType => {
+  const value = String(input || '').toLowerCase();
+  if (value === NavMenuType.AI) return 'ai';
+  if (value === NavMenuType.UIUX) return 'uiux';
+  if (value === NavMenuType.DESIGN) return 'design';
+  if (value === NavMenuType.ECOMMERCE) return 'ecommerce';
+  if (value === NavMenuType.INTERIOR) return 'interior';
+  if (value === NavMenuType.FONT) return 'font';
+  if (value === NavMenuType.THREE_D || value === 'threed') return 'threed';
+  return 'home';
+};
+
 // 图标映射 - key 与后台 admin/src/config/icons.tsx 中的 availableIcons 对应
-const iconMap: Record<string, React.ComponentType<any>> = {
+const iconMap: Record<string, IconComponent> = {
   // ============ 设计相关 ============
   'inspiration': DesignIcons.Inspiration,
   'ui': DesignIcons.UI,
@@ -148,10 +173,6 @@ const DynamicPage: React.FC<DynamicPageProps> = ({ slug, pageType }) => {
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [heroScrollWebsites, setHeroScrollWebsites] = useState<{ id: string; name: string; iconUrl?: string; url: string }[]>([]);
   
-  // 网站跳转弹窗状态
-  const [isExitModalVisible, setIsExitModalVisible] = useState(false);
-  const [currentExitWebsite, setCurrentExitWebsite] = useState<Website | null>(null);
-  
   // 获取前端配置（跳转弹窗自定义文案）
   const { config: frontendConfig } = useFrontendConfig();
   const { config: permalinkConfig } = usePermalinkConfig();
@@ -159,19 +180,18 @@ const DynamicPage: React.FC<DynamicPageProps> = ({ slug, pageType }) => {
   const showDirectArrow = frontendConfig?.pageGlobalConfig?.showDirectArrow ?? false;
   const websiteClickMode = frontendConfig?.pageGlobalConfig?.websiteClickMode ?? 'detail';
   const directArrowNewWindow = frontendConfig?.pageGlobalConfig?.directArrowNewWindow ?? true;
-  // 根据模式决定箭头文案和方向
-  const arrowLabel = websiteClickMode === 'directExternal' ? '查看详情' : '直达网站';
-  const arrowIsExternal = websiteClickMode !== 'directExternal';
+  const detailPageNewWindow = frontendConfig?.pageGlobalConfig?.detailPageNewWindow ?? false;
+  const { isDirectMode, arrowLabel, arrowIsExternal } = getArrowConfigByWebsiteClickMode(websiteClickMode);
 
   // 直达箭头点击回调 - 与 useNavigation.ts 逻辑保持一致
-  const handleDirectVisit = useCallback((tool: any, e: React.MouseEvent) => {
-    if (websiteClickMode === 'directExternal') {
-      // 直达网站模式下，箭头跳转到详情页
+  const handleDirectVisit = useCallback((tool: DirectVisitTarget, _event: React.MouseEvent) => {
+    if (isDirectMode) {
+      // 分类区域设置为直达时，箭头进入详情页
       const detailUrl = generateWebsiteUrl(permalinkConfig, { 
         id: tool.id, 
         slug: tool.slug 
       });
-      if (directArrowNewWindow) {
+      if (detailPageNewWindow) {
         window.open(detailUrl, '_blank');
       } else {
         detailNavigate(detailUrl);
@@ -188,7 +208,7 @@ const DynamicPage: React.FC<DynamicPageProps> = ({ slug, pageType }) => {
         }
       }
     }
-  }, [websiteClickMode, directArrowNewWindow, permalinkConfig, detailNavigate]);
+  }, [isDirectMode, directArrowNewWindow, detailPageNewWindow, permalinkConfig, detailNavigate]);
 
   // 获取滚动图标墙的网站数据
   useEffect(() => {
@@ -200,12 +220,13 @@ const DynamicPage: React.FC<DynamicPageProps> = ({ slug, pageType }) => {
           import('../../services/api').then(({ default: api }) => {
             api.get('/websites', { params: { ids: websiteIds.join(','), limit: 100 } })
               .then(res => {
-                const websites = res.data.websites || res.data || [];
+                const rawData = unwrapApiResponse<WebsiteWithExtra[] | { websites?: WebsiteWithExtra[] }>(res.data, []);
+                const websites = Array.isArray(rawData) ? rawData : (rawData.websites || []);
                 // 按照配置的顺序排序，使用字符串比较确保类型匹配
                 const sortedWebsites = websiteIds
-                  .map((id: string | number) => websites.find((w: any) => String(w.id) === String(id)))
-                  .filter(Boolean)
-                  .map((w: any) => ({
+                  .map((id: string | number) => websites.find((w) => String(w.id) === String(id) || String(w.oldId || '') === String(id)))
+                  .filter((w): w is WebsiteWithExtra => Boolean(w && w.id && w.name && w.url))
+                  .map((w) => ({
                     id: w.id,
                     name: w.name,
                     iconUrl: w.iconUrl,
@@ -229,7 +250,7 @@ const DynamicPage: React.FC<DynamicPageProps> = ({ slug, pageType }) => {
     if (categories.length > 0 && !activeCategory) {
       setActiveCategory(categories[0].id);
     }
-  }, [categories.length]); // 只依赖 categories.length，避免不必要的重置
+  }, [categories, activeCategory]);
 
   // 导航项 - 包含子分类信息
   const navItems: NavItem[] = useMemo(() => {
@@ -266,24 +287,31 @@ const DynamicPage: React.FC<DynamicPageProps> = ({ slug, pageType }) => {
   const handleWebsiteClick = useCallback((website: Website) => {
     // 记录点击数据
     recordWebsiteClick(website.id);
-    setCurrentExitWebsite(website);
-    setIsExitModalVisible(true);
-  }, []);
-
-  // 确认访问网站
-  const confirmExitVisit = useCallback(() => {
-    if (currentExitWebsite) {
-      window.open(currentExitWebsite.url, '_blank');
+    if (isDirectMode) {
+      window.open(website.url, '_blank', 'noopener,noreferrer');
+      return;
     }
-    setIsExitModalVisible(false);
-    setCurrentExitWebsite(null);
-  }, [currentExitWebsite]);
+    const websiteSlug = (website as WebsiteWithExtra).slug;
+    const detailUrl = generateWebsiteUrl(permalinkConfig, {
+      id: website.id,
+      slug: websiteSlug,
+    });
+    if (detailPageNewWindow) {
+      window.open(detailUrl, '_blank');
+    } else {
+      detailNavigate(detailUrl);
+      window.scrollTo(0, 0);
+    }
+  }, [isDirectMode, permalinkConfig, detailPageNewWindow, detailNavigate]);
 
   // 侧边栏配置
   const sidebarConfig: SidebarConfig = {
     title: pageConfig?.name || '导航',
     type: pageType || NavMenuType.UIUX
   };
+  const heroPageType = useMemo<HeroPageType>(() => {
+    return resolveHeroPageType(pageType || slug);
+  }, [pageType, slug]);
 
   // 生成主题色相关的CSS变量 - 必须在早期返回之前调用
   const themeStyle = useMemo(() => {
@@ -373,7 +401,7 @@ const DynamicPage: React.FC<DynamicPageProps> = ({ slug, pageType }) => {
       
       {/* 头部Hero区域 */}
       <HeroBanner 
-        pageType={pageType as any || slug as any}
+        pageType={heroPageType}
         showStats={true}
         customTitle={pageConfig?.heroTitle}
         customDescription={pageConfig?.heroSubtitle}
@@ -556,16 +584,6 @@ const DynamicPage: React.FC<DynamicPageProps> = ({ slug, pageType }) => {
           })}
         </main>
       </div>
-
-      {/* 网站跳转确认弹窗 */}
-      <WebsiteExitModal
-        visible={isExitModalVisible}
-        website={currentExitWebsite}
-        onClose={() => setIsExitModalVisible(false)}
-        onConfirm={confirmExitVisit}
-        onReport={() => {}}
-        config={frontendConfig.exitModalConfig}
-      />
     </div>
   );
 };
@@ -576,7 +594,7 @@ interface SubCategoryTabsProps {
   getWebsitesBySubCategory: (id: string) => Website[];
   onWebsiteClick: (website: Website) => void;
   showDirectArrow?: boolean;
-  onDirectVisit?: (tool: any, e: React.MouseEvent) => void;
+  onDirectVisit?: (tool: DirectVisitTarget, e: React.MouseEvent) => void;
   arrowLabel?: string;
   arrowIsExternal?: boolean;
   directArrowNewWindow?: boolean;

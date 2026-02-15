@@ -114,9 +114,7 @@ describe('SiteContext - Property Tests', () => {
             const actualValue = siteInfo[key];
             
             // 当实际值存在且非空时，应返回实际值
-            if (actualValue && actualValue.length > 0) {
-              expect(result).toBe(actualValue);
-            }
+            expect(!actualValue || actualValue.length === 0 || result === actualValue).toBe(true);
           }
         ),
         { numRuns: 100 }
@@ -171,15 +169,9 @@ describe('SiteContext - Property Tests', () => {
             const result = mergeSiteInfoWithDefaults(siteInfo as Partial<SiteInfo>);
 
             // 实际值应被保留
-            if (siteInfo.siteName && siteInfo.siteName.length > 0) {
-              expect(result.siteName).toBe(siteInfo.siteName);
-            }
-            if (siteInfo.siteTitle && siteInfo.siteTitle.length > 0) {
-              expect(result.siteTitle).toBe(siteInfo.siteTitle);
-            }
-            if (siteInfo.logo && siteInfo.logo.length > 0) {
-              expect(result.logo).toBe(siteInfo.logo);
-            }
+            expect(!siteInfo.siteName || siteInfo.siteName.length === 0 || result.siteName === siteInfo.siteName).toBe(true);
+            expect(!siteInfo.siteTitle || siteInfo.siteTitle.length === 0 || result.siteTitle === siteInfo.siteTitle).toBe(true);
+            expect(!siteInfo.logo || siteInfo.logo.length === 0 || result.logo === siteInfo.logo).toBe(true);
           }
         ),
         { numRuns: 100 }

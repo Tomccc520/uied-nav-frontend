@@ -10,7 +10,10 @@
 
 // @pro-feature-start: ratings
 import React, { useState, useCallback } from 'react';
+import { AxiosError } from 'axios';
 import api from '../../services/api';
+import { unwrapApiResponse } from '../../utils/apiResponse';
+import { debugLog } from '../../utils/debugHelper';
 
 interface RatingWidgetProps {
   websiteId: string;
@@ -19,6 +22,12 @@ interface RatingWidgetProps {
   userRating: number | null;
   userId?: string; // Pro 版本中从认证获取
   onRatingChange?: (newRating: number, newAverage: number, newTotal: number) => void;
+}
+
+interface RatingResponse {
+  userRating: number;
+  averageRating: number;
+  totalRatings: number;
 }
 
 /**
@@ -94,18 +103,21 @@ const RatingWidget: React.FC<RatingWidgetProps> = ({
         rating,
         userId,
       });
-
-      if (response.data.success) {
-        setUserRating(response.data.data.userRating);
-        onRatingChange?.(
-          response.data.data.userRating,
-          response.data.data.averageRating,
-          response.data.data.totalRatings
-        );
+      const data = unwrapApiResponse<Partial<RatingResponse>>(response.data, {});
+      if (typeof data.userRating === 'number') {
+        setUserRating(data.userRating);
       }
-    } catch (err: any) {
-      console.error('评分失败:', err);
-      setError(err.response?.data?.message || '评分失败，请稍后重试');
+      if (
+        typeof data.userRating === 'number' &&
+        typeof data.averageRating === 'number' &&
+        typeof data.totalRatings === 'number'
+      ) {
+        onRatingChange?.(data.userRating, data.averageRating, data.totalRatings);
+      }
+    } catch (err: unknown) {
+      debugLog.error('评分失败:', err);
+      const axiosError = err as AxiosError<{ message?: string }>;
+      setError(axiosError.response?.data?.message || '评分失败，请稍后重试');
     } finally {
       setIsSubmitting(false);
     }

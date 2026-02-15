@@ -232,7 +232,7 @@ export const useDeduplicatedRequest = <T>({
     return () => {
       isMountedRef.current = false;
     };
-  }, [key, enabled]); // 注意：不包含execute以避免无限循环
+  }, [enabled, execute]);
 
   return {
     data,

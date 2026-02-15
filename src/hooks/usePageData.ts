@@ -10,6 +10,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { pageService, PageFullData, Website, Category, SubCategory } from '../services/pageService';
+import { debugLog } from '../utils/debugHelper';
 
 interface UsePageDataOptions {
   slug: string;
@@ -65,7 +66,7 @@ export const usePageData = ({ slug, enabled = true }: UsePageDataOptions): UsePa
       setIsInitialLoad(false);
     } catch (err) {
       setError(err as Error);
-      console.error(`Failed to fetch page data for ${slug}:`, err);
+      debugLog.error(`Failed to fetch page data for ${slug}:`, err);
     } finally {
       setLoading(false);
     }
@@ -79,7 +80,7 @@ export const usePageData = ({ slug, enabled = true }: UsePageDataOptions): UsePa
       const response = await pageService.getHotTags(slug, 10);
       setDynamicHotTags(response.tags || []);
     } catch (err) {
-      console.error(`Failed to fetch hot tags for ${slug}:`, err);
+      debugLog.error(`Failed to fetch hot tags for ${slug}:`, err);
       // 失败时不影响其他功能
     }
   }, [slug, enabled]);

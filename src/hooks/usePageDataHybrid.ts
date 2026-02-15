@@ -5,7 +5,8 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { pageService, PageFullData, Website, Category } from '../services/pageService';
+import { pageService, PageFullData } from '../services/pageService';
+import { debugLog } from '../utils/debugHelper';
 
 export type DataSource = 'api' | 'static' | 'auto';
 export type PageType = 'uiux' | 'ai' | 'design' | '3d' | 'ecommerce' | 'interior' | 'font';
@@ -92,7 +93,7 @@ export const usePageDataHybrid = ({
         setActualDataSource('api');
       }
     } catch (err) {
-      console.warn(`API获取失败: ${slug}`, err);
+      debugLog.warn(`API获取失败: ${slug}`, err);
       setError(err as Error);
       setActualDataSource('api');
     } finally {
@@ -103,9 +104,6 @@ export const usePageDataHybrid = ({
   useEffect(() => {
     fetchApiData();
   }, [fetchApiData]);
-
-  // 不再需要静态数据
-  const staticData = null;
 
   // 统一的数据访问方法 - 仅使用API数据
   const categories = useMemo((): CategoryData[] => {

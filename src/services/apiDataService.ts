@@ -7,6 +7,7 @@
 import { pageService, PageFullData, Website } from './pageService';
 import { type NavItem } from '../components/CategorySidebar';
 import { type Tool, type Stats, type DataService } from '../hooks/useNavigation';
+import { IconComponent } from '../types/icon';
 
 /**
  * 将API返回的Website转换为Tool格式
@@ -33,9 +34,9 @@ export class APIDataService implements DataService {
   private data: PageFullData | null = null;
   private loading: boolean = false;
   private error: Error | null = null;
-  private iconComponents: Record<string, React.ComponentType<any>>;
+  private iconComponents: Record<string, IconComponent>;
 
-  constructor(slug: string, iconComponents: Record<string, React.ComponentType<any>>) {
+  constructor(slug: string, iconComponents: Record<string, IconComponent>) {
     this.slug = slug;
     this.iconComponents = iconComponents;
   }
@@ -286,7 +287,7 @@ export class APIDataService implements DataService {
  */
 export function createAPIDataService(
   slug: string, 
-  iconComponents: Record<string, React.ComponentType<any>>
+  iconComponents: Record<string, IconComponent>
 ): APIDataService {
   return new APIDataService(slug, iconComponents);
 }

@@ -21,11 +21,14 @@ declare module 'lodash/throttle' {
 
 // 声明wordpress-api模块
 declare module '../services/wordpress-api' {
+  type WordPressParams = Record<string, unknown>;
+  type WordPressPost = Record<string, unknown>;
+
   const wordPressApi: {
-    getLatestPosts: (params?: any) => Promise<any[]>;
-    getCategoryPosts: (params?: any) => Promise<any[]>;
-    getTagPosts: (params?: any) => Promise<any[]>;
-    searchPosts: (params?: any) => Promise<any[]>;
+    getLatestPosts: (params?: WordPressParams) => Promise<WordPressPost[]>;
+    getCategoryPosts: (params?: WordPressParams) => Promise<WordPressPost[]>;
+    getTagPosts: (params?: WordPressParams) => Promise<WordPressPost[]>;
+    searchPosts: (params?: WordPressParams) => Promise<WordPressPost[]>;
     clearCache: (type: string) => void;
   };
   export default wordPressApi;

@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
+import { unwrapApiList } from '../utils/apiResponse';
 
 export interface WordPressCategory {
   id: string;
@@ -63,13 +64,13 @@ export const useWordPressCategories = (
       setLoading(true);
       setError(null);
       
-      const params: Record<string, any> = {};
+      const params: Record<string, string> = {};
       if (pageSlug) params.pageSlug = pageSlug;
       
       const response = await api.get('/wordpress/categories/active', { params });
-      
-      if (response.data && response.data.length > 0) {
-        setCategories(response.data);
+      const normalized = unwrapApiList<WordPressCategory>(response.data);
+      if (normalized.length > 0) {
+        setCategories(normalized);
       } else {
         // 如果 API 返回空数据，使用默认分类
         setCategories(DEFAULT_CATEGORIES);

@@ -8,7 +8,7 @@
  * @reference https://www.reactbits.dev/text-animations/falling-text
  */
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './FallingText.css';
 import Matter from "matter-js";
 
@@ -132,8 +132,7 @@ const FallingText: React.FC<FallingTextProps> = ({
       Bodies,
       Runner,
       Mouse,
-      MouseConstraint,
-      Common
+      MouseConstraint
     } = Matter;
 
     const containerRect = containerRef.current?.getBoundingClientRect();
@@ -158,9 +157,10 @@ const FallingText: React.FC<FallingTextProps> = ({
     const world = engine.world;
     
     const canvasEle = canvasRef.current;
+    const canvasContainerEle = canvasContainerRef.current;
     const containerEle = containerRef.current;
     
-    if (!canvasEle || !containerEle) return;
+    if (!canvasEle || !containerEle || !canvasContainerEle) return;
     
     const render = Render.create({
       element: containerEle,
@@ -292,8 +292,8 @@ const FallingText: React.FC<FallingTextProps> = ({
     return () => {
       Render.stop(render);
       Runner.stop(runner);
-      if (render.canvas && canvasContainerRef.current) {
-        canvasContainerRef.current.removeChild(render.canvas);
+      if (render.canvas && canvasContainerEle.contains(render.canvas)) {
+        canvasContainerEle.removeChild(render.canvas);
       }
       World.clear(world, false);
       Engine.clear(engine);

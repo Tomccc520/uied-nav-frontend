@@ -397,16 +397,15 @@ describe('Search Functionality - Property Tests', () => {
             const textWithKeyword = `${text} ${keyword} ${text}`;
             const result = highlightKeyword(textWithKeyword, keyword);
             
-            // 如果有高亮，每个高亮片段应该包含关键词
-            if (result.highlights.length > 0) {
-              for (const highlight of result.highlights) {
-                const matchedText = highlight.fragment.substring(
-                  highlight.matchStart,
-                  highlight.matchEnd
-                );
-                expect(matchedText.toLowerCase()).toBe(keyword.toLowerCase());
-              }
-            }
+            // 每个高亮片段都应命中关键词（空数组时 every 为 true）
+            const allHighlightsMatch = result.highlights.every((highlight) => {
+              const matchedText = highlight.fragment.substring(
+                highlight.matchStart,
+                highlight.matchEnd
+              );
+              return matchedText.toLowerCase() === keyword.toLowerCase();
+            });
+            expect(allHighlightsMatch).toBe(true);
           }
         ),
         { numRuns: 100 }

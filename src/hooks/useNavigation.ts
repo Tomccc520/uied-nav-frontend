@@ -16,6 +16,8 @@ import { NavMenuType } from "../types";
 import { useWebsiteExit } from './useWebsiteExit';
 import { usePermalinkConfig, generateWebsiteUrl } from './usePermalinkConfig';
 import { useFrontendConfig } from './useFrontendConfig';
+import { getArrowConfigByWebsiteClickMode } from '../utils/clickMode';
+import { debugLog } from '../utils/debugHelper';
 
 // 通用工具接口
 export interface Tool {
@@ -179,7 +181,6 @@ export const useNavigation = (config: NavigationConfig): NavigationHookReturn =>
   const {
     isModalVisible: isExitModalVisible,
     currentWebsite: currentExitWebsite,
-    showExitModal,
     hideExitModal,
     confirmVisit: confirmExitVisit,
     reportWebsite: reportExitWebsite,
@@ -244,13 +245,13 @@ export const useNavigation = (config: NavigationConfig): NavigationHookReturn =>
     try {
       return getCravatarFavicon(url);
     } catch (error) {
-      console.error('获取favicon失败:', error);
+      debugLog.error('获取favicon失败:', error);
       
       try {
         const domain = new URL(url).hostname;
         return `https://www.google.com/s2/favicons?domain=${domain}&sz=${size}`;
       } catch (fallbackError) {
-        console.error('降级获取favicon失败:', fallbackError);
+        debugLog.error('降级获取favicon失败:', fallbackError);
         return '';
       }
     }
@@ -273,7 +274,7 @@ export const useNavigation = (config: NavigationConfig): NavigationHookReturn =>
             icon: iconUrl || getFaviconUrl(site.url, 32)
           };
         } catch (error) {
-          console.warn(`获取图标失败: ${site.name}`, error);
+          debugLog.warn(`获取图标失败: ${site.name}`, error);
           return {
             ...site,
             icon: getFaviconUrl(site.url, 32)
@@ -299,9 +300,9 @@ export const useNavigation = (config: NavigationConfig): NavigationHookReturn =>
       
       // 调试日志
       if (process.env.NODE_ENV === 'development') {
-        console.log(`[useNavigation] 初始化数据 - navType: ${config.navType}, navItems数量: ${navItemsData.length}`);
+        debugLog.dev(`[useNavigation] 初始化数据 - navType: ${config.navType}, navItems数量: ${navItemsData.length}`);
         if (navItemsData.length > 0) {
-          console.log(`[useNavigation] 第一个navItem ID: ${navItemsData[0].id}`);
+          debugLog.dev(`[useNavigation] 第一个navItem ID: ${navItemsData[0].id}`);
         }
       }
 
@@ -349,7 +350,7 @@ export const useNavigation = (config: NavigationConfig): NavigationHookReturn =>
       }
       
     } catch (error) {
-      console.error('初始化数据失败:', error);
+      debugLog.error('初始化数据失败:', error);
     } finally {
       setLoading(false);
     }
@@ -358,7 +359,7 @@ export const useNavigation = (config: NavigationConfig): NavigationHookReturn =>
   // 当数据版本变化时，重新初始化数据
   useEffect(() => {
     if (dataVersion > 0) {
-      console.log(`[useNavigation] 数据版本变化: ${dataVersion}，重新初始化数据`);
+      debugLog.dev(`[useNavigation] 数据版本变化: ${dataVersion}，重新初始化数据`);
       initializeData();
     }
   }, [dataVersion, initializeData]);
@@ -377,7 +378,7 @@ export const useNavigation = (config: NavigationConfig): NavigationHookReturn =>
         
         // 搜索结果为空时的处理可以在组件层面决定
       } catch (error) {
-        console.error('搜索失败:', error);
+        debugLog.error('搜索失败:', error);
       }
     } else {
       setIsSearchMode(false);
@@ -498,14 +499,11 @@ export const useNavigation = (config: NavigationConfig): NavigationHookReturn =>
     // 从全局配置中读取网站点击模式
     const websiteClickMode = frontendConfig?.pageGlobalConfig?.websiteClickMode || 'detail';
     const detailPageNewWindow = frontendConfig?.pageGlobalConfig?.detailPageNewWindow || false;
+    const { isDirectMode } = getArrowConfigByWebsiteClickMode(websiteClickMode);
     
-    if (websiteClickMode === 'direct') {
-      // 直接跳转到外部网站
-      showExitModal({
-        name: tool.name,
-        url: tool.url,
-        description: tool.description
-      });
+    if (isDirectMode) {
+      // 直达模式：直接打开外部网站
+      window.open(tool.url, '_blank', 'noopener,noreferrer');
     } else {
       // 跳转到网站详情页
       const detailUrl = generateWebsiteUrl(permalinkConfig, { 
@@ -519,7 +517,7 @@ export const useNavigation = (config: NavigationConfig): NavigationHookReturn =>
         navigate(detailUrl);
       }
     }
-  }, [frontendConfig, permalinkConfig, navigate, showExitModal]);
+  }, [frontendConfig, permalinkConfig, navigate]);
 
   /**
    * 处理热门标签点击
@@ -545,12 +543,7 @@ export const useNavigation = (config: NavigationConfig): NavigationHookReturn =>
     const showDirectArrow = frontendConfig?.pageGlobalConfig?.showDirectArrow ?? true;
     const websiteClickMode = frontendConfig?.pageGlobalConfig?.websiteClickMode || 'detail';
     const directArrowNewWindow = frontendConfig?.pageGlobalConfig?.directArrowNewWindow ?? true;
-    
-    // 根据点击模式决定箭头行为
-    // detail 模式：卡片跳详情页，箭头直达网站
-    // direct 模式：卡片直达网站，箭头也直达网站（或隐藏箭头）
-    const arrowLabel = websiteClickMode === 'detail' ? '直达网站' : '访问网站';
-    const arrowIsExternal = true;
+    const { arrowLabel, arrowIsExternal } = getArrowConfigByWebsiteClickMode(websiteClickMode);
 
     return tools.map((tool, index) => ({
       key: tool.id,

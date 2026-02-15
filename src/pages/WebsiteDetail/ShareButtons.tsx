@@ -10,6 +10,7 @@
 
 // @pro-feature-start: sharing
 import React, { useState, useCallback } from 'react';
+import { debugLog } from '../../utils/debugHelper';
 
 interface ShareButtonsProps {
   websiteId: string;
@@ -70,7 +71,7 @@ const ShareButtons: React.FC<ShareButtonsProps> = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('复制失败:', err);
+      debugLog.error('复制失败:', err);
       // 降级方案
       const textArea = document.createElement('textarea');
       textArea.value = pageUrl;

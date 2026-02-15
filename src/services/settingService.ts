@@ -9,6 +9,7 @@
  */
 
 import api from './api';
+import { unwrapApiList } from '../utils/apiResponse';
 
 // 导航菜单类型
 export interface NavMenuItem {
@@ -57,19 +58,19 @@ export const settingService = {
   // 获取导航菜单（树形结构）
   getNavMenus: async (): Promise<NavMenuItem[]> => {
     const response = await api.get('/settings/nav-menus');
-    return response.data;
+    return unwrapApiList<NavMenuItem>(response.data);
   },
 
   // 获取页脚分组（含链接）
   getFooterGroups: async (): Promise<FooterGroup[]> => {
     const response = await api.get('/settings/footer-groups');
-    return response.data;
+    return unwrapApiList<FooterGroup>(response.data);
   },
 
   // 获取友情链接
   getFriendLinks: async (): Promise<FriendLink[]> => {
     const response = await api.get('/settings/friend-links');
-    return response.data;
+    return unwrapApiList<FriendLink>(response.data);
   },
 };
 

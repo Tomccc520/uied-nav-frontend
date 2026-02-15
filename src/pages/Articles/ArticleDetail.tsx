@@ -10,11 +10,13 @@
 
 // @pro-feature-start: articles
 import React, { useEffect, useState } from 'react';
+import { AxiosError } from 'axios';
 import { useParams, Link } from 'react-router-dom';
 import api from '../../services/api';
 import SEO from '../../components/SEO';
 import { useLicense, FEATURES } from '../../hooks/useLicense';
 import ArticleComments from './ArticleComments';
+import { unwrapApiResponse } from '../../utils/apiResponse';
 import './ArticleDetail.css';
 
 /** 文章标签 */
@@ -129,13 +131,11 @@ const ArticleDetail: React.FC = () => {
         setError(null);
 
         const response = await api.get(`/api/articles/${slug}`);
-
-        if (response.data.success) {
-          setArticle(response.data.data);
-        }
-      } catch (err: any) {
+        setArticle(unwrapApiResponse<Article | null>(response.data, null));
+      } catch (err: unknown) {
         console.error('获取文章详情失败:', err);
-        if (err.response?.status === 404) {
+        const axiosError = err as AxiosError;
+        if (axiosError.response?.status === 404) {
           setError('文章不存在');
         } else {
           setError('获取文章详情失败');

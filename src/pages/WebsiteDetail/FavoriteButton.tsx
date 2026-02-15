@@ -10,7 +10,9 @@
 
 // @pro-feature-start: favorites
 import React, { useState, useCallback } from 'react';
+import { AxiosError } from 'axios';
 import api from '../../services/api';
+import { debugLog } from '../../utils/debugHelper';
 
 interface FavoriteButtonProps {
   websiteId: string;
@@ -80,11 +82,12 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       }
 
       onFavoriteChange?.(!previousState);
-    } catch (err: any) {
+    } catch (err: unknown) {
       // 回滚状态
       setIsFavorited(previousState);
-      console.error('收藏操作失败:', err);
-      setError(err.response?.data?.message || '操作失败');
+      debugLog.error('收藏操作失败:', err);
+      const axiosError = err as AxiosError<{ message?: string }>;
+      setError(axiosError.response?.data?.message || '操作失败');
     } finally {
       setIsLoading(false);
     }

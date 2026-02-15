@@ -7,11 +7,13 @@
  * @version 1.0.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Banner from '../../components/Banner';
 import DesignArticleGrid from '../../components/DesignArticleGrid';
 import { RankingListSkeleton } from '../../components/Skeleton';
 import wordPressApi from '../../services/wordpress-api';
+import { useBanners } from '../../hooks/useBanners';
+import { useFrontendConfig } from '../../hooks/useFrontendConfig';
 import './index.css';
 import './mobile.css';
 
@@ -34,8 +36,17 @@ const EyeIcon: React.FC<{ size?: number; className?: string }> = ({ size = 16, c
   </svg>
 );
 
-// 轮播图数据
-const carouselData = [
+interface CarouselSlide {
+  id: string | number;
+  title: string;
+  subtitle: string;
+  image: string;
+  link: string;
+  bannerId?: string;
+}
+
+// 轮播图默认数据（当后台未配置广告时使用）
+const defaultCarouselData: CarouselSlide[] = [
   {
     id: 1,
     title: '纳米AI超级搜索智能体炸裂升级！',
@@ -93,11 +104,56 @@ const Home: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const { config: frontendConfig } = useFrontendConfig();
+  const { banners: homeBanners, recordClick: recordBannerClick } = useBanners({
+    position: 'home',
+    limit: 4,
+  });
+  const homepageConfig = frontendConfig.homepageConfig;
+  const carouselEnabled = homepageConfig.homeCarouselEnabled !== false;
+  const recommendationEnabled = homepageConfig.homeRecommendationEnabled !== false;
+  const recommendationContentEnabled = homepageConfig.hotRecommendationsEnabled !== false;
+
+  /**
+   * 将后台 Banner 转为首页轮播数据
+   */
+  const carouselData = useMemo<CarouselSlide[]>(() => {
+    if (!homeBanners || homeBanners.length === 0) {
+      return defaultCarouselData;
+    }
+    return homeBanners.map((banner, index) => ({
+      id: banner.id || `banner-${index}`,
+      title: banner.title || `推荐内容 ${index + 1}`,
+      subtitle: banner.description || '精选推荐内容',
+      image: banner.imageUrl || '',
+      link: banner.linkUrl || '/ai',
+      bannerId: banner.id,
+    }));
+  }, [homeBanners]);
+
+  /**
+   * 计算首页顶部模块展示顺序。
+   */
+  const topModules = useMemo<Array<'carousel' | 'recommendation'>>(() => {
+    const modules = [
+      { key: 'carousel' as const, enabled: carouselEnabled, sort: Number(homepageConfig.homeCarouselSort || 10) },
+      { key: 'recommendation' as const, enabled: recommendationEnabled, sort: Number(homepageConfig.homeRecommendationSort || 20) },
+    ];
+    return modules
+      .filter((module) => module.enabled)
+      .sort((a, b) => a.sort - b.sort)
+      .map((module) => module.key);
+  }, [
+    carouselEnabled,
+    recommendationEnabled,
+    homepageConfig.homeCarouselSort,
+    homepageConfig.homeRecommendationSort,
+  ]);
 
   /**
    * 获取最新文章数据
    */
-  const fetchLatestArticles = async () => {
+  const fetchLatestArticles = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -121,7 +177,7 @@ const Home: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   /**
    * 处理文章点击
@@ -135,7 +191,10 @@ const Home: React.FC = () => {
   /**
    * 处理轮播图点击
    */
-  const handleSlideClick = (slide: typeof carouselData[0]) => {
+  const handleSlideClick = (slide: CarouselSlide) => {
+    if (slide.bannerId) {
+      recordBannerClick(slide.bannerId).catch(() => {});
+    }
     if (slide.link) {
       window.open(slide.link, '_blank', 'noopener,noreferrer');
     }
@@ -148,19 +207,35 @@ const Home: React.FC = () => {
     fetchLatestArticles();
   };
 
-  // 组件挂载时获取数据
+  // 推荐区开启时才请求内容
   useEffect(() => {
+    if (!recommendationEnabled || !recommendationContentEnabled) {
+      setLoading(false);
+      setError(null);
+      setArticles([]);
+      return;
+    }
     fetchLatestArticles();
-  }, []);
+  }, [fetchLatestArticles, recommendationEnabled, recommendationContentEnabled]);
+
+  // 当轮播数据源变化时，保证当前索引不越界
+  useEffect(() => {
+    if (currentSlide >= carouselData.length) {
+      setCurrentSlide(0);
+    }
+  }, [carouselData.length, currentSlide]);
 
   // 轮播图自动切换
   useEffect(() => {
+    if (!carouselEnabled || carouselData.length === 0) {
+      return undefined;
+    }
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % carouselData.length);
     }, 4000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [carouselData.length, carouselEnabled]);
 
   // 渲染排行榜项目（参考AntRankingPage设计）
   const renderRankingItem = (article: Article, index: number) => {
@@ -198,64 +273,78 @@ const Home: React.FC = () => {
 
   return (
     <div className="home-container">
-      {/* 顶部区域：轮播图和排行榜并排 */}
-      <div className="home-top-section">
-        {/* 左侧：轮播图 */}
-        <div className="home-carousel-section">
-          <div className="carousel-container">
-            <div className="carousel-wrapper">
-              {carouselData.map((slide, index) => (
-                <div
-                  key={slide.id}
-                  className={`carousel-slide ${index === currentSlide ? 'active' : ''}`}
-                  onClick={() => handleSlideClick(slide)}
-                >
-                  <div className="slide-content">
-                    <h3 className="slide-title">{slide.title}</h3>
-                    <p className="slide-subtitle">{slide.subtitle}</p>
+      {/* 顶部区域：按后台排序渲染轮播和推荐模块 */}
+      {topModules.length > 0 && (
+        <div className="home-top-section">
+          {topModules.map((moduleKey) => {
+            if (moduleKey === 'carousel') {
+              return (
+                <div className="home-carousel-section" key="carousel">
+                  <div className="carousel-container">
+                    <div className="carousel-wrapper">
+                      {carouselData.map((slide, index) => (
+                        <div
+                          key={slide.id}
+                          className={`carousel-slide ${index === currentSlide ? 'active' : ''}`}
+                          onClick={() => handleSlideClick(slide)}
+                        >
+                          <div className="slide-content">
+                            <h3 className="slide-title">{slide.title}</h3>
+                            <p className="slide-subtitle">{slide.subtitle}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* 轮播指示器 */}
+                    <div className="carousel-indicators">
+                      {carouselData.map((_, index) => (
+                        <button
+                          key={index}
+                          className={`indicator ${index === currentSlide ? 'active' : ''}`}
+                          onClick={() => setCurrentSlide(index)}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-            
-            {/* 轮播指示器 */}
-            <div className="carousel-indicators">
-              {carouselData.map((_, index) => (
-                <button
-                  key={index}
-                  className={`indicator ${index === currentSlide ? 'active' : ''}`}
-                  onClick={() => setCurrentSlide(index)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
+              );
+            }
 
-        {/* 右侧：最新文章排行榜 */}
-        <div className="home-ranking-section">
-          <div className="ranking-header">
-            <h2 className="ranking-title">最新文章</h2>
-          </div>
+            return (
+              <div className="home-ranking-section" key="recommendation">
+                <div className="ranking-header">
+                  <h2 className="ranking-title">
+                    {homepageConfig.hotRecommendationsTitle || '最新文章'}
+                  </h2>
+                </div>
 
-          <div className="ranking-content">
-            {loading ? (
-              <RankingListSkeleton count={10} />
-            ) : error ? (
-              <div className="ranking-error">
-                <div className="error-icon">⚠️</div>
-                <div className="error-message">{error}</div>
-                <button className="retry-button" onClick={handleRetry}>
-                  重新加载
-                </button>
+                <div className="ranking-content">
+                  {!recommendationContentEnabled ? (
+                    <div className="ranking-error">
+                      <div className="error-message">推荐内容已在后台关闭</div>
+                    </div>
+                  ) : loading ? (
+                    <RankingListSkeleton count={10} />
+                  ) : error ? (
+                    <div className="ranking-error">
+                      <div className="error-icon">⚠️</div>
+                      <div className="error-message">{error}</div>
+                      <button className="retry-button" onClick={handleRetry}>
+                        重新加载
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="ranking-list">
+                      {articles.map((article, index) => renderRankingItem(article, index))}
+                    </div>
+                  )}
+                </div>
               </div>
-            ) : (
-              <div className="ranking-list">
-                {articles.map((article, index) => renderRankingItem(article, index))}
-              </div>
-            )}
-          </div>
+            );
+          })}
         </div>
-      </div>
+      )}
 
       {/* 中间：Banner区域 */}
       <div className="home-banner-section">

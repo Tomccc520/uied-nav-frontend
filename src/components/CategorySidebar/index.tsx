@@ -10,6 +10,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { IconSearch } from '../UI/Icons/index';
 import { NavMenuType } from '../../types';
+import { IconComponent } from '../../types/icon';
 import { 
   DesignIcons, 
   IconTool, 
@@ -80,7 +81,7 @@ export interface NavItem {
   id: string;
   name: string;
   count?: number;
-  icon?: React.ComponentType<any> | string;
+  icon?: IconComponent | string;
   color?: string;
   badge?: string; // 新增：徽章文本（如"新"、"热门"等）
   disabled?: boolean; // 新增：是否禁用
@@ -94,7 +95,7 @@ export interface SidebarConfig {
   type: NavMenuType;               // 导航类型
   showSearch?: boolean;            // 是否显示搜索结果导航
   searchLabel?: string;            // 搜索结果标签
-  searchIcon?: React.ComponentType<any>; // 搜索图标
+  searchIcon?: IconComponent; // 搜索图标
 }
 
 // 组件属性接口
@@ -121,12 +122,12 @@ export interface CategorySidebarProps {
 export interface NavSwitchItem {
   type: NavMenuType;
   name: string;
-  icon: React.ComponentType<any>;
+  icon: IconComponent;
   description?: string;
 }
 
 // 默认图标映射 - 与后台 admin/src/config/icons.tsx 中的 availableIcons 保持一致
-const defaultIconMap: Record<string, React.ComponentType<any>> = {
+const defaultIconMap: Record<string, IconComponent> = {
   default: IconTool,
   
   // ============ 设计相关 ============
@@ -361,7 +362,7 @@ const getDefaultConfig = (type: NavMenuType): Partial<SidebarConfig> => {
  * @param icon 图标（组件或字符串）
  * @returns 图标组件
  */
-const getIconComponent = (icon?: React.ComponentType<any> | string): React.ComponentType<any> => {
+const getIconComponent = (icon?: IconComponent | string): IconComponent => {
   if (!icon) return defaultIconMap.default;
   if (typeof icon === 'string') {
     // 尝试直接匹配

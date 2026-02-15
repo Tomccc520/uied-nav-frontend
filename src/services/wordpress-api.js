@@ -6,6 +6,7 @@
  * @license MIT
  * @version 1.0.0
  */
+import { debugLog } from '../utils/debugHelper';
 
 // 缓存数据，避免频繁请求API
 const apiCache = {
@@ -93,7 +94,7 @@ const getFromLocalStorage = (key) => {
     
     return parsed;
   } catch (error) {
-    console.warn('从localStorage读取缓存失败:', error);
+    debugLog.warn('从localStorage读取缓存失败:', error);
     return null;
   }
 };
@@ -113,7 +114,7 @@ const saveToLocalStorage = (key, data, expireTime = CACHE_EXPIRE_TIME) => {
     };
     localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(item));
   } catch (error) {
-    console.warn('保存到localStorage失败:', error);
+    debugLog.warn('保存到localStorage失败:', error);
   }
 };
 
@@ -142,10 +143,10 @@ const cleanExpiredCache = () => {
     });
     
     if (cleanedCount > 0) {
-      console.log(`清理了 ${cleanedCount} 个过期的WordPress缓存`);
+      debugLog.dev(`清理了 ${cleanedCount} 个过期的WordPress缓存`);
     }
   } catch (error) {
-    console.warn('清理缓存失败:', error);
+    debugLog.warn('清理缓存失败:', error);
   }
 };
 
@@ -154,13 +155,13 @@ const loadMockData = async () => {
   try {
     const response = await fetch('/mock/design-articles.json');
     if (!response.ok) {
-      console.warn('加载模拟数据失败:', response.statusText);
+      debugLog.warn('加载模拟数据失败:', response.statusText);
       return null;
     }
     const data = await response.json();
     return data.articles || [];
   } catch (error) {
-    console.error('加载模拟数据出错:', error);
+    debugLog.error('加载模拟数据出错:', error);
     return null;
   }
 };
@@ -202,7 +203,7 @@ const checkRequestLimit = () => {
   
   // 检查是否超过最大请求数
   if (requestCounter >= MAX_REQUESTS_PER_MINUTE) {
-    console.warn('请求频率过高，使用缓存或模拟数据');
+    debugLog.warn('请求频率过高，使用缓存或模拟数据');
     return false;
   }
   
@@ -275,7 +276,7 @@ const fetchWithRetry = async (url, options = {}) => {
     } catch (error) {
       lastError = error;
       retries--;
-      console.warn(`请求失败，剩余重试次数: ${retries}`, error);
+      debugLog.warn(`请求失败，剩余重试次数: ${retries}`, error);
       
       // 重试前增加延迟
       await addRandomDelay(1000, 2000);
@@ -300,8 +301,7 @@ const getLatestPosts = async (params = {}) => {
     page = 1,
     perPage = 10,
     orderBy = 'date',
-    order = 'desc',
-    useMock = false // 参数保留但不再使用，总是优先使用真实API
+    order = 'desc'
   } = params;
 
   const cacheKey = 'latest-posts';
@@ -339,7 +339,7 @@ const getLatestPosts = async (params = {}) => {
 
     return processedData;
   } catch (error) {
-    console.error('获取最新文章失败，使用模拟数据:', error);
+    debugLog.error('获取最新文章失败，使用模拟数据:', error);
     
     // API请求失败时使用模拟数据作为备选
     const mockPosts = [...MOCK_DATA.posts]
@@ -381,8 +381,7 @@ const getCategoryPosts = async (params = {}) => {
     page = 1,
     perPage = 10,
     orderBy = 'date',
-    order = 'desc',
-    useMock = false // 参数保留但不再使用，总是优先使用真实API
+    order = 'desc'
   } = params;
 
   if (!categoryId) {
@@ -424,7 +423,7 @@ const getCategoryPosts = async (params = {}) => {
 
     return processedData;
   } catch (error) {
-    console.error(`获取分类(${categoryId})文章失败，使用模拟数据:`, error);
+    debugLog.error(`获取分类(${categoryId})文章失败，使用模拟数据:`, error);
     
     // 尝试从本地JSON文件加载模拟数据
     const mockArticles = await loadMockData();
@@ -524,7 +523,7 @@ const getTagPosts = async (params = {}) => {
 
     return processedData;
   } catch (error) {
-    console.error(`获取标签(${tagId})文章失败:`, error);
+    debugLog.error(`获取标签(${tagId})文章失败:`, error);
     return [];
   }
 };
@@ -575,7 +574,7 @@ const searchPosts = async (params = {}) => {
 
     return processedData;
   } catch (error) {
-    console.error(`搜索文章(${keyword})失败:`, error);
+    debugLog.error(`搜索文章(${keyword})失败:`, error);
     return [];
   }
 };
@@ -587,7 +586,7 @@ const searchPosts = async (params = {}) => {
  */
 const processPostsData = (posts = []) => {
   if (!Array.isArray(posts)) {
-    console.warn('处理文章数据失败，输入不是数组');
+    debugLog.warn('处理文章数据失败，输入不是数组');
     return [];
   }
 
@@ -705,7 +704,7 @@ const clearCache = (type) => {
     try {
       localStorage.removeItem(STORAGE_PREFIX + 'latest-posts');
     } catch (error) {
-      console.warn('清除latest-posts localStorage缓存失败:', error);
+      debugLog.warn('清除latest-posts localStorage缓存失败:', error);
     }
   } else if (type === 'category-posts') {
     apiCache['category-posts'] = {};
@@ -718,7 +717,7 @@ const clearCache = (type) => {
         }
       });
     } catch (error) {
-      console.warn('清除category-posts localStorage缓存失败:', error);
+      debugLog.warn('清除category-posts localStorage缓存失败:', error);
     }
   } else if (type === 'tag-posts') {
     apiCache['tag-posts'] = {};
@@ -731,7 +730,7 @@ const clearCache = (type) => {
         }
       });
     } catch (error) {
-      console.warn('清除tag-posts localStorage缓存失败:', error);
+      debugLog.warn('清除tag-posts localStorage缓存失败:', error);
     }
   } else if (type === 'search-posts') {
     apiCache['search-posts'] = {};
@@ -744,7 +743,7 @@ const clearCache = (type) => {
         }
       });
     } catch (error) {
-      console.warn('清除search-posts localStorage缓存失败:', error);
+      debugLog.warn('清除search-posts localStorage缓存失败:', error);
     }
   } else if (type === 'all') {
     // 清除所有内存缓存
@@ -768,9 +767,9 @@ const clearCache = (type) => {
           localStorage.removeItem(key);
         }
       });
-      console.log('已清除所有WordPress缓存');
+      debugLog.dev('已清除所有WordPress缓存');
     } catch (error) {
-      console.warn('清除所有localStorage缓存失败:', error);
+      debugLog.warn('清除所有localStorage缓存失败:', error);
     }
   }
 };
@@ -778,9 +777,9 @@ const clearCache = (type) => {
 // 初始化：清理过期的localStorage缓存
 try {
   cleanExpiredCache();
-  console.log('WordPress API缓存服务已初始化，已清理过期缓存');
+  debugLog.dev('WordPress API缓存服务已初始化，已清理过期缓存');
 } catch (error) {
-  console.warn('初始化WordPress API缓存失败:', error);
+  debugLog.warn('初始化WordPress API缓存失败:', error);
 }
 
 // 定期清理过期缓存（每30分钟执行一次）

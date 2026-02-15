@@ -10,7 +10,9 @@
 
 // @pro-feature-start: article-comments
 import React, { useState, useEffect, useCallback } from 'react';
+import { AxiosError } from 'axios';
 import api from '../../services/api';
+import { unwrapApiResponse } from '../../utils/apiResponse';
 import './ArticleComments.css';
 
 interface Comment {
@@ -29,6 +31,83 @@ interface ArticleCommentsProps {
   initialCount?: number;
   userId?: string; // Pro 版本中从认证获取
 }
+
+interface CommentListPayload {
+  lists?: unknown[];
+  total?: number;
+  page?: number;
+  pageSize?: number;
+  totalPages?: number;
+}
+
+interface CommentUserPayload {
+  id?: string | number;
+  name?: string;
+  avatar?: string;
+}
+
+interface CommentPayload {
+  id?: string | number;
+  text?: string;
+  content?: string;
+  createdAt?: string | number;
+  createTime?: string | number;
+  create_time?: string | number;
+  user?: CommentUserPayload;
+  userId?: string | number;
+  userName?: string;
+  nickname?: string;
+}
+
+/**
+ * 标准化评论数据，兼容旧版 user/text 结构与新版 nickname/content 结构。
+ */
+const normalizeComment = (item: CommentPayload): Comment => {
+  const nickname = item?.user?.name || item?.nickname || item?.userName || '匿名用户';
+  const rawCreatedAt = item?.createdAt || item?.createTime || item?.create_time || '';
+
+  return {
+    id: String(item?.id ?? ''),
+    text: String(item?.text ?? item?.content ?? ''),
+    createdAt: String(rawCreatedAt),
+    user: {
+      id: String(item?.user?.id ?? item?.userId ?? 'anonymous'),
+      name: String(nickname),
+      avatar: item?.user?.avatar,
+    },
+  };
+};
+
+/**
+ * 解析评论列表接口响应，统一输出分页信息和评论数组。
+ */
+const parseCommentListPayload = (payload: unknown) => {
+  const unwrapped = unwrapApiResponse<unknown[] | CommentListPayload>(payload as CommentListPayload, []);
+
+  if (Array.isArray(unwrapped)) {
+    const lists = unwrapped.map(normalizeComment);
+    return {
+      lists,
+      total: lists.length,
+      totalPages: 1,
+      page: 1,
+    };
+  }
+
+  const lists = Array.isArray(unwrapped?.lists) ? unwrapped.lists.map(normalizeComment) : [];
+  const page = Number(unwrapped?.page ?? 1) || 1;
+  const pageSize = Number(unwrapped?.pageSize ?? 10) || 10;
+  const total = Number(unwrapped?.total ?? lists.length) || 0;
+  const fallbackTotalPages = Math.ceil(total / pageSize) || 1;
+  const totalPages = Number(unwrapped?.totalPages ?? fallbackTotalPages) || 1;
+
+  return {
+    lists,
+    total,
+    totalPages,
+    page,
+  };
+};
 
 /**
  * 默认头像组件
@@ -112,18 +191,16 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
       const response = await api.get(`/api/articles/${articleId}/comments`, {
         params: { page: pageNum, pageSize: 10 }
       });
-      
-      if (response.data.success) {
-        if (pageNum === 1) {
-          setComments(response.data.data);
-        } else {
-          setComments(prev => [...prev, ...response.data.data]);
-        }
-        setTotal(response.data.total);
-        setTotalPages(response.data.totalPages);
-        setPage(pageNum);
+      const normalized = parseCommentListPayload(response.data);
+      if (pageNum === 1) {
+        setComments(normalized.lists);
+      } else {
+        setComments(prev => [...prev, ...normalized.lists]);
       }
-    } catch (err: any) {
+      setTotal(normalized.total);
+      setTotalPages(normalized.totalPages);
+      setPage(normalized.page);
+    } catch (err: unknown) {
       console.error('获取文章评论失败:', err);
       setError('获取评论失败');
     } finally {
@@ -169,16 +246,17 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
         text: trimmedText,
         userId,
       });
-      
-      if (response.data.success) {
+      const comment = normalizeComment(unwrapApiResponse<CommentPayload>(response.data, {}));
+      if (comment.id) {
         // 文章评论按正序排列，新评论添加到列表末尾
-        setComments(prev => [...prev, response.data.data]);
+        setComments(prev => [...prev, comment]);
         setTotal(prev => prev + 1);
         setCommentText('');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('发表评论失败:', err);
-      setError(err.response?.data?.message || '发表评论失败，请稍后重试');
+      const axiosError = err as AxiosError<{ message?: string }>;
+      setError(axiosError.response?.data?.message || '发表评论失败，请稍后重试');
     } finally {
       setSubmitting(false);
     }

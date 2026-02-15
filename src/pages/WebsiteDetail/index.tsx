@@ -9,6 +9,7 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { AxiosError } from 'axios';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../../services/api';
 import { useLicense, FEATURES } from '../../hooks/useLicense';
@@ -21,12 +22,14 @@ import CommentsSection from './CommentsSection';
 import FavoriteButton from './FavoriteButton';
 import ShareButtons from './ShareButtons';
 import { getFullImageUrl, processContentImageUrls } from '../../utils/urlUtils';
+import { unwrapApiList, unwrapApiResponse } from '../../utils/apiResponse';
+import { debugLog } from '../../utils/debugHelper';
 import './index.css';
 
 /**
  * 网站详情数据类型
  */
-interface WebsiteDetail {
+interface WebsiteDetailData {
   id: string;
   name: string;
   slug?: string;
@@ -99,12 +102,12 @@ interface DetailPageConfig {
   visitBtnNewWindow?: boolean;
 }
 
-const WebsiteDetail: React.FC = () => {
+const WebsiteDetailPage: React.FC = () => {
   const { idOrSlug } = useParams<{ idOrSlug: string }>();
   const navigate = useNavigate();
   const { hasFeature, isLoading: licenseLoading } = useLicense();
   
-  const [website, setWebsite] = useState<WebsiteDetail | null>(null);
+  const [website, setWebsite] = useState<WebsiteDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [relatedWebsites, setRelatedWebsites] = useState<RelatedWebsite[]>([]);
@@ -130,10 +133,16 @@ const WebsiteDetail: React.FC = () => {
         setLoading(true);
         setError(null);
         const response = await api.get(`/websites/${idOrSlug}`);
-        setWebsite(response.data);
-      } catch (err: any) {
-        console.error('获取网站详情失败:', err);
-        if (err.response?.status === 404) {
+        const data = unwrapApiResponse<WebsiteDetailData | null>(response.data, null);
+        if (!data) {
+          setError('网站不存在');
+          return;
+        }
+        setWebsite(data);
+      } catch (err: unknown) {
+        debugLog.error('获取网站详情失败:', err);
+        const axiosError = err as AxiosError;
+        if (axiosError.response?.status === 404) {
           setError('网站不存在');
         } else {
           setError('获取网站详情失败，请稍后重试');
@@ -156,9 +165,9 @@ const WebsiteDetail: React.FC = () => {
         const response = await api.get(`/websites/${website.id}/related`, {
           params: { limit: 6 }
         });
-        setRelatedWebsites(response.data.data || response.data || []);
+        setRelatedWebsites(unwrapApiList(response.data));
       } catch (err) {
-        console.error('获取相关推荐失败:', err);
+        debugLog.error('获取相关推荐失败:', err);
         setRelatedWebsites([]);
       } finally {
         setRelatedLoading(false);
@@ -175,9 +184,9 @@ const WebsiteDetail: React.FC = () => {
       
       try {
         const response = await api.get(`/settings/website/${website.id}/tags`);
-        setWebsiteTags(response.data.data || []);
+        setWebsiteTags(unwrapApiList(response.data));
       } catch (err) {
-        console.error('获取网站标签失败:', err);
+        debugLog.error('获取网站标签失败:', err);
         setWebsiteTags([]);
       }
     };
@@ -190,11 +199,9 @@ const WebsiteDetail: React.FC = () => {
     const fetchDetailPageConfig = async () => {
       try {
         const response = await api.get('/settings/detailPageConfig');
-        if (response.data.success) {
-          setDetailPageConfig(response.data.data || {});
-        }
+        setDetailPageConfig(unwrapApiResponse<DetailPageConfig>(response.data, {}));
       } catch (err) {
-        console.error('获取详情页配置失败:', err);
+        debugLog.error('获取详情页配置失败:', err);
         setDetailPageConfig({});
       }
     };
@@ -245,7 +252,7 @@ const WebsiteDetail: React.FC = () => {
       .replace(/^# (.*$)/gim, '<h1>$1</h1>')
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.+?)\*/g, '<em>$1</em>')
-      .replace(/^\- (.*$)/gim, '<li>$1</li>')
+      .replace(/^- (.*$)/gim, '<li>$1</li>')
       .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
       .replace(/\n/g, '<br />');
   };
@@ -525,4 +532,4 @@ const WebsiteDetail: React.FC = () => {
   );
 };
 
-export default WebsiteDetail;
+export default WebsiteDetailPage;

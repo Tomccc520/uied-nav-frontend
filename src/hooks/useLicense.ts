@@ -9,6 +9,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { debugLog } from '../utils/debugHelper';
 
 /**
  * ============================================
@@ -86,7 +87,7 @@ export const useLicense = (): UseLicenseReturn => {
             type: DEV_LICENSE_TYPE,
             features: devFeatures,
           });
-          console.log(`🔧 开发模式: 使用 ${DEV_LICENSE_TYPE} 许可证，功能:`, devFeatures);
+          debugLog.dev(`🔧 开发模式: 使用 ${DEV_LICENSE_TYPE} 许可证，功能:`, devFeatures);
           setIsLoading(false);
           return;
         }

@@ -30,6 +30,7 @@ import publicSettingService, {
   DEFAULT_EXIT_MODAL,
   DEFAULT_DETAIL_PAGE,
 } from '../services/publicSettingService';
+import { debugLog } from '../utils/debugHelper';
 
 // ==================== 通用 Hook 类型 ====================
 
@@ -69,7 +70,7 @@ export const usePublicSettings = (): UseSettingResult<PublicSettings> => {
       setError(null);
     } catch (err) {
       setError(err as Error);
-      console.error('获取公开设置失败:', err);
+      debugLog.error('获取公开设置失败:', err);
     } finally {
       setLoading(false);
     }
@@ -101,7 +102,7 @@ export const usePublicSiteInfo = (): UseSettingResult<SiteInfo> => {
       setError(null);
     } catch (err) {
       setError(err as Error);
-      console.error('获取站点信息失败:', err);
+      debugLog.error('获取站点信息失败:', err);
     } finally {
       setLoading(false);
     }
@@ -136,7 +137,7 @@ export const useAppearanceConfig = (): UseSettingResult<AppearanceConfig> => {
       applyAppearanceConfig(config);
     } catch (err) {
       setError(err as Error);
-      console.error('获取外观配置失败:', err);
+      debugLog.error('获取外观配置失败:', err);
     } finally {
       setLoading(false);
     }
@@ -196,7 +197,7 @@ export const useHomepageConfig = (): UseSettingResult<HomepageConfig> => {
       setError(null);
     } catch (err) {
       setError(err as Error);
-      console.error('获取首页配置失败:', err);
+      debugLog.error('获取首页配置失败:', err);
     } finally {
       setLoading(false);
     }
@@ -228,7 +229,7 @@ export const usePageGlobalConfig = (): UseSettingResult<PageGlobalConfig> => {
       setError(null);
     } catch (err) {
       setError(err as Error);
-      console.error('获取页面配置失败:', err);
+      debugLog.error('获取页面配置失败:', err);
     } finally {
       setLoading(false);
     }
@@ -260,7 +261,7 @@ export const useCardStyleConfig = (): UseSettingResult<CardStyleConfig> => {
       setError(null);
     } catch (err) {
       setError(err as Error);
-      console.error('获取卡片样式配置失败:', err);
+      debugLog.error('获取卡片样式配置失败:', err);
     } finally {
       setLoading(false);
     }
@@ -292,7 +293,7 @@ export const useSidebarConfig = (): UseSettingResult<SidebarConfig> => {
       setError(null);
     } catch (err) {
       setError(err as Error);
-      console.error('获取侧边栏配置失败:', err);
+      debugLog.error('获取侧边栏配置失败:', err);
     } finally {
       setLoading(false);
     }
@@ -324,7 +325,7 @@ export const useSearchConfig = (): UseSettingResult<SearchConfig> => {
       setError(null);
     } catch (err) {
       setError(err as Error);
-      console.error('获取搜索配置失败:', err);
+      debugLog.error('获取搜索配置失败:', err);
     } finally {
       setLoading(false);
     }
@@ -356,7 +357,7 @@ export const useExitModalConfig = (): UseSettingResult<ExitModalConfig> => {
       setError(null);
     } catch (err) {
       setError(err as Error);
-      console.error('获取跳转提醒配置失败:', err);
+      debugLog.error('获取跳转提醒配置失败:', err);
     } finally {
       setLoading(false);
     }
@@ -388,7 +389,7 @@ export const useDetailPageConfig = (): UseSettingResult<DetailPageConfig> => {
       setError(null);
     } catch (err) {
       setError(err as Error);
-      console.error('获取详情页配置失败:', err);
+      debugLog.error('获取详情页配置失败:', err);
     } finally {
       setLoading(false);
     }
@@ -400,4 +401,3 @@ export const useDetailPageConfig = (): UseSettingResult<DetailPageConfig> => {
 
   return { data, loading, error, refresh: fetchData };
 };
-

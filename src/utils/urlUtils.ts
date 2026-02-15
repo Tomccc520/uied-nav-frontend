@@ -20,7 +20,7 @@ const DEFAULT_API_BASE = `http://localhost:${DEFAULT_API_PORT}/api`;
  */
 export const getApiBaseUrl = (): string => {
   // Vite 使用 import.meta.env，Create React App 使用 process.env
-  const viteEnv = (import.meta as any).env?.VITE_API_URL;
+  const viteEnv = (import.meta as ImportMeta & { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL;
   const craEnv = process.env.REACT_APP_API_URL;
   
   return viteEnv || craEnv || DEFAULT_API_BASE;
@@ -91,10 +91,14 @@ export const processContentImageUrls = (content: string): string => {
     .replace(/src="\/uploads\//g, `src="${backendBase}/uploads/`);
 };
 
-export default {
+/**
+ * URL 工具对象导出，便于默认导入场景复用。
+ */
+const urlUtils = {
   getApiBaseUrl,
   getBackendBaseUrl,
   getFullImageUrl,
   processContentImageUrls,
 };
 
+export default urlUtils;
