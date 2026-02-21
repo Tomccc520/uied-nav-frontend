@@ -13,6 +13,8 @@ import { useLocation, useNavigate } from 'react-router-dom'; // 导入路由钩�
 import { useSiteInfo } from '../../hooks/useSiteInfo'; // 导入站点信息Hook
 import { usePages } from '../../hooks/usePages'; // 导入页面列表Hook
 import { useFrontendConfig } from '../../hooks/useFrontendConfig';
+import { useUser } from '../../contexts/UserContext'; // 导入用户Context
+import AuthModal from '../Auth/AuthModal'; // 导入认证弹窗
 import { unwrapApiList } from '../../utils/apiResponse';
 import { IconComponent } from '../../types/icon';
 import {
@@ -296,6 +298,9 @@ const Navbar = () => {
   const { siteInfo } = useSiteInfo(); // 获取站点信息
   const { pages: apiPages } = usePages(); // 获取页面列表
   const { config: frontendConfig } = useFrontendConfig();
+  const { user, isLoggedIn, logout } = useUser();
+  const [authModalVisible, setAuthModalVisible] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [visible, setVisible] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -875,12 +880,62 @@ const Navbar = () => {
                 <path d="M21 21L16.65 16.65"/>
               </svg>
             </Button>
+
+            {/* 用户登录/信息 */}
+            {isLoggedIn && user ? (
+              <div className="navbar-user-container">
+                <div 
+                  className="navbar-user-avatar"
+                  onClick={() => setActiveSubmenu(activeSubmenu === 'user-menu' ? null : 'user-menu')}
+                >
+                  {user.avatar ? (
+                    <img src={user.avatar} alt={user.nickname || user.username} />
+                  ) : (
+                    <div className="avatar-placeholder">
+                      {(user.nickname || user.username || 'U').charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                {activeSubmenu === 'user-menu' && (
+                  <div className="navbar-user-dropdown">
+                    <div className="user-info">
+                      <div className="user-name">{user.nickname || user.username}</div>
+                      <div className="user-role">{user.userTypeName || '普通用户'}</div>
+                    </div>
+                    <div className="dropdown-divider" />
+                    <button onClick={() => { navigate('/profile'); setActiveSubmenu(null); }}>
+                      个人中心
+                    </button>
+                    <button onClick={() => { logout(); setActiveSubmenu(null); }}>
+                      退出登录
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Button 
+                type="primary" 
+                className="navbar-login-btn"
+                onClick={() => {
+                  setAuthMode('login');
+                  setAuthModalVisible(true);
+                }}
+              >
+                登录
+              </Button>
+            )}
           </div>
         )}
       </div>
       
       {/* 背景装饰 */}
       <div className="navbar-decoration" />
+      
+      <AuthModal 
+        visible={authModalVisible} 
+        onClose={() => setAuthModalVisible(false)}
+        initialMode={authMode}
+      />
     </div>
   );
 };

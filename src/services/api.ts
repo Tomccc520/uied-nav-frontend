@@ -28,6 +28,35 @@ interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
   _startTime?: number;
 }
 
+/**
+ * 统一规范请求路径，避免出现 /api/api 重复前缀与历史别名路径
+ */
+const normalizeRequestUrl = (rawUrl: unknown, rawBaseUrl: unknown): string | undefined => {
+  if (!rawUrl || typeof rawUrl !== 'string') {
+    return undefined;
+  }
+  // 绝对地址不做处理
+  if (/^https?:\/\//i.test(rawUrl)) {
+    return rawUrl;
+  }
+
+  const [pathPart, queryPart] = String(rawUrl).split('?');
+  let path = pathPart.startsWith('/') ? pathPart : `/${pathPart}`;
+
+  // 兼容历史公开设置路径（旧路径会触发后台鉴权）
+  if (path === '/uied/setting/public' || path === '/api/uied/setting/public') {
+    path = '/settings/public';
+  }
+
+  const baseUrl = typeof rawBaseUrl === 'string' ? rawBaseUrl : '';
+  const baseHasApiSuffix = /\/api\/?$/i.test(baseUrl);
+  if (baseHasApiSuffix && path.startsWith('/api/')) {
+    path = path.replace(/^\/api/, '');
+  }
+
+  return queryPart ? `${path}?${queryPart}` : path;
+};
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
@@ -39,6 +68,9 @@ const api = axios.create({
 // 请求拦截器
 api.interceptors.request.use(
   (config: ExtendedAxiosRequestConfig) => {
+    // 规范化请求 URL，统一接口路径规则
+    config.url = normalizeRequestUrl(config.url, config.baseURL || API_BASE_URL);
+
     // 记录请求开始时间（用于性能监控）
     config._startTime = Date.now();
     
@@ -50,6 +82,13 @@ api.interceptors.request.use(
     // 添加请求ID用于追踪
     const requestId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     config.headers['X-Request-ID'] = requestId;
+
+    // 添加 token (如果存在)
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers['token'] = token;
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
     
     return config;
   },

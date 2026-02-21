@@ -16,6 +16,7 @@ import {
 } from '../utils/clickMode';
 import { debugLog } from '../utils/debugHelper';
 import { DEFAULT_NAV_SWITCH_ITEMS } from '../config/navModel';
+import { DEFAULT_ARTICLE_CONFIG as DEFAULT_ARTICLE_UI_CONFIG, ARTICLE_TOPICS } from '../config/articleConfig';
 
 // ==================== 类型定义 ====================
 
@@ -122,6 +123,12 @@ export interface ExitModalConfig {
   description: string;
   autoRedirect: boolean;
   countdown: number;
+  logo?: string;
+  showAgreementLinks?: boolean;
+  userAgreementText?: string;
+  userAgreementUrl?: string;
+  copyrightAgreementText?: string;
+  copyrightAgreementUrl?: string;
 }
 
 // 详情页配置
@@ -147,6 +154,33 @@ export interface DetailPageConfig {
   visitBtnNewWindow: boolean;
 }
 
+// 文章配置
+export interface ArticleConfig {
+  enabled: boolean;
+  homeSectionEnabled: boolean;
+  homeSectionTitle: string;
+  homeSectionSubtitle: string;
+  homeSectionLimit: number;
+  listPageTitle: string;
+  listPageDescription: string;
+  listPageCoverImage: string;
+  commentsEnabled: boolean;
+  topicsEnabled: boolean;
+}
+
+// 文章专题配置
+export interface ArticleTopicConfig {
+  id: string;
+  type: 'category' | 'tag';
+  title: string;
+  description: string;
+  coverImage?: string;
+  icon?: string;
+  themeColor?: string;
+}
+
+export type ArticleTopicsConfig = Record<string, ArticleTopicConfig>;
+
 // 公开设置（所有配置的集合）
 export interface PublicSettings {
   siteInfo: SiteInfo;
@@ -158,6 +192,8 @@ export interface PublicSettings {
   search: SearchConfig;
   exitModal: ExitModalConfig;
   detailPage: DetailPageConfig;
+  article: ArticleConfig;
+  articleTopics: ArticleTopicsConfig;
 }
 
 interface PublicSettingsPayload {
@@ -170,6 +206,21 @@ interface PublicSettingsPayload {
   search?: SearchConfig;
   exitModal?: ExitModalConfig;
   detailPage?: DetailPageConfig;
+  article?: ArticleConfig;
+  articleTopics?: ArticleTopicsConfig;
+  popup?: ExitModalConfig;
+}
+
+export interface FrontendConfigPayload {
+  exitModalEnabled?: boolean;
+  exitModalConfig?: ExitModalConfig;
+  popupConfig?: ExitModalConfig;
+  pageGlobalConfig?: PageGlobalConfig;
+  appearanceConfig?: AppearanceConfig;
+  homepageConfig?: HomepageConfig;
+  cardStyleConfig?: CardStyleConfig;
+  sidebarConfig?: SidebarConfig;
+  searchConfig?: SearchConfig;
 }
 
 // ==================== 默认配置 ====================
@@ -263,6 +314,12 @@ export const DEFAULT_EXIT_MODAL: ExitModalConfig = {
   description: '您即将访问外部网站，请注意安全',
   autoRedirect: true,
   countdown: 5,
+  logo: '',
+  showAgreementLinks: false,
+  userAgreementText: '',
+  userAgreementUrl: '',
+  copyrightAgreementText: '',
+  copyrightAgreementUrl: '',
 };
 
 export const DEFAULT_DETAIL_PAGE: DetailPageConfig = {
@@ -286,6 +343,21 @@ export const DEFAULT_DETAIL_PAGE: DetailPageConfig = {
   visitBtnText: '访问网站',
   visitBtnNewWindow: true,
 };
+
+export const DEFAULT_ARTICLE_SETTING: ArticleConfig = {
+  enabled: true,
+  homeSectionEnabled: true,
+  homeSectionTitle: '设计文章',
+  homeSectionSubtitle: '汇聚优质设计文章，分享前沿设计趋势与实战经验',
+  homeSectionLimit: 12,
+  listPageTitle: DEFAULT_ARTICLE_UI_CONFIG.title,
+  listPageDescription: DEFAULT_ARTICLE_UI_CONFIG.description,
+  listPageCoverImage: DEFAULT_ARTICLE_UI_CONFIG.coverImage || '',
+  commentsEnabled: true,
+  topicsEnabled: true,
+};
+
+export const DEFAULT_ARTICLE_TOPICS: ArticleTopicsConfig = ARTICLE_TOPICS;
 
 // ==================== API 服务 ====================
 
@@ -353,12 +425,81 @@ export const publicSettingService = {
   },
 
   /**
+   * 规范化文章配置，保证字段完整可用
+   */
+  normalizeArticleConfig: (config: unknown): ArticleConfig => {
+    const merged = { ...DEFAULT_ARTICLE_SETTING, ...((config as Partial<ArticleConfig>) || {}) };
+    return {
+      ...merged,
+      enabled: merged.enabled !== false,
+      homeSectionEnabled: merged.homeSectionEnabled !== false,
+      homeSectionLimit: Number.isFinite(Number(merged.homeSectionLimit))
+        ? Number(merged.homeSectionLimit)
+        : DEFAULT_ARTICLE_SETTING.homeSectionLimit,
+      listPageTitle: String(merged.listPageTitle || DEFAULT_ARTICLE_SETTING.listPageTitle),
+      listPageDescription: String(merged.listPageDescription || DEFAULT_ARTICLE_SETTING.listPageDescription),
+      listPageCoverImage: String(merged.listPageCoverImage || DEFAULT_ARTICLE_SETTING.listPageCoverImage),
+      homeSectionTitle: String(merged.homeSectionTitle || DEFAULT_ARTICLE_SETTING.homeSectionTitle),
+      homeSectionSubtitle: String(merged.homeSectionSubtitle || DEFAULT_ARTICLE_SETTING.homeSectionSubtitle),
+      commentsEnabled: merged.commentsEnabled !== false,
+      topicsEnabled: merged.topicsEnabled !== false,
+    };
+  },
+
+  /**
+   * 规范化文章专题配置，兼容未配置时的默认配置
+   */
+  normalizeArticleTopicsConfig: (config: unknown): ArticleTopicsConfig => {
+    if (!config || typeof config !== 'object') {
+      return DEFAULT_ARTICLE_TOPICS;
+    }
+    const merged = { ...DEFAULT_ARTICLE_TOPICS, ...(config as ArticleTopicsConfig) };
+    return Object.keys(merged).reduce<ArticleTopicsConfig>((result, key) => {
+      const current = merged[key];
+      if (!current || typeof current !== 'object') {
+        return result;
+      }
+      result[key] = {
+        id: String(current.id || key),
+        type: current.type === 'tag' ? 'tag' : 'category',
+        title: String(current.title || ''),
+        description: String(current.description || ''),
+        coverImage: current.coverImage ? String(current.coverImage) : undefined,
+        icon: current.icon ? String(current.icon) : undefined,
+        themeColor: current.themeColor ? String(current.themeColor) : undefined,
+      };
+      return result;
+    }, {} as ArticleTopicsConfig);
+  },
+
+  getFrontendConfig: async (): Promise<FrontendConfigPayload> => {
+    try {
+      const response = await api.get('/settings/frontend-config');
+      const data = publicSettingService.unwrapResponseData<FrontendConfigPayload>(response.data, {});
+      return {
+        exitModalEnabled: typeof data.exitModalEnabled === 'boolean' ? data.exitModalEnabled : undefined,
+        exitModalConfig: data.exitModalConfig || data.popupConfig,
+        pageGlobalConfig: data.pageGlobalConfig,
+        appearanceConfig: data.appearanceConfig,
+        homepageConfig: data.homepageConfig,
+        cardStyleConfig: data.cardStyleConfig,
+        sidebarConfig: data.sidebarConfig,
+        searchConfig: data.searchConfig,
+      };
+    } catch (error) {
+      debugLog.error('获取前端配置失败，回退公开设置:', error);
+      return {};
+    }
+  },
+
+  /**
    * 获取所有公开设置
    */
   getPublicSettings: async (): Promise<PublicSettings> => {
     try {
-      const response = await api.get('/uied/setting/public');
+      const response = await api.get('/settings/public');
       const data = publicSettingService.unwrapResponseData<PublicSettingsPayload>(response.data, {});
+      const exitModalConfig = data.exitModal || data.popup;
       return {
         siteInfo: data.siteInfo || DEFAULT_SITE_INFO,
         appearance: data.appearance || DEFAULT_APPEARANCE,
@@ -367,8 +508,10 @@ export const publicSettingService = {
         cardStyle: data.cardStyle || DEFAULT_CARD_STYLE,
         sidebar: data.sidebar || DEFAULT_SIDEBAR,
         search: data.search || DEFAULT_SEARCH,
-        exitModal: data.exitModal || DEFAULT_EXIT_MODAL,
+        exitModal: exitModalConfig || DEFAULT_EXIT_MODAL,
         detailPage: data.detailPage || DEFAULT_DETAIL_PAGE,
+        article: publicSettingService.normalizeArticleConfig(data.article),
+        articleTopics: publicSettingService.normalizeArticleTopicsConfig(data.articleTopics),
       };
     } catch (error) {
       debugLog.error('获取公开设置失败，使用默认配置:', error);
@@ -383,6 +526,8 @@ export const publicSettingService = {
         search: DEFAULT_SEARCH,
         exitModal: DEFAULT_EXIT_MODAL,
         detailPage: DEFAULT_DETAIL_PAGE,
+        article: DEFAULT_ARTICLE_SETTING,
+        articleTopics: DEFAULT_ARTICLE_TOPICS,
       };
     }
   },
@@ -392,8 +537,8 @@ export const publicSettingService = {
    */
   getSiteInfo: async (): Promise<SiteInfo> => {
     try {
-      const response = await api.get('/uied/setting/siteInfo');
-      return publicSettingService.unwrapResponseData<SiteInfo>(response.data, DEFAULT_SITE_INFO);
+      const settings = await publicSettingService.getPublicSettings();
+      return settings.siteInfo || DEFAULT_SITE_INFO;
     } catch (error) {
       debugLog.error('获取站点信息失败，使用默认配置:', error);
       return DEFAULT_SITE_INFO;
@@ -405,10 +550,8 @@ export const publicSettingService = {
    */
   getAppearanceConfig: async (): Promise<AppearanceConfig> => {
     try {
-      const response = await api.get('/uied/setting/get', {
-        params: { key: 'appearanceConfig' }
-      });
-      return publicSettingService.unwrapResponseData<AppearanceConfig>(response.data, DEFAULT_APPEARANCE);
+      const settings = await publicSettingService.getPublicSettings();
+      return settings.appearance || DEFAULT_APPEARANCE;
     } catch (error) {
       debugLog.error('获取外观配置失败，使用默认配置:', error);
       return DEFAULT_APPEARANCE;
@@ -420,11 +563,8 @@ export const publicSettingService = {
    */
   getHomepageConfig: async (): Promise<HomepageConfig> => {
     try {
-      const response = await api.get('/uied/setting/get', {
-        params: { key: 'homepageConfig' }
-      });
-      const config = publicSettingService.unwrapResponseData<HomepageConfig>(response.data, DEFAULT_HOMEPAGE);
-      return publicSettingService.normalizeHomepageConfig(config);
+      const settings = await publicSettingService.getPublicSettings();
+      return publicSettingService.normalizeHomepageConfig(settings.homepage || DEFAULT_HOMEPAGE);
     } catch (error) {
       debugLog.error('获取首页配置失败，使用默认配置:', error);
       return DEFAULT_HOMEPAGE;
@@ -436,11 +576,8 @@ export const publicSettingService = {
    */
   getPageGlobalConfig: async (): Promise<PageGlobalConfig> => {
     try {
-      const response = await api.get('/uied/setting/get', {
-        params: { key: 'pageGlobalConfig' }
-      });
-      const config = publicSettingService.unwrapResponseData<Partial<PageGlobalConfig>>(response.data, DEFAULT_PAGE_GLOBAL);
-      return publicSettingService.normalizePageGlobalConfig(config);
+      const settings = await publicSettingService.getPublicSettings();
+      return publicSettingService.normalizePageGlobalConfig(settings.pageGlobal || DEFAULT_PAGE_GLOBAL);
     } catch (error) {
       debugLog.error('获取页面配置失败，使用默认配置:', error);
       return DEFAULT_PAGE_GLOBAL;
@@ -452,10 +589,8 @@ export const publicSettingService = {
    */
   getCardStyleConfig: async (): Promise<CardStyleConfig> => {
     try {
-      const response = await api.get('/uied/setting/get', {
-        params: { key: 'cardStyleConfig' }
-      });
-      return publicSettingService.unwrapResponseData<CardStyleConfig>(response.data, DEFAULT_CARD_STYLE);
+      const settings = await publicSettingService.getPublicSettings();
+      return settings.cardStyle || DEFAULT_CARD_STYLE;
     } catch (error) {
       debugLog.error('获取卡片样式配置失败，使用默认配置:', error);
       return DEFAULT_CARD_STYLE;
@@ -467,10 +602,8 @@ export const publicSettingService = {
    */
   getSidebarConfig: async (): Promise<SidebarConfig> => {
     try {
-      const response = await api.get('/uied/setting/get', {
-        params: { key: 'sidebarConfig' }
-      });
-      return publicSettingService.unwrapResponseData<SidebarConfig>(response.data, DEFAULT_SIDEBAR);
+      const settings = await publicSettingService.getPublicSettings();
+      return settings.sidebar || DEFAULT_SIDEBAR;
     } catch (error) {
       debugLog.error('获取侧边栏配置失败，使用默认配置:', error);
       return DEFAULT_SIDEBAR;
@@ -482,10 +615,8 @@ export const publicSettingService = {
    */
   getSearchConfig: async (): Promise<SearchConfig> => {
     try {
-      const response = await api.get('/uied/setting/get', {
-        params: { key: 'searchConfig' }
-      });
-      return publicSettingService.unwrapResponseData<SearchConfig>(response.data, DEFAULT_SEARCH);
+      const settings = await publicSettingService.getPublicSettings();
+      return settings.search || DEFAULT_SEARCH;
     } catch (error) {
       debugLog.error('获取搜索配置失败，使用默认配置:', error);
       return DEFAULT_SEARCH;
@@ -497,10 +628,8 @@ export const publicSettingService = {
    */
   getExitModalConfig: async (): Promise<ExitModalConfig> => {
     try {
-      const response = await api.get('/uied/setting/get', {
-        params: { key: 'exitModalConfig' }
-      });
-      return publicSettingService.unwrapResponseData<ExitModalConfig>(response.data, DEFAULT_EXIT_MODAL);
+      const settings = await publicSettingService.getPublicSettings();
+      return settings.exitModal || DEFAULT_EXIT_MODAL;
     } catch (error) {
       debugLog.error('获取跳转提醒配置失败，使用默认配置:', error);
       return DEFAULT_EXIT_MODAL;
@@ -512,9 +641,7 @@ export const publicSettingService = {
    */
   getDetailPageConfig: async (): Promise<DetailPageConfig> => {
     try {
-      const response = await api.get('/uied/setting/get', {
-        params: { key: 'detailPageConfig' }
-      });
+      const response = await api.get('/settings/detailPageConfig');
       return publicSettingService.unwrapResponseData<DetailPageConfig>(response.data, DEFAULT_DETAIL_PAGE);
     } catch (error) {
       debugLog.error('获取详情页配置失败，使用默认配置:', error);

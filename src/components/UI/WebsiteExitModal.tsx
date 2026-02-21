@@ -25,6 +25,12 @@ interface ExitModalConfig {
   showAd?: boolean;
   adCode?: string;
   adPosition?: 'top' | 'bottom';
+  logo?: string;
+  showAgreementLinks?: boolean;
+  userAgreementText?: string;
+  userAgreementUrl?: string;
+  copyrightAgreementText?: string;
+  copyrightAgreementUrl?: string;
 }
 
 // 网站跳转弹窗属性接口
@@ -60,6 +66,12 @@ const defaultConfig: ExitModalConfig = {
   showAd: false,
   adCode: '',
   adPosition: 'bottom',
+  logo: '',
+  showAgreementLinks: false,
+  userAgreementText: '',
+  userAgreementUrl: '',
+  copyrightAgreementText: '',
+  copyrightAgreementUrl: '',
 };
 
 // 广告渲染组件
@@ -150,6 +162,11 @@ const WebsiteExitModal: React.FC<WebsiteExitModalProps> = ({
     ? `${mergedConfig.confirmText} (${countdown}s)`
     : mergedConfig.confirmText;
 
+  const showAgreements = Boolean(
+    mergedConfig.showAgreementLinks
+    && (mergedConfig.userAgreementText || mergedConfig.copyrightAgreementText)
+  );
+
   // 手动点击确认
   const handleConfirm = () => {
     clearTimer();
@@ -173,6 +190,9 @@ const WebsiteExitModal: React.FC<WebsiteExitModalProps> = ({
 
         {/* 警告图标和标题 */}
         <div className="exit-modal-header">
+          {mergedConfig.logo && (
+            <img className="exit-modal-logo" src={mergedConfig.logo} alt="logo" />
+          )}
           <div className="warning-icon">⚠️</div>
           <h2 className="exit-modal-title">{mergedConfig.title}</h2>
         </div>
@@ -196,6 +216,39 @@ const WebsiteExitModal: React.FC<WebsiteExitModalProps> = ({
             </p>
           </div>
         </div>
+
+        {showAgreements && (
+          <div className="exit-modal-agreements">
+            {mergedConfig.userAgreementText && (
+              mergedConfig.userAgreementUrl ? (
+                <a
+                  className="agreement-link"
+                  href={mergedConfig.userAgreementUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {mergedConfig.userAgreementText}
+                </a>
+              ) : (
+                <span className="agreement-text">{mergedConfig.userAgreementText}</span>
+              )
+            )}
+            {mergedConfig.copyrightAgreementText && (
+              mergedConfig.copyrightAgreementUrl ? (
+                <a
+                  className="agreement-link"
+                  href={mergedConfig.copyrightAgreementUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {mergedConfig.copyrightAgreementText}
+                </a>
+              ) : (
+                <span className="agreement-text">{mergedConfig.copyrightAgreementText}</span>
+              )
+            )}
+          </div>
+        )}
 
         {/* 底部广告位 */}
         {mergedConfig.showAd && mergedConfig.adPosition === 'bottom' && mergedConfig.adCode && (

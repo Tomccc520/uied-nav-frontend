@@ -1,316 +1,311 @@
 /**
  * @file pages/Articles/ArticleList.tsx
- * @description 文章列表页组件（Pro 功能）
+ * @description 文章列表页组件 - 2026 设计改版 (支持专题/分类页)
  * @author Tomda
  * @copyright 版权所有 (c) 2026 UIED技术团队
- * @website https://fsuied.com
- * @license MIT
- * @version 1.0.0
+ */
+/**
+ * @copyright Tomda (https://www.tomda.top)
+ * @copyright UIED技术团队 (https://fsuied.com)
+ * @author UIED技术团队
+ * @createDate 2026.1.27
  */
 
-// @pro-feature-start: articles
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import api from '../../services/api';
+import { 
+  getArticles, 
+  getArticleCategories, 
+  getArticleTags 
+} from '../../services/articleService';
+import { ArticleListItem, TagMeta, CategoryMeta } from '../../types/article';
+import { getTopicConfig, DEFAULT_ARTICLE_CONFIG } from '../../config/articleConfig';
+import { usePublicSettings } from '../../hooks/usePublicSettings';
 import SEO from '../../components/SEO';
 import ArticleCard from './ArticleCard';
-import { unwrapApiList, unwrapApiResponse } from '../../utils/apiResponse';
 import './ArticleList.css';
-
-/** 文章标签 */
-interface ArticleTag {
-  id: number;
-  name: string;
-  slug: string;
-  color?: string;
-}
-
-/** 文章列表项 */
-interface Article {
-  id: number;
-  title: string;
-  excerpt: string;
-  coverImage?: string;
-  author: string;
-  category: string;
-  slug: string;
-  viewCount: number;
-  publishedAt: string | number | null;
-  tags: ArticleTag[];
-}
-
-/** 标签元数据（含文章数量） */
-interface TagMeta {
-  id: number;
-  name: string;
-  slug: string;
-  color?: string;
-  articleCount: number;
-}
 
 interface ArticleListProps {
   pageTitle?: string;
 }
 
-interface ArticleListPayload {
-  lists?: Article[];
-  total?: number;
-  page?: number;
-  pageSize?: number;
-  totalPages?: number;
-}
-
-/**
- * 文章列表页组件
- */
-const ArticleList: React.FC<ArticleListProps> = ({ pageTitle = '文章' }) => {
+const ArticleList: React.FC<ArticleListProps> = () => {
+  const { data: publicSettings } = usePublicSettings();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [articles, setArticles] = useState<Article[]>([]);
+  const [articles, setArticles] = useState<ArticleListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [categories, setCategories] = useState<string[]>([]);
+  
+  // 分页状态
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 12,
+    total: 0,
+    totalPages: 1
+  });
+
+  const [categories, setCategories] = useState<CategoryMeta[]>([]);
   const [tags, setTags] = useState<TagMeta[]>([]);
 
-  // 从 URL 获取过滤参数
+  // 从 URL 获取参数
+  const currentPage = parseInt(searchParams.get('page') || '1', 10);
   const currentCategory = searchParams.get('category') || '';
   const currentTag = searchParams.get('tag') || '';
 
-  /**
-   * 统一解析文章列表响应，兼容数组直出与分页对象。
-   */
-  const parseArticleListResponse = useCallback((payload: unknown) => {
-    const unwrapped = unwrapApiResponse<Article[] | ArticleListPayload>(payload as ArticleListPayload, []);
-    if (Array.isArray(unwrapped)) {
-      return {
-        lists: unwrapped,
-        total: unwrapped.length,
-        totalPages: 1,
-      };
+  // 获取当前页面的视觉配置 (专题/分类信息)
+  const topicConfig = useMemo(() => {
+    const topics = publicSettings.articleTopics || {};
+    if (currentTag && topics[currentTag]) {
+      return topics[currentTag];
     }
+    if (currentCategory && topics[currentCategory]) {
+      return topics[currentCategory];
+    }
+    return getTopicConfig(currentCategory, currentTag);
+  }, [currentCategory, currentTag, publicSettings.articleTopics]);
 
-    const lists = Array.isArray(unwrapped?.lists) ? unwrapped.lists : [];
-    const total = Number(unwrapped?.total ?? lists.length) || 0;
-    const fallbackTotalPages = Math.ceil(total / 12) || 1;
-    const totalPages = Number(unwrapped?.totalPages ?? fallbackTotalPages) || 1;
-    return { lists, total, totalPages };
-  }, []);
+  // 页面标题和描述
+  const listTitle = publicSettings.article?.listPageTitle || DEFAULT_ARTICLE_CONFIG.title;
+  const listDescription = publicSettings.article?.listPageDescription || DEFAULT_ARTICLE_CONFIG.description;
+  const pageTitle = topicConfig?.title || (currentCategory || (currentTag ? `#${currentTag}` : listTitle));
+  const pageDescription = topicConfig?.description || listDescription;
+  const themeColor = topicConfig?.themeColor || '#3b82f6';
 
   /**
-   * 获取文章列表
+   * 获取文章数据
    */
-  const fetchArticles = useCallback(async (pageNum: number = 1) => {
+  const fetchArticlesData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
 
-      const params: Record<string, string | number> = {
-        page: pageNum,
+      const response = await getArticles({
+        page: currentPage,
         pageSize: 12,
-      };
+        category: currentCategory || undefined,
+        tag: currentTag || undefined
+      });
 
-      if (currentCategory) params.category = currentCategory;
-      if (currentTag) params.tag = currentTag;
+      setArticles(response.data);
+      setPagination({
+        page: response.pagination.page,
+        pageSize: response.pagination.pageSize,
+        total: response.pagination.total,
+        totalPages: response.pagination.totalPages
+      });
 
-      const response = await api.get('/api/articles', { params });
-      const normalized = parseArticleListResponse(response.data);
-      setArticles(normalized.lists);
-      setTotal(normalized.total);
-      setTotalPages(normalized.totalPages);
-      setPage(pageNum);
-    } catch (err: unknown) {
+    } catch (err) {
       console.error('获取文章列表失败:', err);
-      setError('获取文章列表失败');
+      setError('获取文章列表失败，请稍后重试');
       setArticles([]);
-      setTotal(0);
-      setTotalPages(1);
     } finally {
       setLoading(false);
     }
-  }, [currentCategory, currentTag, parseArticleListResponse]);
+  }, [currentPage, currentCategory, currentTag]);
 
   /**
-   * 获取分类和标签元数据
+   * 获取元数据
    */
-  const fetchMeta = useCallback(async () => {
-    try {
-      const [categoriesRes, tagsRes] = await Promise.all([
-        api.get('/api/articles/meta/categories'),
-        api.get('/api/articles/meta/tags'),
-      ]);
-      setCategories(unwrapApiList<string>(categoriesRes.data));
-      setTags(unwrapApiList<TagMeta>(tagsRes.data));
-    } catch (err) {
-      console.error('获取分类标签失败:', err);
-    }
+  useEffect(() => {
+    const fetchMeta = async () => {
+      try {
+        const [cats, ts] = await Promise.all([
+          getArticleCategories(),
+          getArticleTags()
+        ]);
+        setCategories(cats);
+        setTags(ts);
+      } catch (e) {
+        console.error('获取元数据失败', e);
+      }
+    };
+    fetchMeta();
   }, []);
 
   useEffect(() => {
-    fetchArticles(1);
-    fetchMeta();
-  }, [fetchArticles, fetchMeta]);
+    fetchArticlesData();
+  }, [fetchArticlesData]);
 
   /**
-   * 切换分类
+   * 路由跳转助手
    */
-  const handleCategoryChange = (category: string) => {
+  const updateParams = (key: string, value: string) => {
     const newParams = new URLSearchParams(searchParams);
-    if (category) {
-      newParams.set('category', category);
+    if (value) {
+      newParams.set(key, value);
     } else {
-      newParams.delete('category');
+      newParams.delete(key);
     }
-    newParams.delete('tag'); // 切换分类时清除标签
-    setSearchParams(newParams);
-  };
-
-  /**
-   * 切换标签
-   */
-  const handleTagChange = (tagSlug: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (tagSlug) {
-      newParams.set('tag', tagSlug);
-    } else {
-      newParams.delete('tag');
+    
+    if (key !== 'page') {
+      newParams.set('page', '1');
+      if (key === 'category') newParams.delete('tag');
     }
     setSearchParams(newParams);
-  };
-
-  /**
-   * 翻页
-   */
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      fetchArticles(newPage);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
   };
 
   return (
-    <div className="blog-list-container">
-      <SEO
+    <div className="article-list-page" style={{ '--theme-color': themeColor } as React.CSSProperties}>
+      <SEO 
         title={`${pageTitle} - UIED 设计导航`}
-        description="发现优质设计文章，学习设计知识和技巧"
+        description={pageDescription}
       />
 
-      {/* 页面标题 */}
-      <div className="blog-list-header">
-        <h1>{pageTitle}</h1>
-        <p className="blog-list-subtitle">发现优质设计文章，学习设计知识和技巧</p>
-      </div>
+      {/* 动态头部区域 */}
+      <header className={`article-header-section ${topicConfig ? 'is-topic' : ''}`}>
+        <div className="article-header-bg">
+          {/* 装饰性背景元素 */}
+          <div className="header-orb orb-1"></div>
+          <div className="header-orb orb-2"></div>
+        </div>
+        
+        <div className="article-header-content">
+          {topicConfig?.icon && (
+            <div className="topic-icon">{topicConfig.icon}</div>
+          )}
+          
+          <h1 className="article-page-title">
+            {currentTag && !topicConfig && <span className="hash-symbol">#</span>}
+            {pageTitle}
+          </h1>
+          
+          <p className="article-page-desc">
+            {pageDescription}
+          </p>
 
-      {/* 过滤器 */}
-      <div className="blog-filters">
-        {/* 分类过滤 */}
-        {categories.length > 0 && (
-          <div className="blog-filter-group">
-            <span className="blog-filter-label">分类：</span>
-            <div className="blog-filter-tags">
-              <button
-                className={`blog-filter-tag ${!currentCategory ? 'active' : ''}`}
-                onClick={() => handleCategoryChange('')}
-              >
-                全部
-              </button>
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  className={`blog-filter-tag ${currentCategory === cat ? 'active' : ''}`}
-                  onClick={() => handleCategoryChange(cat)}
+          {/* 如果是专题页，显示"返回全部" */}
+          {(currentCategory || currentTag) && (
+            <button 
+              className="reset-filter-btn"
+              onClick={() => {
+                setSearchParams(new URLSearchParams());
+              }}
+            >
+              ← 查看全部文章
+            </button>
+          )}
+        </div>
+      </header>
+
+      <main className="article-main-container">
+        {/* 筛选区域 - 仅在非专题模式下显示，或者作为二级导航 */}
+        <section className="article-filters">
+          {/* 分类筛选 */}
+          {categories.length > 0 && (
+            <div className="filter-row">
+              <span className="filter-label">分类</span>
+              <div className="filter-options">
+                <button 
+                  className={`filter-chip ${!currentCategory ? 'active' : ''}`}
+                  onClick={() => updateParams('category', '')}
                 >
-                  {cat}
+                  全部
                 </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 标签过滤 */}
-        {tags.length > 0 && (
-          <div className="blog-filter-group">
-            <span className="blog-filter-label">标签：</span>
-            <div className="blog-filter-tags">
-              <button
-                className={`blog-filter-tag ${!currentTag ? 'active' : ''}`}
-                onClick={() => handleTagChange('')}
-              >
-                全部
-              </button>
-              {tags.slice(0, 10).map((tag) => (
-                <button
-                  key={tag.id}
-                  className={`blog-filter-tag ${currentTag === tag.slug ? 'active' : ''}`}
-                  onClick={() => handleTagChange(tag.slug)}
-                  style={
-                    currentTag === tag.slug && tag.color
-                      ? { backgroundColor: tag.color, borderColor: tag.color }
-                      : undefined
-                  }
-                >
-                  {tag.name}
-                  {tag.articleCount > 0 && (
-                    <span className="blog-filter-tag-count">{tag.articleCount}</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* 文章列表 */}
-      {loading ? (
-        <div className="blog-list-loading">
-          <div className="blog-loading-spinner"></div>
-          <p>加载中...</p>
-        </div>
-      ) : error ? (
-        <div className="blog-list-error">
-          <p>{error}</p>
-          <button onClick={() => fetchArticles(page)}>重试</button>
-        </div>
-      ) : articles.length === 0 ? (
-        <div className="blog-list-empty">
-          <p>暂无文章</p>
-        </div>
-      ) : (
-        <>
-          <div className="blog-grid">
-            {articles.map((article) => (
-              <ArticleCard key={article.id} article={article} />
-            ))}
-          </div>
-
-          {/* 分页 */}
-          {totalPages > 1 && (
-            <div className="blog-pagination">
-              <button
-                className="blog-pagination-btn"
-                disabled={page <= 1}
-                onClick={() => handlePageChange(page - 1)}
-              >
-                上一页
-              </button>
-              <span className="blog-pagination-info">
-                第 {page} 页 / 共 {totalPages} 页（{total} 篇文章）
-              </span>
-              <button
-                className="blog-pagination-btn"
-                disabled={page >= totalPages}
-                onClick={() => handlePageChange(page + 1)}
-              >
-                下一页
-              </button>
+                {categories.map(cat => (
+                  <button
+                    key={cat}
+                    className={`filter-chip ${currentCategory === cat ? 'active' : ''}`}
+                    onClick={() => updateParams('category', cat)}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
-        </>
-      )}
+
+          {/* 标签筛选 */}
+          {tags.length > 0 && (
+            <div className="filter-row">
+              <span className="filter-label">热门标签</span>
+              <div className="filter-options">
+                {tags.slice(0, 15).map(tag => (
+                  <button
+                    key={tag.id}
+                    className={`filter-tag ${currentTag === tag.slug ? 'active' : ''}`}
+                    onClick={() => updateParams('tag', currentTag === tag.slug ? '' : tag.slug)}
+                  >
+                    #{tag.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* 内容区域 */}
+        <section className="article-content-area">
+          {loading ? (
+            <div className="article-loading">
+              <div className="spinner"></div>
+              <p>正在加载精彩内容...</p>
+            </div>
+          ) : error ? (
+            <div className="article-error">
+              <div className="error-icon">⚠️</div>
+              <p>{error}</p>
+              <button onClick={fetchArticlesData} className="retry-btn">重试</button>
+            </div>
+          ) : articles.length === 0 ? (
+            <div className="article-empty">
+              <div className="empty-icon">📭</div>
+              <p>暂无相关文章，换个筛选条件试试？</p>
+              {(currentCategory || currentTag) && (
+                <button 
+                  className="reset-btn"
+                  onClick={() => setSearchParams(new URLSearchParams())}
+                >
+                  查看所有文章
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="article-grid">
+                {articles.map(article => (
+                  <ArticleCard key={article.id} article={article} />
+                ))}
+              </div>
+
+              {/* 分页器 */}
+              {pagination.totalPages > 1 && (
+                <div className="article-pagination">
+                  <button 
+                    disabled={pagination.page <= 1}
+                    onClick={() => updateParams('page', String(pagination.page - 1))}
+                    className="page-btn prev"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M15 18l-6-6 6-6" />
+                    </svg>
+                    上一页
+                  </button>
+                  
+                  <div className="page-info">
+                    <span className="current">{pagination.page}</span>
+                    <span className="separator">/</span>
+                    <span className="total">{pagination.totalPages}</span>
+                  </div>
+
+                  <button 
+                    disabled={pagination.page >= pagination.totalPages}
+                    onClick={() => updateParams('page', String(pagination.page + 1))}
+                    className="page-btn next"
+                  >
+                    下一页
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M9 18l6-6-6-6" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </section>
+      </main>
     </div>
   );
 };
 
 export default ArticleList;
-// @pro-feature-end: articles

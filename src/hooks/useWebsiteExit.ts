@@ -43,6 +43,12 @@ interface ExitModalConfig {
   showAd?: boolean;
   adCode?: string;
   adPosition?: 'top' | 'bottom';
+  logo?: string;
+  showAgreementLinks?: boolean;
+  userAgreementText?: string;
+  userAgreementUrl?: string;
+  copyrightAgreementText?: string;
+  copyrightAgreementUrl?: string;
   // 页面级配置
   pageOverrides?: {
     [pageSlug: string]: PageOverrideConfig;
@@ -64,6 +70,12 @@ const defaultModalConfig: ExitModalConfig = {
   showAd: false,
   adCode: '',
   adPosition: 'bottom',
+  logo: '',
+  showAgreementLinks: false,
+  userAgreementText: '',
+  userAgreementUrl: '',
+  copyrightAgreementText: '',
+  copyrightAgreementUrl: '',
 };
 
 // 缓存配置

@@ -29,6 +29,8 @@ import publicSettingService, {
   DEFAULT_SEARCH,
   DEFAULT_EXIT_MODAL,
   DEFAULT_DETAIL_PAGE,
+  DEFAULT_ARTICLE_SETTING,
+  DEFAULT_ARTICLE_TOPICS,
 } from '../services/publicSettingService';
 import { debugLog } from '../utils/debugHelper';
 
@@ -58,6 +60,8 @@ export const usePublicSettings = (): UseSettingResult<PublicSettings> => {
     search: DEFAULT_SEARCH,
     exitModal: DEFAULT_EXIT_MODAL,
     detailPage: DEFAULT_DETAIL_PAGE,
+    article: DEFAULT_ARTICLE_SETTING,
+    articleTopics: DEFAULT_ARTICLE_TOPICS,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);

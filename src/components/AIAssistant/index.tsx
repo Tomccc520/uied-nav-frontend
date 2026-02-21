@@ -6,6 +6,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AxiosError } from 'axios';
 import api from '../../services/api';
+import { unwrapApiResponse } from '../../utils/apiResponse';
 import './index.css';
 
 interface Message {
@@ -57,8 +58,8 @@ const AIAssistant: React.FC<AIAssistantProps> = ({
         message: userMessage,
         context,
       });
-
-      setMessages(prev => [...prev, { role: 'assistant', content: res.data.reply }]);
+      const data = unwrapApiResponse<{ reply?: string }>(res.data, {});
+      setMessages(prev => [...prev, { role: 'assistant', content: data.reply || '未获取到回复内容' }]);
     } catch (error: unknown) {
       console.error('AI 对话失败:', error);
       const axiosError = error as AxiosError<{ error?: string }>;

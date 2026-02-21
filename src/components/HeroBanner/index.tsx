@@ -10,6 +10,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAISearch } from '../../hooks/useAISearch';
 import api from '../../services/api';
+import { unwrapApiResponse } from '../../utils/apiResponse';
 import './index.css';
 import './index.mobile.css'; // 引入独立的移动端样式
 
@@ -135,8 +136,9 @@ const HeroBanner: React.FC<HeroBannerProps> = ({
         if (slug && slug !== 'home' && slug !== 'search') {
           try {
             const response = await api.get(`/pages/${slug}/stats`);
-            if (response.data?.totalWebsites) {
-              setWebsiteCount(response.data.totalWebsites);
+            const stats = unwrapApiResponse<{ totalWebsites?: number }>(response.data, {});
+            if (stats.totalWebsites) {
+              setWebsiteCount(stats.totalWebsites);
               return;
             }
           } catch (e) {
@@ -147,8 +149,13 @@ const HeroBanner: React.FC<HeroBannerProps> = ({
         // 获取全站统计
         try {
           const response = await api.get('/websites', { params: { pageSize: 1 } });
-          if (response.data?.pagination?.total) {
-            setWebsiteCount(response.data.pagination.total);
+          const payload = unwrapApiResponse<{ pagination?: { total?: number }; websites?: unknown[] }>(
+            response.data,
+            {}
+          );
+          const total = Number(payload?.pagination?.total || 0);
+          if (total > 0) {
+            setWebsiteCount(total);
           } else {
             setWebsiteCount(2000); // 默认值
           }

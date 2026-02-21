@@ -33,6 +33,14 @@
   background: var(--background-light, #f6f8fb);
 }
 
+.exit-modal-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  margin: 0 auto 12px;
+  display: block;
+}
+
 .warning-icon {
   font-size: 40px;
   margin-bottom: 12px;
@@ -114,6 +122,30 @@
   border: 1px solid #fef3c7;
   border-radius: 0.5rem;
   padding: 12px 16px;
+}
+
+.exit-modal-agreements {
+  padding: 10px 24px 16px;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  border-top: 1px solid var(--border-color, #f0f0f0);
+  flex-wrap: wrap;
+}
+
+.agreement-link,
+.agreement-text {
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+}
+
+.agreement-link {
+  color: var(--primary-color, #0066ff);
+  text-decoration: none;
+}
+
+.agreement-link:hover {
+  text-decoration: underline;
 }
 
 /* 安全检测状态 */

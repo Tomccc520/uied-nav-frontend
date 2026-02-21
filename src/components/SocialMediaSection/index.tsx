@@ -1,10 +1,15 @@
 /**
  * @file SocialMediaSection/index.tsx
  * @description 关注交流组件 - 鼠标移入显示详细内容
+ * @copyright Tomda (https://www.tomda.top)
+ * @copyright UIED技术团队 (https://fsuied.com)
+ * @author UIED技术团队
+ * @createDate 2026.1.27
  */
 
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
+import { unwrapApiList } from '../../utils/apiResponse';
 import './index.css';
 
 interface SocialMediaItem {
@@ -147,10 +152,14 @@ const SocialMediaSection: React.FC = () => {
   useEffect(() => {
     const fetchGroups = async () => {
       try {
-        const res = await api.get('/social-media/groups');
-        setGroups(res.data);
+        const res = await api.get('/social-media');
+        // 使用工具函数解包数据，确保返回数组
+        const data = unwrapApiList<SocialMediaGroup>(res.data);
+        setGroups(data);
       } catch (error) {
         console.error('获取关注交流数据失败:', error);
+        // 出错时也重置为空数组
+        setGroups([]);
       } finally {
         setLoading(false);
       }
@@ -158,12 +167,13 @@ const SocialMediaSection: React.FC = () => {
     fetchGroups();
   }, []);
 
-  if (loading || groups.length === 0) return null;
+  // 增加数组类型检查
+  if (loading || !Array.isArray(groups) || groups.length === 0) return null;
 
   return (
     <div className="social-media-section">
       <div className="social-media-groups">
-        {groups.map((group) => (
+        {Array.isArray(groups) && groups.map((group) => (
           <div
             key={group.id}
             className={`social-media-group ${activeGroup === group.id ? 'active' : ''}`}

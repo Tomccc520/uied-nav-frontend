@@ -14,16 +14,21 @@ const DEFAULT_API_BASE = `http://localhost:${DEFAULT_API_PORT}/api`;
 
 /**
  * 获取 API 基础地址
- * 支持 Vite 和 Create React App 的环境变量
+ * 统一优先使用 CRA 环境变量（REACT_APP_API_URL）
  * 
  * @returns API 基础地址
  */
 export const getApiBaseUrl = (): string => {
-  // Vite 使用 import.meta.env，Create React App 使用 process.env
-  const viteEnv = (import.meta as ImportMeta & { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL;
-  const craEnv = process.env.REACT_APP_API_URL;
-  
-  return viteEnv || craEnv || DEFAULT_API_BASE;
+  const craEnv = String(process.env.REACT_APP_API_URL || '').trim();
+  const legacyEnv = String(process.env.VITE_API_URL || '').trim();
+  const candidate = craEnv || legacyEnv || DEFAULT_API_BASE;
+  const normalized = candidate.replace(/\/+$/, '');
+
+  // 兜底兼容：若误传后端根地址（不含 /api），自动补齐
+  if (/^https?:\/\/[^/]+$/i.test(normalized)) {
+    return `${normalized}/api`;
+  }
+  return normalized || DEFAULT_API_BASE;
 };
 
 /**

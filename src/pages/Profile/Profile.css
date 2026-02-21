@@ -1,0 +1,358 @@
+/**
+ * @file ProfilePage.css
+ * @description 用户中心样式 - 扁平化设计
+ * @copyright 版权所有 (c) 2026 UIED技术团队
+ */
+
+.profile-page {
+  background-color: #f3f4f6;
+  min-height: calc(100vh - 64px); /* 减去导航栏高度 */
+  padding: 40px 0;
+}
+
+.profile-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  gap: 24px;
+}
+
+/* 侧边栏导航 */
+.profile-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+}
+
+.user-card {
+  background: white;
+  border-radius: 12px;
+  padding: 32px 24px;
+  text-align: center;
+  margin-bottom: 24px;
+  border: 1px solid #e5e7eb;
+}
+
+.user-avatar-large {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 32px;
+  font-weight: 600;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
+}
+
+.user-name-large {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.user-type-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background-color: #eff6ff;
+  color: #3b82f6;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 20px;
+}
+
+.profile-menu {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  color: #6b7280;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.menu-item:hover {
+  background-color: #f9fafb;
+  color: #374151;
+}
+
+.menu-item.active {
+  background-color: #eff6ff;
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+/* 内容区域 */
+.profile-content {
+  flex: 1;
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  min-height: 600px;
+  border: 1px solid #e5e7eb;
+}
+
+.profile-info-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-bottom: 32px;
+  padding: 24px;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 1px solid #f3f4f6;
+}
+
+.info-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-label {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.info-value {
+  font-size: 15px;
+  color: #111827;
+  font-weight: 600;
+}
+
+@media (max-width: 1024px) {
+  .profile-info-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .profile-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.content-header {
+  margin-bottom: 32px;
+  border-bottom: 1px solid #f3f4f6;
+  padding-bottom: 20px;
+}
+
+.content-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+/* 表单通用样式 */
+.profile-form {
+  max-width: 600px;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.2s;
+  background-color: #f9fafb;
+}
+
+.form-group input:focus {
+  border-color: #3b82f6;
+  background-color: white;
+}
+
+.form-group input:disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.input-with-action {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-action input {
+  padding-right: 80px;
+}
+
+.action-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 4px 12px;
+  background-color: transparent;
+  color: #3b82f6;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.action-btn:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.readonly-input {
+  background-color: #f9fafb !important;
+  color: #4b5563 !important;
+  cursor: default;
+  border-color: #e5e7eb !important;
+}
+
+.form-tip {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 6px;
+}
+
+.save-btn {
+  padding: 12px 32px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.save-btn:hover {
+  background-color: #2563eb;
+}
+
+.save-btn:disabled {
+  background-color: #d1d5db;
+  cursor: not-allowed;
+}
+
+/* 列表通用样式 */
+.list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.list-item:last-child {
+  border-bottom: none;
+}
+
+.item-main {
+  flex: 1;
+}
+
+.item-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 8px;
+  text-decoration: none;
+  display: block;
+  transition: color 0.2s;
+}
+
+.item-title:hover {
+  color: #3b82f6;
+}
+
+.item-meta {
+  font-size: 13px;
+  color: #6b7280;
+  display: flex;
+  gap: 16px;
+}
+
+.item-action {
+  margin-left: 24px;
+}
+
+.action-btn {
+  padding: 6px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: white;
+  color: #6b7280;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 60px 0;
+  color: #9ca3af;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .profile-container {
+    flex-direction: column;
+  }
+
+  .profile-sidebar {
+    width: 100%;
+  }
+
+  .profile-menu {
+    display: flex;
+    overflow-x: auto;
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .menu-item {
+    white-space: nowrap;
+    padding: 8px 16px;
+  }
+}

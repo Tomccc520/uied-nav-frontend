@@ -6,6 +6,7 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import api from '../../services/api';
+import { unwrapApiResponse } from '../../utils/apiResponse';
 import './index.css';
 
 // SVG 图标组件
@@ -137,11 +138,16 @@ const AISearchSidebar: React.FC<AISearchSidebarProps> = ({ visible, onClose, onW
         query: query.trim(),
         limit: 10,
       });
-
-      const results = (response.data?.results || []) as AiSearchApiResult[];
-      const mode = response.data?.mode || 'keyword';
-      const reason = response.data?.reason || '';
-      const reasoning = response.data?.reasoning || ''; // AI 思考过程
+      const payload = unwrapApiResponse<{
+        results?: AiSearchApiResult[];
+        mode?: 'ai' | 'keyword';
+        reason?: string;
+        reasoning?: string;
+      }>(response.data, {});
+      const results = (payload.results || []) as AiSearchApiResult[];
+      const mode = payload.mode || 'keyword';
+      const reason = payload.reason || '';
+      const reasoning = payload.reasoning || ''; // AI 思考过程
 
       let aiContent = '';
       if (results.length > 0) {

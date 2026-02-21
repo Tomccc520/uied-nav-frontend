@@ -5,6 +5,7 @@
 
 import { useState, useCallback } from 'react';
 import api from '../services/api';
+import { unwrapApiResponse } from '../utils/apiResponse';
 
 export interface AISearchResult {
   id: string;
@@ -57,11 +58,17 @@ export const useAISearch = (): UseAISearchReturn => {
         categoryId: options.categoryId,
         limit: options.limit || 10,
       });
+      const payload = unwrapApiResponse<{
+        results?: AISearchResult[];
+        mode?: 'ai' | 'keyword';
+        reason?: string;
+        message?: string;
+      }>(response.data, {});
 
-      setResults(response.data.results || []);
-      setMode(response.data.mode || 'keyword');
-      setReason(response.data.reason || '');
-      setMessage(response.data.message || '');
+      setResults(Array.isArray(payload.results) ? payload.results : []);
+      setMode(payload.mode || 'keyword');
+      setReason(payload.reason || '');
+      setMessage(payload.message || '');
     } catch (err) {
       setError(err as Error);
       console.error('AI search failed:', err);

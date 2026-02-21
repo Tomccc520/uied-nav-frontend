@@ -5,7 +5,8 @@
  * @version 1.0.0
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import './Modal.css';
 
 // 模态框属性接口
@@ -46,6 +47,13 @@ const Modal: React.FC<ModalProps> = ({
   className = '',
   zIndex = 9999
 }) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
   // ESC键关闭模态框
   useEffect(() => {
     if (!visible) return;
@@ -68,16 +76,18 @@ const Modal: React.FC<ModalProps> = ({
 
   // 处理遮罩层点击
   const handleMaskClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget && maskClosable) {
+    const target = e.target as HTMLElement;
+    // 允许点击 mask 或 wrapper 关闭
+    if ((target === e.currentTarget || target.classList.contains('modal-wrapper')) && maskClosable) {
       onClose();
     }
   };
 
-  if (!visible) {
+  if (!mounted || !visible) {
     return null;
   }
 
-  return (
+  return createPortal(
     <div 
       className={`modal-mask ${className}`}
       style={{ zIndex }}
@@ -110,7 +120,8 @@ const Modal: React.FC<ModalProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

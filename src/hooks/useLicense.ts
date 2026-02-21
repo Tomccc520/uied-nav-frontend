@@ -9,6 +9,8 @@
  */
 
 import { useEffect, useState } from 'react';
+import api from '../services/api';
+import { unwrapApiResponse } from '../utils/apiResponse';
 import { debugLog } from '../utils/debugHelper';
 
 /**
@@ -38,6 +40,24 @@ interface License {
   type: 'free' | 'personal' | 'enterprise';
   features: string[];
   expiresAt?: string;
+}
+
+interface LicenseInfoResponse {
+  edition?: string;
+  effectiveEdition?: string;
+  expiresAt?: number;
+  isActive?: boolean;
+  isExpired?: boolean;
+}
+
+interface FeatureItem {
+  key?: string;
+  enabled?: boolean;
+}
+
+interface FeatureListResponse {
+  rows?: FeatureItem[];
+  isActive?: boolean;
 }
 
 /**
@@ -76,6 +96,22 @@ export const useLicense = (): UseLicenseReturn => {
   });
   const [isLoading, setIsLoading] = useState(true);
 
+  const normalizeEdition = (edition: unknown): License['type'] => {
+    if (edition === 'enterprise') return 'enterprise';
+    if (edition === 'pro' || edition === 'personal') return 'personal';
+    return 'free';
+  };
+
+  const normalizeExpiresAt = (value: unknown): string | undefined => {
+    if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+      return new Date(value * 1000).toISOString();
+    }
+    if (typeof value === 'string') {
+      return value;
+    }
+    return undefined;
+  };
+
   useEffect(() => {
     // 获取许可证信息
     const fetchLicense = async () => {
@@ -92,16 +128,33 @@ export const useLicense = (): UseLicenseReturn => {
           return;
         }
         
-        // @pro-feature-start: license-api
-        // 商业版：从 API 获取许可证信息
-        // const response = await api.get('/api/license/info');
-        // setLicense(response.data);
-        // @pro-feature-end: license-api
-        
-        // 开源版：默认为免费版
+        const [licenseResult, featureResult] = await Promise.allSettled([
+          api.get('/uied/license/info'),
+          api.get('/uied/feature/list'),
+        ]);
+
+        const licenseData = licenseResult.status === 'fulfilled'
+          ? unwrapApiResponse<LicenseInfoResponse>(licenseResult.value.data, {})
+          : {};
+        const featureData = featureResult.status === 'fulfilled'
+          ? unwrapApiResponse<FeatureListResponse>(featureResult.value.data, {})
+          : {};
+
+        const editionSource = licenseData.effectiveEdition || licenseData.edition;
+        const resolvedEdition = licenseData.isActive === false || licenseData.isExpired === true
+          ? 'free'
+          : normalizeEdition(editionSource);
+        const resolvedFeatures = Array.isArray(featureData.rows) && featureData.isActive !== false
+          ? featureData.rows
+            .filter(item => item?.enabled)
+            .map(item => String(item.key || '').trim())
+            .filter(Boolean)
+          : [];
+
         setLicense({
-          type: 'free',
-          features: [],
+          type: resolvedEdition,
+          features: resolvedFeatures,
+          expiresAt: normalizeExpiresAt(licenseData.expiresAt),
         });
       } catch (error) {
         console.error('获取许可证信息失败:', error);

@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
+import { unwrapApiList } from '../utils/apiResponse';
 
 export interface WordPressTag {
   id: string;
@@ -49,10 +50,11 @@ export const useWordPressTags = (
       setError(null);
       
       const response = await api.get('/wordpress/tags');
-      
-      if (response.data && response.data.length > 0) {
+
+      const normalized = unwrapApiList<WordPressTag>(response.data);
+      if (normalized.length > 0) {
         // 只返回可见的标签
-        const visibleTags = response.data.filter((tag: WordPressTag) => tag.visible);
+        const visibleTags = normalized.filter((tag: WordPressTag) => tag.visible);
         setTags(visibleTags);
       } else {
         setTags([]);

@@ -11,9 +11,10 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Banner from '../../components/Banner';
 import DesignArticleGrid from '../../components/DesignArticleGrid';
 import { RankingListSkeleton } from '../../components/Skeleton';
-import wordPressApi from '../../services/wordpress-api';
+import api from '../../services/api';
 import { useBanners } from '../../hooks/useBanners';
 import { useFrontendConfig } from '../../hooks/useFrontendConfig';
+import { unwrapApiResponse } from '../../utils/apiResponse';
 import './index.css';
 import './mobile.css';
 
@@ -95,6 +96,20 @@ interface Article {
   isFeatured: boolean;
 }
 
+interface BackendArticleListPayload {
+  lists?: Array<{
+    id?: number | string;
+    title?: string;
+    excerpt?: string;
+    coverImage?: string;
+    author?: string;
+    slug?: string;
+    viewCount?: number;
+    publishedAt?: number | string | null;
+    createdAt?: number | string | null;
+  }>;
+}
+
 /**
  * 首页组件
  * @returns 首页JSX元素
@@ -113,6 +128,55 @@ const Home: React.FC = () => {
   const carouselEnabled = homepageConfig.homeCarouselEnabled !== false;
   const recommendationEnabled = homepageConfig.homeRecommendationEnabled !== false;
   const recommendationContentEnabled = homepageConfig.hotRecommendationsEnabled !== false;
+
+  /**
+   * 将时间值格式化为 YYYY-MM-DD 字符串
+   */
+  const formatDateString = useCallback((value: number | string | null | undefined): string => {
+    if (value === null || value === undefined || value === '') return '';
+    const date = typeof value === 'number'
+      ? new Date(value > 1e12 ? value : value * 1000)
+      : new Date(value);
+    if (isNaN(date.getTime())) return '';
+    return date.toISOString().slice(0, 10);
+  }, []);
+
+  /**
+   * 将后台文章列表转换为首页推荐区结构
+   */
+  const mapBackendArticles = useCallback((payload: unknown): Article[] => {
+    const unwrapped = unwrapApiResponse<BackendArticleListPayload>(payload, {});
+    const lists = Array.isArray(unwrapped?.lists) ? unwrapped.lists : [];
+    const now = Date.now();
+    return lists.map((item, index) => {
+      const id = String(item?.id || `article-${index}`);
+      const title = String(item?.title || '');
+      const excerpt = String(item?.excerpt || '');
+      const publishedAt = item?.publishedAt ?? item?.createdAt ?? null;
+      const publishedDate = formatDateString(publishedAt);
+      const publishedTs = typeof publishedAt === 'number'
+        ? (publishedAt > 1e12 ? publishedAt : publishedAt * 1000)
+        : Date.parse(String(publishedAt || ''));
+      const isNew = Number.isFinite(publishedTs) ? (now - Number(publishedTs) <= 7 * 24 * 3600 * 1000) : false;
+      const viewCount = Number(item?.viewCount || 0);
+      return {
+        id,
+        name: title,
+        description: excerpt,
+        link: `/article/${String(item?.slug || id)}`,
+        thumbnail: String(item?.coverImage || ''),
+        date: publishedDate,
+        authorName: String(item?.author || 'UIED'),
+        authorAvatar: '',
+        viewCount,
+        score: Math.max(60, Math.min(999, Math.floor(viewCount / 5))),
+        timeAgo: publishedDate || '',
+        isNew,
+        isHot: viewCount >= 100,
+        isFeatured: index < 3,
+      };
+    });
+  }, [formatDateString]);
 
   /**
    * 将后台 Banner 转为首页轮播数据
@@ -157,27 +221,29 @@ const Home: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      const response = await wordPressApi.getLatestPosts({
-        page: 1,
-        perPage: 10, // 减少到10条，适合排行榜显示
-        orderBy: 'date',
-        order: 'desc',
-        useMock: false
+
+      const response = await api.get('/articles', {
+        params: {
+          page: 1,
+          pageSize: 10,
+        },
       });
-      
-      if (Array.isArray(response) && response.length > 0) {
-        setArticles(response);
+
+      const mappedArticles = mapBackendArticles(response.data);
+      if (mappedArticles.length > 0) {
+        setArticles(mappedArticles);
       } else {
         setError('暂无文章数据');
+        setArticles([]);
       }
     } catch (err) {
       console.error('获取最新文章失败:', err);
       setError('获取文章数据失败，请稍后重试');
+      setArticles([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [mapBackendArticles]);
 
   /**
    * 处理文章点击

@@ -38,6 +38,12 @@ interface ExitModalConfig {
   showAd?: boolean;
   adCode?: string;
   adPosition?: 'top' | 'bottom';
+  logo?: string;
+  showAgreementLinks?: boolean;
+  userAgreementText?: string;
+  userAgreementUrl?: string;
+  copyrightAgreementText?: string;
+  copyrightAgreementUrl?: string;
   hotRecommendationsEnabled?: boolean;
   pageOverrides?: { [pageSlug: string]: PageOverrideConfig };
 }
@@ -174,6 +180,12 @@ const defaultExitModalConfig: ExitModalConfig = {
   showAd: false,
   adCode: '',
   adPosition: 'bottom',
+  logo: '',
+  showAgreementLinks: false,
+  userAgreementText: '',
+  userAgreementUrl: '',
+  copyrightAgreementText: '',
+  copyrightAgreementUrl: '',
   hotRecommendationsEnabled: true,
 };
 
@@ -365,8 +377,37 @@ export const useFrontendConfig = () => {
     }
 
     setLoading(true);
-    configPromise = publicSettingService.getPublicSettings()
-      .then(settings => {
+    configPromise = (async () => {
+      try {
+        const frontendConfig = await publicSettingService.getFrontendConfig();
+        const hasFrontendConfig = Boolean(
+          frontendConfig.exitModalConfig ||
+          frontendConfig.pageGlobalConfig ||
+          frontendConfig.appearanceConfig ||
+          frontendConfig.homepageConfig ||
+          frontendConfig.cardStyleConfig ||
+          frontendConfig.sidebarConfig ||
+          frontendConfig.searchConfig ||
+          typeof frontendConfig.exitModalEnabled === 'boolean'
+        );
+
+        if (hasFrontendConfig) {
+          const newConfig = buildConfig({
+            exitModalEnabled: frontendConfig.exitModalEnabled,
+            exitModalConfig: frontendConfig.exitModalConfig,
+            pageGlobalConfig: frontendConfig.pageGlobalConfig,
+            appearanceConfig: frontendConfig.appearanceConfig,
+            homepageConfig: frontendConfig.homepageConfig,
+            cardStyleConfig: frontendConfig.cardStyleConfig,
+            sidebarConfig: frontendConfig.sidebarConfig,
+            searchConfig: frontendConfig.searchConfig,
+          });
+          cachedConfig = newConfig;
+          cacheTimestamp = Date.now();
+          return newConfig;
+        }
+
+        const settings = await publicSettingService.getPublicSettings();
         const newConfig = buildConfig({
           pageGlobalConfig: settings.pageGlobal,
           appearanceConfig: settings.appearance,
@@ -379,16 +420,15 @@ export const useFrontendConfig = () => {
         cachedConfig = newConfig;
         cacheTimestamp = Date.now();
         return newConfig;
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error('加载前端配置失败，使用默认配置:', err);
         cachedConfig = defaultConfig;
         cacheTimestamp = Date.now();
         return defaultConfig;
-      })
-      .finally(() => {
+      } finally {
         configPromise = null;
-      });
+      }
+    })();
 
     const result = await configPromise;
     setConfig(result);
@@ -412,6 +452,33 @@ export const getFrontendConfig = async (forceRefresh = false): Promise<FrontendC
   }
 
   try {
+    const frontendConfig = await publicSettingService.getFrontendConfig();
+    const hasFrontendConfig = Boolean(
+      frontendConfig.exitModalConfig ||
+      frontendConfig.pageGlobalConfig ||
+      frontendConfig.appearanceConfig ||
+      frontendConfig.homepageConfig ||
+      frontendConfig.cardStyleConfig ||
+      frontendConfig.sidebarConfig ||
+      frontendConfig.searchConfig ||
+      typeof frontendConfig.exitModalEnabled === 'boolean'
+    );
+
+    if (hasFrontendConfig) {
+      cachedConfig = buildConfig({
+        exitModalEnabled: frontendConfig.exitModalEnabled,
+        exitModalConfig: frontendConfig.exitModalConfig,
+        pageGlobalConfig: frontendConfig.pageGlobalConfig,
+        appearanceConfig: frontendConfig.appearanceConfig,
+        homepageConfig: frontendConfig.homepageConfig,
+        cardStyleConfig: frontendConfig.cardStyleConfig,
+        sidebarConfig: frontendConfig.sidebarConfig,
+        searchConfig: frontendConfig.searchConfig,
+      });
+      cacheTimestamp = Date.now();
+      return cachedConfig;
+    }
+
     const settings = await publicSettingService.getPublicSettings();
     cachedConfig = buildConfig({
       pageGlobalConfig: settings.pageGlobal,

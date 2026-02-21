@@ -18,7 +18,7 @@
 }
 
 .section-title {
-  font-size: 1.375rem;
+  font-size: 1.125rem;
   font-weight: 700;
   position: relative;
   display: flex;
@@ -207,9 +207,9 @@
 /* 文章网格布局 - 响应式设计 */
 .article-grid {
   display: grid;
-  gap: 1rem;
-  /* 桌面端：6列网格，支持显示8篇文章（两行） */
-  grid-template-columns: repeat(6, 1fr);
+  gap: 1.5rem;
+  /* 桌面端：4列网格，显示8篇文章刚好两行，卡片更宽，展示效果更好 */
+  grid-template-columns: repeat(4, 1fr);
 }
 
 /* 包装器样式 */
@@ -218,40 +218,18 @@
   display: contents; /* 继承父级网格布局 */
 }
 
-/* 大屏幕优化：增加更多断点以避免内容遮挡 */
+/* 大屏幕优化 */
 @media (min-width: 1440px) {
   .article-grid {
-    gap: 1.25rem; /* 增加间距 */
-  }
-  
-  .article-card {
-    height: auto; /* 使用自动高度，避免内容被裁剪 */
-    min-height: 13rem; /* 设置最小高度保持视觉一致性 */
-  }
-  
-  .article-title {
-    min-height: auto; /* 大屏幕下允许标题自适应高度 */
+    gap: 1.75rem; /* 增加间距 */
   }
 }
 
 /* 超大屏幕优化 */
 @media (min-width: 1920px) {
   .article-grid {
-    gap: 1.5rem; /* 进一步增加间距 */
-  }
-  
-  .article-card {
-    min-height: 14rem; /* 超大屏幕增加最小高度 */
-  }
-  
-  .article-title {
-    font-size: 0.9375rem; /* 稍微增大字体 */
-    line-height: 1.5; /* 增加行高 */
-  }
-  
-  .article-title-text {
-    line-height: 1.5;
-    -webkit-line-clamp: 3; /* 超大屏幕允许显示3行 */
+    gap: 2rem; /* 进一步增加间距 */
+    /* 超大屏幕保持4列，但卡片会更大气 */
   }
 }
 
@@ -259,7 +237,7 @@
 @media (max-width: 1024px) {
   .article-grid {
     grid-template-columns: repeat(3, 1fr);
-    gap: 0.875rem;
+    gap: 1rem;
   }
 }
 

@@ -1,6 +1,6 @@
 /**
  * @file pages/WebsiteDetail/RelatedWebsites.tsx
- * @description 相关推荐组件 - 参考 maomu.com 设计风格
+ * @description 相关推荐组件
  * @author Tomda
  * @copyright 版权所有 (c) 2026 UIED技术团队
  * @website https://fsuied.com

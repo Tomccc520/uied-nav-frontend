@@ -90,7 +90,7 @@ export class FrontendDebugHelper {
     
     // 检查环境配置
     console.log('🌍 运行环境:', process.env.NODE_ENV);
-    console.log('🔗 API地址:', process.env.REACT_APP_API_BASE_URL || 'http://localhost:5173/api');
+    console.log('🔗 API地址:', process.env.REACT_APP_API_URL || 'http://localhost:8002/api');
     
     // 检查localStorage
     const categories = localStorage.getItem('uied_mock_categories');

@@ -1,369 +1,365 @@
 /**
  * @file pages/Articles/ArticleDetail.css
- * @description 文章详情页样式（Pro 功能）
- * @author Tomda
- * @copyright 版权所有 (c) 2026 UIED技术团队
- * @website https://fsuied.com
- * @license MIT
- * @version 1.0.0
+ * @description 文章详情页样式 - 沉浸式阅读体验
  */
 
-/* @pro-feature-start: articles */
+.article-detail-page {
+  background-color: #ffffff;
+  min-height: 100vh;
+  padding-bottom: 80px;
+  position: relative;
+}
 
-/* ==================== 容器 ==================== */
-.blog-detail-container {
+.detail-hero-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 400px;
+  background: linear-gradient(180deg, #f0f7ff 0%, rgba(255,255,255,0) 100%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.detail-container {
   max-width: 800px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 40px 24px;
+  position: relative;
+  z-index: 1;
 }
 
-/* ==================== 返回链接 ==================== */
-.blog-back-link {
-  display: inline-block;
-  margin-bottom: 24px;
-  padding: 8px 16px;
-  background: #f5f5f5;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #666;
-  text-decoration: none;
-  transition: all 0.3s ease;
-}
-
-.blog-back-link:hover {
-  background: #e8e8e8;
-  color: #333;
-}
-
-/* ==================== 文章头部 ==================== */
-.blog-header {
-  margin-bottom: 32px;
-}
-
-.blog-meta-top {
+/* Navigation */
+.detail-nav {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
-  font-size: 14px;
-  color: #999;
-}
-
-.blog-category {
-  padding: 4px 12px;
-  background: #1890ff;
-  border-radius: 4px;
-  color: white;
-  font-size: 12px;
-}
-
-.blog-title {
-  margin: 0 0 16px;
-  font-size: 32px;
-  font-weight: 700;
-  color: #1a1a1a;
-  line-height: 1.4;
-}
-
-.blog-meta-bottom {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  font-size: 14px;
-  color: #666;
-}
-
-/* 标签 */
-.blog-tags {
-  display: flex;
-  flex-wrap: wrap;
   gap: 8px;
-  margin-top: 16px;
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-bottom: 40px;
 }
 
-.blog-detail-tag {
-  padding: 4px 12px;
-  background: #f5f5f5;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  font-size: 13px;
-  color: #666;
+.detail-nav a {
+  color: #6b7280;
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: color 0.2s;
 }
 
-.blog-detail-tag:hover {
-  background: #e6f7ff;
-  border-color: #1890ff;
-  color: #1890ff;
+.detail-nav a:hover {
+  color: #3b82f6;
 }
 
-/* ==================== 封面图 ==================== */
-.blog-cover {
+/* Header */
+.detail-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.detail-meta-tags {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.category-badge {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.detail-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #1f2937;
+  line-height: 1.3;
   margin-bottom: 32px;
-  border-radius: 12px;
-  overflow: hidden;
+  letter-spacing: -0.02em;
 }
 
-.blog-cover img {
+.detail-author-bar {
+  display: flex;
+  justify-content: center;
+}
+
+.author-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.author-avatar {
+  width: 40px;
+  height: 40px;
+  background-color: #3b82f6;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.author-text {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+}
+
+.author-name {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 0.95rem;
+}
+
+.read-count {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+/* Cover Image */
+.detail-cover {
+  margin: 0 0 60px;
+  border-radius: 16px;
+  overflow: hidden;
+  /* 移除阴影，使用扁平化设计 */
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  background-color: #fafafa;
+}
+
+.detail-cover img {
   width: 100%;
   height: auto;
   display: block;
 }
 
-/* ==================== 文章内容 ==================== */
-.blog-content {
-  font-size: 16px;
+/* Content Typography */
+.detail-content {
+  font-size: 1.125rem;
   line-height: 1.8;
-  color: #333;
+  color: #374151;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow-wrap: break-word; /* 移动端防溢出 */
 }
 
-.blog-content h2 {
-  margin: 32px 0 16px;
-  font-size: 24px;
+.detail-content p {
+  margin-bottom: 1.5em;
+  text-align: justify; /* 两端对齐，提升阅读感 */
+}
+
+.detail-content h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-top: 2em;
+  margin-bottom: 0.8em;
+  color: #111827;
+  padding-bottom: 0.5em;
+  border-bottom: 1px solid #e5e7eb; /* 标题分割线 */
+}
+
+.detail-content h3 {
+  font-size: 1.4rem;
   font-weight: 600;
-  color: #1a1a1a;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #f0f0f0;
+  margin-top: 1.5em;
+  margin-bottom: 0.6em;
+  color: #1f2937;
+  position: relative;
+  padding-left: 16px;
 }
 
-.blog-content h3 {
-  margin: 24px 0 12px;
-  font-size: 20px;
-  font-weight: 600;
-  color: #1a1a1a;
+.detail-content h3::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 4px;
+  background-color: #3b82f6; /* 装饰竖线 */
+  border-radius: 2px;
 }
 
-.blog-content p {
-  margin: 16px 0;
+.detail-content ul, .detail-content ol {
+  margin-bottom: 1.5em;
+  padding-left: 1.5em;
 }
 
-.blog-content a {
-  color: #1890ff;
-  text-decoration: none;
+.detail-content li {
+  margin-bottom: 0.5em;
+  position: relative;
 }
 
-.blog-content a:hover {
-  text-decoration: underline;
+/* 优化列表项样式 */
+.detail-content ul li::marker {
+  color: #3b82f6;
 }
 
-.blog-content img {
+.detail-content img {
   max-width: 100%;
   height: auto;
   border-radius: 8px;
-  margin: 16px 0;
+  margin: 2em 0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* 图片阴影 */
+  display: block;
 }
 
-.blog-content blockquote {
-  margin: 16px 0;
-  padding: 16px 20px;
-  background: #f9f9f9;
-  border-left: 4px solid #1890ff;
-  color: #666;
+.detail-content blockquote {
+  border-left: 4px solid #3b82f6;
+  background-color: #f9fafb;
+  padding: 1em 1.5em;
+  margin: 2em 0;
+  font-style: italic;
+  color: #4b5563;
+  border-radius: 0 8px 8px 0;
+  position: relative;
 }
 
-.blog-content pre {
-  margin: 16px 0;
-  padding: 16px;
-  background: #282c34;
+/* 引用装饰 */
+.detail-content blockquote::before {
+  content: '"';
+  font-family: Georgia, serif;
+  font-size: 3rem;
+  color: rgba(59, 130, 246, 0.1);
+  position: absolute;
+  top: -10px;
+  left: 10px;
+  line-height: 1;
+}
+
+.detail-content code {
+  background-color: #f3f4f6;
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: #ef4444;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.detail-content pre {
+  background-color: #1f2937;
+  color: #f3f4f6;
+  padding: 1.5em;
   border-radius: 8px;
   overflow-x: auto;
+  margin: 2em 0;
+  position: relative;
 }
 
-.blog-content code {
-  font-family: 'Fira Code', 'Monaco', monospace;
-  font-size: 14px;
+/* 代码块语言标记 (可选，需配合JS生成 data-lang) */
+.detail-content pre::after {
+  content: 'Code';
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  font-family: sans-serif;
 }
 
-.blog-content pre code {
-  color: #abb2bf;
+.detail-content pre code {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.95em;
+  line-height: 1.5;
 }
 
-.blog-content p code {
-  padding: 2px 6px;
-  background: #f5f5f5;
-  border-radius: 4px;
-  color: #e83e8c;
-}
-
-.blog-content ul,
-.blog-content ol {
-  margin: 16px 0;
-  padding-left: 24px;
-}
-
-.blog-content li {
-  margin: 8px 0;
-}
-
-.blog-content hr {
-  margin: 32px 0;
-  border: none;
-  border-top: 1px solid #e0e0e0;
-}
-
-.blog-content strong {
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-/* ==================== 文章底部 ==================== */
-.blog-footer {
-  margin-top: 48px;
-  padding-top: 24px;
-  border-top: 1px solid #f0f0f0;
-}
-
-.blog-update-time {
-  font-size: 14px;
-  color: #999;
-}
-
-/* ==================== 评论区 ==================== */
-.blog-comments {
-  margin-top: 48px;
-  padding-top: 32px;
-  border-top: 1px solid #f0f0f0;
-}
-
-.blog-comments h3 {
-  margin: 0 0 24px;
-  font-size: 20px;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.blog-comments-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.blog-comment-item {
-  display: flex;
-  gap: 12px;
-  padding: 16px;
-  background: #fafafa;
-  border-radius: 8px;
-}
-
-.blog-comment-avatar {
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  overflow: hidden;
-  background: #1890ff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 600;
-}
-
-.blog-comment-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.blog-comment-content {
-  flex: 1;
-}
-
-.blog-comment-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.blog-comment-author {
-  font-weight: 500;
-  color: #1a1a1a;
-}
-
-.blog-comment-time {
-  font-size: 12px;
-  color: #999;
-}
-
-.blog-comment-text {
-  margin: 0;
-  font-size: 14px;
-  color: #333;
-  line-height: 1.6;
-}
-
-.blog-no-comments {
-  text-align: center;
-  padding: 32px;
-  color: #999;
-}
-
-/* ==================== 加载和错误状态 ==================== */
-.blog-detail-loading,
-.blog-detail-error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  text-align: center;
-}
-
-.blog-detail-error h2 {
-  margin: 0 0 12px;
-  font-size: 24px;
-  color: #333;
-}
-
-.blog-detail-error p {
-  margin: 0 0 24px;
-  color: #666;
-}
-
-.blog-btn-back {
-  padding: 10px 24px;
-  background: #1890ff;
-  color: white;
-  border: none;
-  border-radius: 6px;
+/* 链接样式 */
+.detail-content a {
+  color: #3b82f6;
   text-decoration: none;
-  transition: background 0.3s ease;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s;
 }
 
-.blog-btn-back:hover {
-  background: #40a9ff;
+.detail-content a:hover {
+  border-bottom-color: #3b82f6;
 }
 
-/* ==================== 响应式 ==================== */
+/* Tags */
+.detail-tags {
+  margin-top: 60px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tag-chip {
+  padding: 6px 16px;
+  background-color: #f3f4f6;
+  color: #6b7280;
+  border-radius: 20px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.tag-chip:hover {
+  background-color: #e5e7eb;
+  color: #3b82f6;
+}
+
+/* Divider */
+.detail-divider {
+  border: 0;
+  height: 1px;
+  background-color: #e5e7eb;
+  margin: 60px 0;
+}
+
+/* Comments Section */
+.detail-comments h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 30px;
+  color: #1f2937;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-  .blog-detail-container {
-    padding: 16px;
+  .detail-title {
+    font-size: 1.8rem;
+    line-height: 1.4;
+  }
+  
+  .detail-container {
+    padding: 24px 16px;
+  }
+  
+  .detail-cover {
+    margin-bottom: 30px;
+    border-radius: 12px;
   }
 
-  .blog-title {
-    font-size: 24px;
+  .detail-hero-bg {
+    height: 250px; /* 移动端背景缩减 */
   }
 
-  .blog-meta-bottom {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+  .detail-content {
+    font-size: 1rem; /* 移动端字体稍小 */
+    line-height: 1.7;
   }
 
-  .blog-content {
-    font-size: 15px;
+  .detail-content h2 {
+    font-size: 1.5rem;
+    margin-top: 1.5em;
   }
 
-  .blog-content h2 {
-    font-size: 20px;
+  .detail-content h3 {
+    font-size: 1.25rem;
   }
 
-  .blog-content h3 {
-    font-size: 18px;
+  .detail-content pre {
+    margin: 1.5em -16px; /* 代码块贴边 */
+    border-radius: 0;
+    padding: 1em;
+    font-size: 0.9rem;
   }
 }
-
-/* @pro-feature-end: articles */

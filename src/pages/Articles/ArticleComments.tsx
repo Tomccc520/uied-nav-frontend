@@ -11,20 +11,9 @@
 // @pro-feature-start: article-comments
 import React, { useState, useEffect, useCallback } from 'react';
 import { AxiosError } from 'axios';
-import api from '../../services/api';
-import { unwrapApiResponse } from '../../utils/apiResponse';
+import { getArticleComments, createArticleComment } from '../../services/articleService';
+import { CommentItem } from '../../types/article';
 import './ArticleComments.css';
-
-interface Comment {
-  id: string;
-  text: string;
-  createdAt: string;
-  user: {
-    id: string;
-    name: string;
-    avatar?: string;
-  };
-}
 
 interface ArticleCommentsProps {
   articleId: string;
@@ -32,90 +21,13 @@ interface ArticleCommentsProps {
   userId?: string; // Pro 版本中从认证获取
 }
 
-interface CommentListPayload {
-  lists?: unknown[];
-  total?: number;
-  page?: number;
-  pageSize?: number;
-  totalPages?: number;
-}
-
-interface CommentUserPayload {
-  id?: string | number;
-  name?: string;
-  avatar?: string;
-}
-
-interface CommentPayload {
-  id?: string | number;
-  text?: string;
-  content?: string;
-  createdAt?: string | number;
-  createTime?: string | number;
-  create_time?: string | number;
-  user?: CommentUserPayload;
-  userId?: string | number;
-  userName?: string;
-  nickname?: string;
-}
-
-/**
- * 标准化评论数据，兼容旧版 user/text 结构与新版 nickname/content 结构。
- */
-const normalizeComment = (item: CommentPayload): Comment => {
-  const nickname = item?.user?.name || item?.nickname || item?.userName || '匿名用户';
-  const rawCreatedAt = item?.createdAt || item?.createTime || item?.create_time || '';
-
-  return {
-    id: String(item?.id ?? ''),
-    text: String(item?.text ?? item?.content ?? ''),
-    createdAt: String(rawCreatedAt),
-    user: {
-      id: String(item?.user?.id ?? item?.userId ?? 'anonymous'),
-      name: String(nickname),
-      avatar: item?.user?.avatar,
-    },
-  };
-};
-
-/**
- * 解析评论列表接口响应，统一输出分页信息和评论数组。
- */
-const parseCommentListPayload = (payload: unknown) => {
-  const unwrapped = unwrapApiResponse<unknown[] | CommentListPayload>(payload as CommentListPayload, []);
-
-  if (Array.isArray(unwrapped)) {
-    const lists = unwrapped.map(normalizeComment);
-    return {
-      lists,
-      total: lists.length,
-      totalPages: 1,
-      page: 1,
-    };
-  }
-
-  const lists = Array.isArray(unwrapped?.lists) ? unwrapped.lists.map(normalizeComment) : [];
-  const page = Number(unwrapped?.page ?? 1) || 1;
-  const pageSize = Number(unwrapped?.pageSize ?? 10) || 10;
-  const total = Number(unwrapped?.total ?? lists.length) || 0;
-  const fallbackTotalPages = Math.ceil(total / pageSize) || 1;
-  const totalPages = Number(unwrapped?.totalPages ?? fallbackTotalPages) || 1;
-
-  return {
-    lists,
-    total,
-    totalPages,
-    page,
-  };
-};
-
 /**
  * 默认头像组件
  */
 const DefaultAvatar: React.FC<{ name: string; size?: number }> = ({ name, size = 40 }) => {
-  const initial = name.charAt(0).toUpperCase();
+  const initial = name ? name.charAt(0).toUpperCase() : '?';
   const colors = ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#13c2c2', '#eb2f96', '#fa8c16'];
-  const colorIndex = name.charCodeAt(0) % colors.length;
+  const colorIndex = name ? name.charCodeAt(0) % colors.length : 0;
   
   return (
     <div 
@@ -143,6 +55,7 @@ const DefaultAvatar: React.FC<{ name: string; size?: number }> = ({ name, size =
  * 格式化时间
  */
 const formatTime = (dateString: string): string => {
+  if (!dateString) return '';
   const date = new Date(dateString);
   const now = new Date();
   const diff = now.getTime() - date.getTime();
@@ -171,7 +84,7 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
   initialCount = 0,
   userId,
 }) => {
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments, setComments] = useState<CommentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -183,23 +96,24 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
   /**
    * 获取评论列表
    */
-  const fetchComments = useCallback(async (pageNum: number = 1) => {
+  const fetchCommentsData = useCallback(async (pageNum: number = 1) => {
     try {
       setLoading(true);
       setError(null);
       
-      const response = await api.get(`/api/articles/${articleId}/comments`, {
-        params: { page: pageNum, pageSize: 10 }
+      const response = await getArticleComments(Number(articleId), {
+        page: pageNum, 
+        pageSize: 10 
       });
-      const normalized = parseCommentListPayload(response.data);
+
       if (pageNum === 1) {
-        setComments(normalized.lists);
+        setComments(response.data);
       } else {
-        setComments(prev => [...prev, ...normalized.lists]);
+        setComments(prev => [...prev, ...response.data]);
       }
-      setTotal(normalized.total);
-      setTotalPages(normalized.totalPages);
-      setPage(normalized.page);
+      setTotal(response.pagination.total);
+      setTotalPages(response.pagination.totalPages);
+      setPage(response.pagination.page);
     } catch (err: unknown) {
       console.error('获取文章评论失败:', err);
       setError('获取评论失败');
@@ -212,8 +126,8 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
    * 初始加载
    */
   useEffect(() => {
-    fetchComments(1);
-  }, [fetchComments]);
+    fetchCommentsData(1);
+  }, [fetchCommentsData]);
 
   /**
    * 提交评论
@@ -221,9 +135,19 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
+    // 注意：当前 API 文档中发表评论需要 token，这里假设 api.ts 的拦截器会处理 token
+    // 或者需要从 context 获取 token 并手动传递
+    // 这里暂时假设全局 axios 实例已包含 token 或无需手动传递（根据 API 文档，需要 Header: token）
+    // 如果 api.ts 没有自动处理 token，这里可能需要调整
+
+    // 检查是否登录 (简单判断 userId 是否存在，实际应该检查 auth context)
     if (!userId) {
-      setError('请先登录后再评论');
-      return;
+      // 尝试从 localStorage 获取 token，如果也没有则提示
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('请先登录后再评论');
+        return;
+      }
     }
     
     const trimmedText = commentText.trim();
@@ -242,14 +166,14 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
       setSubmitting(true);
       setError(null);
       
-      const response = await api.post(`/api/articles/${articleId}/comments`, {
+      const newComment = await createArticleComment(Number(articleId), {
         text: trimmedText,
-        userId,
+        parentId: 0
       });
-      const comment = normalizeComment(unwrapApiResponse<CommentPayload>(response.data, {}));
-      if (comment.id) {
+
+      if (newComment && newComment.id) {
         // 文章评论按正序排列，新评论添加到列表末尾
-        setComments(prev => [...prev, comment]);
+        setComments(prev => [...prev, newComment]);
         setTotal(prev => prev + 1);
         setCommentText('');
       }
@@ -267,7 +191,7 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
    */
   const handleLoadMore = () => {
     if (page < totalPages) {
-      fetchComments(page + 1);
+      fetchCommentsData(page + 1);
     }
   };
 
@@ -291,66 +215,62 @@ const ArticleComments: React.FC<ArticleCommentsProps> = ({
             {comments.map((comment) => (
               <div key={comment.id} className="article-comment-item">
                 <div className="article-comment-avatar">
-                  {comment.user.avatar ? (
-                    <img src={comment.user.avatar} alt={comment.user.name} />
+                  {comment.avatar ? (
+                    <img src={comment.avatar} alt={comment.nickname} />
                   ) : (
-                    <DefaultAvatar name={comment.user.name} />
+                    <DefaultAvatar name={comment.nickname} />
                   )}
                 </div>
                 <div className="article-comment-content">
                   <div className="article-comment-header">
-                    <span className="article-comment-author">{comment.user.name}</span>
-                    <span className="article-comment-time">{formatTime(comment.createdAt)}</span>
+                    <span className="article-comment-author">{comment.nickname}</span>
+                    <span className="article-comment-time">{formatTime(comment.createTime)}</span>
                   </div>
-                  <p className="article-comment-text">{comment.text}</p>
+                  <div className="article-comment-text">{comment.content}</div>
                 </div>
               </div>
             ))}
-            
-            {page < totalPages && (
-              <button 
-                className="article-btn-load-more"
-                onClick={handleLoadMore}
-                disabled={loading}
-              >
-                {loading ? '加载中...' : '加载更多'}
-              </button>
-            )}
           </>
         )}
-      </div>
-      
-      {error && (
-        <p className="article-comments-error">{error}</p>
-      )}
-      
-      {/* 评论表单 */}
-      <form className="article-comment-form" onSubmit={handleSubmit}>
-        <textarea
-          className="article-comment-input"
-          placeholder={userId ? '写下你的评论...' : '登录后即可评论'}
-          value={commentText}
-          onChange={(e) => setCommentText(e.target.value)}
-          maxLength={1000}
-          disabled={!userId || submitting}
-          rows={4}
-        />
-        <div className="article-comment-form-footer">
-          <span className="article-comment-char-count">
-            {commentText.length}/1000
-          </span>
-          <button 
-            type="submit" 
-            className="article-btn-submit-comment"
-            disabled={!userId || submitting || !commentText.trim()}
-          >
-            {submitting ? '发表中...' : '发表评论'}
-          </button>
-        </div>
-        {!userId && (
-          <p className="article-comment-login-hint">登录后即可发表评论</p>
+        
+        {/* 加载更多 */}
+        {page < totalPages && (
+          <div className="article-comments-load-more">
+            <button 
+              onClick={handleLoadMore} 
+              disabled={loading}
+              className="article-load-more-btn"
+            >
+              {loading ? '加载中...' : '加载更多评论'}
+            </button>
+          </div>
         )}
-      </form>
+      </div>
+
+      {/* 发表评论表单 */}
+      <div className="article-comment-form-container">
+        <h4>发表评论</h4>
+        {error && <div className="article-comment-error">{error}</div>}
+        <form className="article-comment-form" onSubmit={handleSubmit}>
+          <textarea
+            className="article-comment-textarea"
+            placeholder="写下你的评论..."
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            disabled={submitting}
+            rows={4}
+          />
+          <div className="article-comment-actions">
+            <button 
+              type="submit" 
+              className="article-comment-submit-btn"
+              disabled={submitting || !commentText.trim()}
+            >
+              {submitting ? '发表中...' : '发表评论'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

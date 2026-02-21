@@ -13,6 +13,7 @@ import { BrowserRouter as Router, Routes, Route, useParams } from 'react-router-
 
 // Context
 import { SiteProvider } from './contexts/SiteContext';
+import { UserProvider } from './contexts/UserContext';
 
 // 页面组件
 import HomePage from './pages/Home';
@@ -50,7 +51,8 @@ const FixedDynamicPageRoute: React.FC<{ slug: string }> = ({ slug }) => {
 function App() {
   return (
     <SiteProvider>
-      <Router>
+      <UserProvider>
+        <Router>
         <Layout>
           <Routes>
             {/* 固定页面路由 - 统一走动态页模型 */}
@@ -87,6 +89,7 @@ function App() {
           </Routes>
         </Layout>
       </Router>
+      </UserProvider>
     </SiteProvider>
   );
 }

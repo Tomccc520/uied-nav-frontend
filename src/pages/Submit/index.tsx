@@ -403,12 +403,24 @@ const SubmitPage: React.FC = () => {
     
     try {
       const res = await api.get('/submissions/check-url', { params: { url } });
+      const data = unwrapApiResponse<{
+        exists?: boolean;
+        type?: 'website' | 'pending';
+        message?: string;
+        website?: { id?: string; name?: string; url?: string };
+      }>(res.data, {});
+      const normalizedWebsite = data.website
+        ? {
+            name: String(data.website.name || ''),
+            url: String(data.website.url || ''),
+          }
+        : undefined;
       setUrlCheckResult({
         checking: false,
-        exists: res.data.exists,
-        type: res.data.type,
-        message: res.data.message,
-        website: res.data.website,
+        exists: Boolean(data.exists),
+        type: data.type,
+        message: data.message,
+        website: normalizedWebsite,
       });
     } catch (error) {
       debugLog.error('检查URL失败:', error);
