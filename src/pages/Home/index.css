@@ -1,71 +1,64 @@
 /**
  * @file Home/index.css
- * @description 首页样式 - 参考AIBase设计
- * @copyright 版权所有 (c) 2025 UIED技术团队
- * @website https://fsuied.com
- * @license MIT
- * @version 1.0.0
+ * @description 首页样式
  */
 
-/* 全局变量 */
-:root {
-  --primary-color: #FF6B00;
-  --primary-gradient: linear-gradient(135deg, #FF6B00 0%, #FF913E 100%);
-  --secondary-color: #8B5DFF;
-  --success-color: #10a37f;
-  --warning-color: #FFB800;
-  --error-color: #FF4757;
-  --text-primary: #1a1a1a;
-  --text-secondary: #666666;
-  --text-tertiary: #999999;
-  --background-light: #ffffff;
-  --background-gray: #f8f9fa;
-  --border-light: #e5e7eb;
-  --border-medium: #d1d5db;
-  --shadow-light: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-  --shadow-medium: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
-  --shadow-heavy: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-  --radius-small: 0.5rem;
-  --radius-medium: 0.75rem;
-  --radius-large: 1rem;
-  --transition-fast: 0.15s ease;
-  --transition-normal: 0.3s ease;
-  --transition-slow: 0.5s ease;
-}
-
-/* 首页容器 */
 .home-container {
-  width: 100%;
-  max-width: 77.5rem; /* 1240px转换为rem */
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 1.25rem;
-  background: var(--background-light);
-  min-height: 100vh;
+  padding: 0 var(--spacing-4);
+  padding-bottom: var(--spacing-8);
 }
 
-/* 顶部区域：轮播图和排行榜并排 */
-.home-top-section {
+.home-quick-entry {
   display: flex;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-  align-items: flex-start;
+  justify-content: flex-end;
+  padding-top: var(--spacing-4);
 }
 
-/* 左侧轮播图区域 */
+.home-quick-entry-link {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.home-quick-entry-link:hover {
+  color: var(--primary-color);
+  border-color: var(--primary-300);
+  background: var(--bg-hover);
+}
+
+/* 顶部区域布局 */
+.home-top-section {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--spacing-6);
+  margin-top: var(--spacing-6);
+  margin-bottom: var(--spacing-8);
+  min-height: 400px;
+}
+
+/* 轮播图区域 */
 .home-carousel-section {
-  flex: 2;
-  min-height: 25rem;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
 }
 
-/* 轮播图容器 */
 .carousel-container {
   position: relative;
   width: 100%;
-  height: 25rem;
-  border-radius: 0.75rem;
-  overflow: hidden;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.1);
+  height: 100%;
+  min-height: 400px;
 }
 
 .carousel-wrapper {
@@ -80,489 +73,338 @@
   left: 0;
   width: 100%;
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   opacity: 0;
-  transition: opacity 0.6s ease-in-out;
-  cursor: pointer;
-  background: linear-gradient(135deg, 
-    rgba(255, 107, 0, 0.9) 0%, 
-    rgba(255, 140, 0, 0.8) 50%, 
-    rgba(255, 165, 0, 0.7) 100%
-  );
+  transition: opacity 0.5s ease-in-out;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: flex-end;
+  z-index: 1;
 }
 
 .carousel-slide.active {
   opacity: 1;
-}
-
-.carousel-slide:nth-child(1) {
-  background: linear-gradient(135deg, 
-    rgba(255, 107, 0, 0.9) 0%, 
-    rgba(255, 140, 0, 0.8) 100%
-  );
-}
-
-.carousel-slide:nth-child(2) {
-  background: linear-gradient(135deg, 
-    rgba(0, 102, 255, 0.9) 0%, 
-    rgba(51, 153, 255, 0.8) 100%
-  );
-}
-
-.carousel-slide:nth-child(3) {
-  background: linear-gradient(135deg, 
-    rgba(138, 43, 226, 0.9) 0%, 
-    rgba(186, 85, 211, 0.8) 100%
-  );
-}
-
-.carousel-slide:nth-child(4) {
-  background: linear-gradient(135deg, 
-    rgba(34, 193, 195, 0.9) 0%, 
-    rgba(253, 187, 45, 0.8) 100%
-  );
+  z-index: 2;
 }
 
 .slide-content {
-  text-align: center;
+  width: 100%;
+  padding: var(--spacing-8) var(--spacing-6);
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
   color: white;
-  padding: 2rem;
-  max-width: 80%;
 }
 
 .slide-title {
-  font-size: 1.75rem;
+  font-size: var(--font-size-2xl);
   font-weight: 700;
-  margin-bottom: 0.75rem;
-  line-height: 1.3;
-  text-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
+  margin-bottom: var(--spacing-2);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .slide-subtitle {
-  font-size: 1rem;
-  font-weight: 400;
-  opacity: 0.95;
-  line-height: 1.5;
-  text-shadow: 0 0.0625rem 0.125rem rgba(0, 0, 0, 0.2);
+  font-size: var(--font-size-lg);
+  opacity: 0.9;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
 /* 轮播指示器 */
 .carousel-indicators {
   position: absolute;
-  bottom: 1.25rem;
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: var(--spacing-4);
+  right: var(--spacing-6);
   display: flex;
-  gap: 0.5rem;
-  z-index: 10;
+  gap: var(--spacing-2);
+  z-index: 3;
 }
 
 .indicator {
-  width: 0.75rem;
-  height: 0.75rem;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
+  background: rgba(255,255,255,0.4);
   border: none;
-  background: rgba(255, 255, 255, 0.4);
+  padding: 0;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .indicator.active {
   background: white;
-  transform: scale(1.2);
+  width: 24px;
+  border-radius: 4px;
 }
 
-/* 右侧排行榜区域 */
+/* 推荐/排行榜区域 */
 .home-ranking-section {
-  flex: 1;
-  background: white;
-  border-radius: 0.75rem;
-  border: 1px solid var(--border-color);
-  height: 25rem;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-5);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 
 .ranking-header {
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--border-color);
-  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
-  border-radius: 0.75rem 0.75rem 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-4);
+  padding-bottom: var(--spacing-3);
+  border-bottom: 1px solid var(--border-light);
 }
 
 .ranking-title {
-  font-size: 1.125rem;
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--spacing-2);
 }
 
 .ranking-title::before {
-  content: '//';
-  font-size: 1rem;
+  content: '';
+  display: block;
+  width: 4px;
+  height: 16px;
+  background: var(--primary-color);
+  border-radius: 2px;
+}
+
+.ranking-link {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-light);
+  transition: all 0.2s ease;
+}
+
+.ranking-link:hover {
   color: var(--primary-color);
-  font-weight: 700;
-  margin-right: 0.5rem;
+  border-color: var(--primary-300);
+  background: var(--bg-hover);
 }
 
 .ranking-content {
   flex: 1;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  overflow-y: auto;
+  padding-right: var(--spacing-1);
+}
+
+/* 自定义滚动条 */
+.ranking-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.ranking-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ranking-content::-webkit-scrollbar-thumb {
+  background: var(--border-medium);
+  border-radius: 2px;
 }
 
 .ranking-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
 }
 
-/* 排行榜项目样式（参考AntRankingPage） */
 .ranking-item {
   display: flex;
-  align-items: center;
-  padding: 0.75rem 1.25rem;
+  gap: var(--spacing-3);
+  padding: var(--spacing-2);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background-color 0.2s ease;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
 }
 
 .ranking-item:hover {
-  background-color: rgba(0, 102, 255, 0.02);
+  background: var(--bg-hover);
 }
 
-.ranking-item:last-child {
-  border-bottom: none;
-}
-
-/* 排名数字容器 */
 .rank-number-container {
-  flex: 0 0 2rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-right: 0.75rem;
-}
-
-.rank-number {
-  font-size: 0.875rem;
-  font-weight: bold;
-  width: 1.5rem;
-  height: 1.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0.25rem;
-  background: #f5f5f5;
-  color: #999;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 14px;
+  margin-top: 2px;
 }
 
-/* 前三名特殊样式 */
-.rank-number-1 .rank-number {
-  background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
-  color: #fff;
-  box-shadow: 0 0.125rem 0.5rem rgba(255, 71, 87, 0.3);
+.rank-number-1 {
+  background: #fff1f0;
+  color: #ff4d4f;
 }
 
-.rank-number-2 .rank-number {
-  background: linear-gradient(135deg, #ff7f50 0%, #ff9f7f 100%);
-  color: #fff;
-  box-shadow: 0 0.125rem 0.5rem rgba(255, 127, 80, 0.3);
+.rank-number-2 {
+  background: #fff7e6;
+  color: #fa8c16;
 }
 
-.rank-number-3 .rank-number {
-  background: linear-gradient(135deg, #ffa502 0%, #ffb733 100%);
-  color: #fff;
-  box-shadow: 0 0.125rem 0.5rem rgba(255, 165, 2, 0.3);
+.rank-number-3 {
+  background: #fffbe6;
+  color: #faad14;
 }
 
-/* 排行榜项目内容 */
+.rank-number-other {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
 .ranking-item-content {
   flex: 1;
   min-width: 0;
 }
 
 .ranking-item-title {
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: var(--font-size-base);
   color: var(--text-primary);
+  margin-bottom: var(--spacing-1);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
   line-height: 1.4;
-  margin-bottom: 0.25rem;
+  
+  /* 文本截断 */
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+}
+
+.new-tag, .hot-tag {
+  font-size: 10px;
+  padding: 0 4px;
+  border-radius: 2px;
+  height: 16px;
+  line-height: 16px;
+  flex-shrink: 0;
+}
+
+.new-tag {
+  background: #e6f7ff;
+  color: #1890ff;
+  border: 1px solid #91d5ff;
+}
+
+.hot-tag {
+  background: #fff1f0;
+  color: #ff4d4f;
+  border: 1px solid #ffa39e;
 }
 
 .ranking-item-meta {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
+  gap: var(--spacing-3);
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
 }
 
-.ranking-item-views,
-.ranking-item-score {
+.ranking-item-views, .ranking-item-score {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 4px;
 }
 
-.ranking-item-score {
-  color: #ff4d4f;
-  font-weight: 500;
-}
-
-/* 标签样式 */
-.new-tag,
-.hot-tag {
-  display: inline-block;
-  padding: 0.125rem 0.375rem;
-  font-size: 0.625rem;
-  font-weight: 500;
-  border-radius: 0.25rem;
-  margin-left: 0.5rem;
-  vertical-align: middle;
-}
-
-.new-tag {
-  background: #f6ffed;
-  color: #52c41a;
-  border: 1px solid #b7eb8f;
-}
-
-.hot-tag {
-  background: #fff2e8;
-  color: #fa8c16;
-  border: 1px solid #ffd591;
-}
-
-/* 下方Banner区域 */
+/* Banner区域 */
 .home-banner-section {
-  width: 100%;
-  margin-top: 2rem;
+  margin-bottom: var(--spacing-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
 }
 
-/* 加载和错误状态 */
-.ranking-loading,
+.home-banner-section__ad {
+  margin-bottom: 0;
+}
+
+/* 设计文章网格区域 */
+.home-design-section {
+  margin-bottom: var(--spacing-8);
+}
+
+/* 每日热榜区域 */
+.home-daily-hot-section {
+  margin-top: var(--spacing-8);
+  width: 100%;
+  scroll-margin-top: var(--header-height);
+}
+
+/* 错误状态 */
 .ranking-error {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  height: 100%;
+  padding: var(--spacing-4);
+  color: var(--text-secondary);
   text-align: center;
 }
 
-.loading-spinner {
-  width: 2rem;
-  height: 2rem;
-  border: 0.125rem solid #f3f3f3;
-  border-top: 0.125rem solid var(--primary-color);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.loading-text,
-.error-message {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin-bottom: 1rem;
-}
-
 .error-icon {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
+  font-size: 24px;
+  margin-bottom: var(--spacing-2);
 }
 
 .retry-button {
-  padding: 0.5rem 1rem;
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
+  margin-top: var(--spacing-2);
+  padding: 4px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  font-size: var(--font-size-sm);
+  transition: all 0.2s;
 }
 
 .retry-button:hover {
-  background: var(--primary-dark);
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .home-container {
-    padding: 1rem;
-  }
-  
-  .home-top-section {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .home-carousel-section,
-  .home-ranking-section {
-    flex: none;
-    width: 100%;
-  }
-  
-  .carousel-container {
-    height: 20rem;
-  }
-  
-  .home-ranking-section {
-    height: auto;
-    min-height: 20rem;
-  }
-  
-  .slide-title {
-    font-size: 1.5rem;
-  }
-  
-  .slide-subtitle {
-    font-size: 0.875rem;
-  }
-  
-  .ranking-item {
-    padding: 0.625rem 1rem;
-  }
-  
-  .ranking-item-title {
-    font-size: 0.8125rem;
-  }
-}
-
-/* 下方：设计文章区域 */
-.home-design-section {
-  margin-top: 3rem;
-  padding: 0 1rem;
-}
-
-/* 确保设计文章网格组件的样式 */
-.home-design-section .design-article-grid-container {
-  max-width: 75rem;
-  margin: 0 auto;
-}
-
-/* 设计文章网格的标题样式 */
-.home-design-section .section-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 1.5rem;
-}
-
-/* 设计文章网格的子分类标签样式 */
-.home-design-section .subcategory-tabs {
-  margin-bottom: 2rem;
-}
-
-.home-design-section .subcategory-tab {
-  padding: 0.5rem 1rem;
-  margin-right: 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-small);
-  background: var(--white);
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-}
-
-.home-design-section .subcategory-tab:hover {
+  background: var(--bg-hover);
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
-.home-design-section .subcategory-tab.active {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
-  color: var(--white);
+/* 响应式调整 */
+@media (max-width: 1024px) {
+  .home-top-section {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+  
+  .carousel-container {
+    min-height: 300px;
+  }
+  
+  .home-ranking-section {
+    height: 400px;
+  }
 }
 
-/* 设计文章卡片样式 */
-.home-design-section .article-card {
-  background: var(--white);
-  border-radius: var(--border-radius);
-  overflow: hidden;
-  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.08);
-  transition: all var(--transition-normal);
-  cursor: pointer;
+@media (max-width: 768px) {
+  .home-container {
+    padding: 0 var(--spacing-3);
+  }
+  
+  .carousel-container {
+    min-height: 200px;
+  }
+  
+  .slide-title {
+    font-size: var(--font-size-xl);
+  }
+  
+  .slide-subtitle {
+    font-size: var(--font-size-base);
+  }
 }
-
-.home-design-section .article-card:hover {
-  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15);
-  transform: translateY(-0.25rem);
-}
-
-.home-design-section .article-image-container {
-  position: relative;
-  width: 100%;
-  height: 10rem;
-  overflow: hidden;
-}
-
-.home-design-section .article-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform var(--transition-normal);
-}
-
-.home-design-section .article-card:hover .article-image {
-  transform: scale(1.05);
-}
-
-.home-design-section .article-content {
-  padding: 1rem;
-}
-
-.home-design-section .article-title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  line-height: 1.4;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.home-design-section .article-rank {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 2rem;
-  height: 1.25rem;
-  padding: 0 0.375rem;
-  border-radius: 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--white);
-  flex-shrink: 0;
-}
-
-.home-design-section .article-title-text {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-

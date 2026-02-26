@@ -11,9 +11,9 @@
  */
 
 .auth-modal-content {
-  padding: 48px 40px 40px;
+  padding: var(--spacing-12) var(--spacing-10) var(--spacing-10);
   position: relative;
-  background-color: #ffffff;
+  background-color: var(--bg-card);
 }
 
 /* 覆盖 Modal 组件的默认 padding */
@@ -24,76 +24,76 @@
 /* 头部设计 */
 .auth-header {
   text-align: center;
-  margin-bottom: 40px; /* 加大间距 */
+  margin-bottom: var(--spacing-10); /* 加大间距 */
 }
 
 .auth-logo {
-  width: 56px; /* 加大Logo */
-  height: 56px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  border-radius: 16px;
+  width: 3.5rem; /* 56px */
+  height: 3.5rem;
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+  color: var(--text-inverse);
+  border-radius: var(--radius-xl);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  font-size: 16px;
-  margin: 0 auto 20px;
+  font-weight: var(--font-extrabold);
+  font-size: var(--text-base);
+  margin: 0 auto var(--spacing-5);
 }
 
 .auth-title {
-  font-size: 24px;
-  color: #111827;
-  font-weight: 700;
-  margin: 0 0 8px;
-  line-height: 1.2;
+  font-size: var(--text-2xl);
+  color: var(--neutral-900);
+  font-weight: var(--font-bold);
+  margin: 0 0 var(--spacing-2);
+  line-height: var(--leading-tight);
   letter-spacing: -0.02em;
 }
 
 .auth-subtitle {
-  font-size: 14px;
-  color: #6b7280;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
   margin: 0;
-  line-height: 1.5;
+  line-height: var(--leading-normal);
 }
 
 /* 关闭按钮 */
 .auth-close-btn {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: var(--spacing-4);
+  right: var(--spacing-4);
   background: none;
   border: none;
-  font-size: 24px;
-  color: #9ca3af;
+  font-size: var(--text-2xl);
+  color: var(--text-tertiary);
   cursor: pointer;
   padding: 0;
-  width: 32px;
-  height: 32px;
+  width: var(--spacing-8);
+  height: var(--spacing-8);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s ease;
+  border-radius: var(--radius-full);
+  transition: var(--transition-all);
   z-index: 10;
 }
 
 .auth-close-btn:hover {
-  background: #f3f4f6;
-  color: #4b5563;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
 }
 
 /* 模式切换 */
 .auth-switch-wrapper {
   display: flex;
   justify-content: center;
-  margin-bottom: 40px; /* 加大间距 */
+  margin-bottom: var(--spacing-10); /* 加大间距 */
 }
 
 .auth-switch-simple {
   display: flex;
   align-items: center;
-  gap: 24px; /* 加大文字间距 */
+  gap: var(--spacing-6); /* 加大文字间距 */
 }
 
 .auth-switch-divider {

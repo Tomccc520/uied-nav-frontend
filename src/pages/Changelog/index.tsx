@@ -1,4 +1,10 @@
 /**
+ * @copyright Tomda (https://www.tomda.top)
+ * @copyright UIED技术团队 (https://fsuied.com)
+ * @author UIED技术团队
+ * @createDate 2026-02-26
+ */
+/**
  * @file Changelog/index.tsx
  * @description 更新记录页面 - 展示网站功能更新历史
  */
@@ -61,6 +67,40 @@ const platformLinks = [
 
 // 更新记录数据
 const changelogData = [
+  {
+    version: '3.0.0-beta.6',
+    date: '2026-02-26',
+    title: '商业版运营模块与详情页对比能力增强',
+    changes: [
+      { type: 'feature', text: '新增网址详情页多模板（展示版/紧凑版/企业版）与后台切换配置' },
+      { type: 'feature', text: '新增网址对比页 VS 路由与 SEO 结构化数据（FAQPage）' },
+      { type: 'feature', text: '新增网站点赞链路（匿名+登录均可）并接入榜单系统' },
+      { type: 'improve', text: '网站详情页支持截图优先级：上传预览图 > 本地图/截图 > 自动截图兜底' },
+      { type: 'improve', text: '榜单系统升级为访问量/收藏量/点赞量 + 日周月切换' },
+    ]
+  },
+  {
+    version: '3.0.0-beta.5',
+    date: '2026-02-25',
+    title: '每日热榜与运营配置后台化',
+    changes: [
+      { type: 'feature', text: '每日热榜新增后台全局配置（默认平台、显示位置、入口配置）' },
+      { type: 'feature', text: '每日热榜前端页面支持多平台展示与平台标签切换' },
+      { type: 'improve', text: '每日热榜平台配置页改为运营化交互，弱化开发调试字段' },
+      { type: 'fix', text: '修复热榜平台列表为空时前端无数据问题（后端默认平台回退）' },
+    ]
+  },
+  {
+    version: '3.0.0-beta.4',
+    date: '2026-02-24',
+    title: '商业位体系与截图能力升级',
+    changes: [
+      { type: 'feature', text: '新增商业位体系（顶部/正文中/底部/侧栏）并接入详情页运营位' },
+      { type: 'feature', text: '新增网站预览截图接口（Playwright 优先，mShots 兜底）' },
+      { type: 'improve', text: '广告管理支持图片/链接/HTML 代码广告内容配置' },
+      { type: 'improve', text: '后台菜单按运营场景重构，新增榜单与专题/商业变现分组' },
+    ]
+  },
   {
     version: '2.7.1',
     date: '2026-01-18',

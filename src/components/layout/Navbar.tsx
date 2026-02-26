@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Button, Chip, DesignIcons } from '../UI';
 import { useLocation, useNavigate } from 'react-router-dom'; // 导入路由钩子
 import { useSiteInfo } from '../../hooks/useSiteInfo'; // 导入站点信息Hook
@@ -459,6 +460,11 @@ const Navbar = () => {
   // 点击外部关闭菜单
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // 如果点击的是移动端菜单内部，不关闭
+      if ((event.target as Element).closest('.navbar-mobile-menu')) {
+        return;
+      }
+
       if (anchorEl && !anchorEl.contains(event.target as Node)) {
         setAnchorEl(null);
       }
@@ -470,8 +476,13 @@ const Navbar = () => {
             !(event.target as Element).closest('.nav-switch-container')) {
           setActiveSubmenu(null);
         }
+        // 检查是否点击了用户菜单区域外
+        else if (activeSubmenu === 'user-menu' && 
+            !(event.target as Element).closest('.navbar-user-container')) {
+          setActiveSubmenu(null);
+        }
         // 检查是否点击了常规二级菜单区域外
-        else if (activeSubmenu !== 'nav-switch' && 
+        else if (activeSubmenu !== 'nav-switch' && activeSubmenu !== 'user-menu' && 
                 !(event.target as Element).closest('.navbar-submenu-container')) {
           setActiveSubmenu(null);
         }
@@ -715,6 +726,46 @@ const Navbar = () => {
               </svg>
             </button>
             
+            {/* 移动端用户头像 */}
+            {isLoggedIn && user && (
+              <div 
+                className="navbar-mobile-user-avatar"
+                onClick={() => navigate('/profile')}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  border: '1px solid rgba(0,0,0,0.1)'
+                }}
+              >
+                {user.avatar ? (
+                  <img 
+                    src={user.avatar} 
+                    alt={user.nickname || user.username} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <div 
+                    style={{
+                      width: '100%', 
+                      height: '100%', 
+                      background: '#f5f5f5', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      fontSize: '14px',
+                      color: '#666',
+                      fontWeight: 600
+                    }}
+                  >
+                    {(user.nickname || user.username || 'U').charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+            )}
+
             <button
               type="button"
               onClick={handleMenu}
@@ -722,10 +773,54 @@ const Navbar = () => {
             >
               ☰
             </button>
-            {Boolean(anchorEl) && (
+            {Boolean(anchorEl) && createPortal(
               <>
-                <div className="navbar-mobile-overlay" onClick={handleClose} />
-                <div className="navbar-mobile-menu">
+                <div className="navbar-mobile-overlay" onClick={handleClose} style={{ zIndex: 2001 }} />
+                <div className="navbar-mobile-menu" style={{ zIndex: 2002 }}>
+                  {/* 移动端菜单头部用户信息 */}
+                  {isLoggedIn && user ? (
+                    <div className="navbar-mobile-user-info" style={{ padding: '1rem 1.5rem', background: '#f8f9fa', borderBottom: '1px solid #eee' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '50%', overflow: 'hidden', background: '#fff' }}>
+                          {user.avatar ? (
+                            <img src={user.avatar} alt={user.nickname} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#eee' }}>
+                              {(user.nickname || user.username || 'U').charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: '16px' }}>{user.nickname || user.username}</div>
+                          <div style={{ fontSize: '12px', color: '#666' }}>{user.userTypeName || '普通用户'}</div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        <button 
+                          onClick={() => { navigate('/profile'); handleClose(); }}
+                          style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #ddd', background: '#fff', fontSize: '14px' }}
+                        >
+                          个人中心
+                        </button>
+                        <button 
+                          onClick={() => { logout(); handleClose(); }}
+                          style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #ddd', background: '#fff', fontSize: '14px', color: '#ff4d4f' }}
+                        >
+                          退出
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #eee' }}>
+                      <button 
+                        onClick={() => { setAuthMode('login'); setAuthModalVisible(true); handleClose(); }}
+                        style={{ width: '100%', padding: '10px', borderRadius: '8px', background: '#1976d2', color: '#fff', border: 'none', fontWeight: 600 }}
+                      >
+                        登录 / 注册
+                      </button>
+                    </div>
+                  )}
+
                   {visibleMenuItems.map((item) => (
                     <div key={item.id || item.text}>
                       {/* 主菜单项 */}
@@ -793,7 +888,8 @@ const Navbar = () => {
                     </div>
                   ))}
                 </div>
-              </>
+              </>,
+              document.body
             )}
           </div>
         ) : (

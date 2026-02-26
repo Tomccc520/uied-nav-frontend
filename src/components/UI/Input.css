@@ -5,45 +5,45 @@
  * @copyright 版权所有 (c) 2026 UIED技术团队
  * @website https://fsuied.com
  * @license MIT
- * @version 1.0.0
+ * @version 1.0.1
  */
 
 /* 自定义输入框样式 */
 .custom-input-wrapper {
   display: flex;
   align-items: center;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  background: white;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  transition: var(--transition-all);
   position: relative;
 }
 
 .custom-input-wrapper:focus-within {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px var(--primary-100);
 }
 
 .custom-input-wrapper--disabled {
-  background: #f9fafb;
-  border-color: #d1d5db;
+  background: var(--neutral-50);
+  border-color: var(--neutral-200);
   opacity: 0.6;
   cursor: not-allowed;
 }
 
 /* 输入框尺寸 */
 .custom-input-wrapper--small {
-  padding: 8px 12px;
-  border-radius: 6px;
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-sm);
 }
 
 .custom-input-wrapper--medium {
-  padding: 12px 16px;
+  padding: var(--spacing-3) var(--spacing-4);
 }
 
 .custom-input-wrapper--large {
-  padding: 16px 20px;
-  border-radius: 10px;
+  padding: var(--spacing-4) var(--spacing-5);
+  border-radius: var(--radius-lg);
 }
 
 /* 输入框本体 */
@@ -52,42 +52,42 @@
   border: none;
   outline: none;
   background: transparent;
-  font-size: 16px;
-  color: #374151;
+  font-size: var(--text-base);
+  color: var(--neutral-700);
   font-family: inherit;
 }
 
 .custom-input::placeholder {
-  color: #9ca3af;
+  color: var(--neutral-400);
 }
 
 .custom-input:disabled {
   cursor: not-allowed;
-  color: #6b7280;
+  color: var(--neutral-500);
 }
 
 /* 图标样式 */
 .custom-input__icon {
   display: flex;
   align-items: center;
-  margin-right: 12px;
-  color: #6b7280;
-  font-size: 18px;
+  margin-right: var(--spacing-3);
+  color: var(--neutral-500);
+  font-size: var(--text-lg);
 }
 
 .custom-input__suffix {
   display: flex;
   align-items: center;
-  margin-left: 12px;
-  color: #6b7280;
+  margin-left: var(--spacing-3);
+  color: var(--neutral-500);
 }
 
 /* 特殊样式变体 */
 .custom-input-wrapper--search {
-  border-radius: 50px;
+  border-radius: var(--radius-full);
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
 }
 
 .custom-input-wrapper--search:focus-within {
@@ -97,21 +97,5 @@
 
 /* 搜索框特殊样式 */
 .hero-search .custom-input-wrapper {
-  border-radius: 50px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  padding: 0 8px;
+  border-radius: var(--radius-full);
 }
-
-.hero-search .custom-input {
-  padding: 16px 24px;
-  font-size: 16px;
-  color: #333;
-  border: none;
-}
-
-.hero-search .custom-input::placeholder {
-  color: #999;
-} 

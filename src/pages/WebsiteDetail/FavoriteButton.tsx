@@ -9,16 +9,22 @@
  */
 
 // @pro-feature-start: favorites
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { AxiosError } from 'axios';
 import api from '../../services/api';
+import { unwrapApiResponse } from '../../utils/apiResponse';
 import { debugLog } from '../../utils/debugHelper';
 
 interface FavoriteButtonProps {
   websiteId: string;
   initialFavorited?: boolean;
   userId?: string;
-  onFavoriteChange?: (isFavorited: boolean) => void;
+  onFavoriteChange?: (isFavorited: boolean, totalFavorites?: number) => void;
+}
+
+interface FavoriteResponsePayload {
+  favorited?: boolean;
+  totalFavorites?: number;
 }
 
 /**
@@ -53,14 +59,16 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   /**
+   * 外部详情数据切换时同步收藏状态
+   */
+  useEffect(() => {
+    setIsFavorited(initialFavorited);
+  }, [initialFavorited]);
+
+  /**
    * 切换收藏状态
    */
   const handleToggle = useCallback(async () => {
-    if (!userId) {
-      setError('请先登录');
-      return;
-    }
-
     if (isLoading) return;
 
     // 乐观更新
@@ -71,17 +79,20 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     try {
       setIsLoading(true);
 
+      let totalFavorites: number | undefined;
       if (previousState) {
         // 取消收藏
-        await api.delete(`/websites/${websiteId}/favorite`, {
-          data: { userId }
-        });
+        const response = await api.delete(`/websites/${websiteId}/favorite`, userId ? { data: { userId } } : undefined);
+        const data = unwrapApiResponse<FavoriteResponsePayload>(response.data, {});
+        if (typeof data.totalFavorites === 'number') totalFavorites = data.totalFavorites;
       } else {
         // 添加收藏
-        await api.post(`/websites/${websiteId}/favorite`, { userId });
+        const response = await api.post(`/websites/${websiteId}/favorite`, userId ? { userId } : {});
+        const data = unwrapApiResponse<FavoriteResponsePayload>(response.data, {});
+        if (typeof data.totalFavorites === 'number') totalFavorites = data.totalFavorites;
       }
 
-      onFavoriteChange?.(!previousState);
+      onFavoriteChange?.(!previousState, totalFavorites);
     } catch (err: unknown) {
       // 回滚状态
       setIsFavorited(previousState);
@@ -98,14 +109,13 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       <button
         className={`btn-favorite ${isFavorited ? 'favorited' : ''} ${isLoading ? 'loading' : ''}`}
         onClick={handleToggle}
-        disabled={isLoading || !userId}
+        disabled={isLoading}
         title={isFavorited ? '取消收藏' : '添加收藏'}
       >
         <HeartIcon filled={isFavorited} />
         <span>{isFavorited ? '已收藏' : '收藏'}</span>
       </button>
       {error && <span className="favorite-error">{error}</span>}
-      {!userId && <span className="favorite-hint">登录后可收藏</span>}
     </div>
   );
 };

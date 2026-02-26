@@ -5,6 +5,7 @@
  */
 
 import api from './api';
+import { unwrapApiResponse } from '../utils/apiResponse';
 
 // 用户信息接口
 export interface User {
@@ -56,7 +57,12 @@ export const userService = {
    */
   login: async (params: LoginParams): Promise<AuthResponse> => {
     const response = await api.post<AuthResponse>('/user/login', params);
-    return response.data;
+    const payload = unwrapApiResponse<any>(response.data, {});
+    return {
+      token: String(payload.token || ''),
+      user: payload.user || payload.userInfo || {},
+      userInfo: payload.userInfo || payload.user || {},
+    };
   },
 
   /**
@@ -64,7 +70,12 @@ export const userService = {
    */
   register: async (params: RegisterParams): Promise<AuthResponse> => {
     const response = await api.post<AuthResponse>('/user/register', params);
-    return response.data;
+    const payload = unwrapApiResponse<any>(response.data, {});
+    return {
+      token: String(payload.token || ''),
+      user: payload.user || payload.userInfo || {},
+      userInfo: payload.userInfo || payload.user || {},
+    };
   },
 
   /**
@@ -79,7 +90,7 @@ export const userService = {
    */
   getProfile: async (): Promise<User> => {
     const response = await api.get<User>('/user/profile');
-    return response.data;
+    return unwrapApiResponse<User>(response.data, {} as User);
   },
 
   /**
@@ -87,7 +98,7 @@ export const userService = {
    */
   updateProfile: async (data: Partial<User>): Promise<User> => {
     const response = await api.post<User>('/user/profile/update', data);
-    return response.data;
+    return unwrapApiResponse<User>(response.data, {} as User);
   },
 
   /**
@@ -102,31 +113,43 @@ export const userService = {
    */
   getStats: async (): Promise<any> => {
     const response = await api.post('/user/index/stats');
-    return response.data;
+    return unwrapApiResponse<any>(response.data, {});
   },
 
   /**
    * 获取订单列表
    */
   getOrderList: async (params: { page?: number; pageSize?: number; status?: string }): Promise<any> => {
-    const response = await api.post('/user/order/list', params);
-    return response.data;
+    const response = await api.post('/user/order/list', {
+      ...params,
+      pageNo: params.page ?? 1,
+      pageSize: params.pageSize ?? 10,
+    });
+    return unwrapApiResponse<any>(response.data, { lists: [], total: 0, pageNo: 1, pageSize: 10 });
   },
 
   /**
    * 获取许可证列表
    */
   getLicenseList: async (params: { page?: number; pageSize?: number }): Promise<any> => {
-    const response = await api.post('/user/license/list', params);
-    return response.data;
+    const response = await api.post('/user/license/list', {
+      ...params,
+      pageNo: params.page ?? 1,
+      pageSize: params.pageSize ?? 10,
+    });
+    return unwrapApiResponse<any>(response.data, { lists: [], total: 0, pageNo: 1, pageSize: 10 });
   },
 
   /**
    * 获取消息列表
    */
   getMessageList: async (params: { page?: number; pageSize?: number; isRead?: boolean }): Promise<any> => {
-    const response = await api.post('/user/message/list', params);
-    return response.data;
+    const response = await api.post('/user/message/list', {
+      ...params,
+      pageNo: params.page ?? 1,
+      pageSize: params.pageSize ?? 10,
+    });
+    return unwrapApiResponse<any>(response.data, { lists: [], total: 0, pageNo: 1, pageSize: 10 });
   },
 
   /**
@@ -147,8 +170,12 @@ export const userService = {
    * 获取登录日志
    */
   getLoginLog: async (params: { page?: number; pageSize?: number }): Promise<any> => {
-    const response = await api.post('/user/login/log', params);
-    return response.data;
+    const response = await api.post('/user/login/log', {
+      ...params,
+      pageNo: params.page ?? 1,
+      pageSize: params.pageSize ?? 10,
+    });
+    return unwrapApiResponse<any>(response.data, { lists: [], total: 0, pageNo: 1, pageSize: 10 });
   },
 
   /**
@@ -156,7 +183,7 @@ export const userService = {
    */
   getAuthorCenterDetail: async (): Promise<any> => {
     const response = await api.post('/user/author/center/detail');
-    return response.data;
+    return unwrapApiResponse<any>(response.data, {});
   },
 
   /**
@@ -171,7 +198,31 @@ export const userService = {
    */
   getAuthorPublicDetail: async (authorId: number): Promise<any> => {
     const response = await api.post('/user/author/public/detail', { authorId });
-    return response.data;
+    return unwrapApiResponse<any>(response.data, {});
+  },
+
+  /**
+   * 获取用户收藏网址列表
+   */
+  getWebsiteFavoriteList: async (params: { page?: number; pageSize?: number }): Promise<any> => {
+    const response = await api.post('/user/website/favorite/list', {
+      ...params,
+      pageNo: params.page ?? 1,
+      pageSize: params.pageSize ?? 10,
+    });
+    return unwrapApiResponse<any>(response.data, { lists: [], total: 0, pageNo: 1, pageSize: 10 });
+  },
+
+  /**
+   * 获取用户点赞网址列表
+   */
+  getWebsiteLikeList: async (params: { page?: number; pageSize?: number }): Promise<any> => {
+    const response = await api.post('/user/website/like/list', {
+      ...params,
+      pageNo: params.page ?? 1,
+      pageSize: params.pageSize ?? 10,
+    });
+    return unwrapApiResponse<any>(response.data, { lists: [], total: 0, pageNo: 1, pageSize: 10 });
   }
 };
 

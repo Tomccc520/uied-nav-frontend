@@ -1,57 +1,45 @@
 /**
  * @file index.css
- * @description 前端用户界面组件
+ * @description Global Styles & Resets (Variables moved to styles/design-system.css)
  * @author Tomda
  * @copyright 版权所有 (c) 2026 UIED技术团队
  * @website https://fsuied.com
  * @license MIT
- * @version 1.0.0
+ * @version 1.1.0
  */
 
-/* 全局CSS变量定义 */
-:root {
-  --primary-color: #0066ff;
-  --primary-light: rgba(0, 102, 255, 0.1);
-  --primary-dark: #0052cc;
-  --text-primary: #333;
-  --text-secondary: #666;
-  --text-light: #999;
-  --border-color: #f0f0f0;
-  --background-light: #f6f8fb;
-  --white: #ffffff;
-  --transition-normal: 0.3s ease;
-  --border-radius: 0.75rem;
-  --border-radius-small: 0.5rem;
-}
+/* 
+ * 注意：所有CSS变量定义已移动到 src/styles/design-system.css
+ * 这里只保留基础重置和字体设置
+ */
 
 body {
   margin: 0;
-  font-family: 'Lexend', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif !important;
+  font-family: var(--font-sans) !important;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 code {
-  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, 'Liberation Mono', Menlo, Courier, monospace !important;
+  font-family: var(--font-mono) !important;
 }
 
 /* 全局高亮文本样式 */
 .highlight-text {
   color: var(--primary-color);
-  font-weight: 800;
+  font-weight: var(--font-extrabold);
 }
 
 /* 强制所有元素使用Lexend字体 */
 * {
-  font-family: 'Lexend', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif !important;
+  font-family: var(--font-sans) !important;
+  box-sizing: border-box;
 }
 
 /* 代码相关元素保持等宽字体 */
 code, pre, .code, .monospace, 
 kbd, samp, var, tt {
-  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, 'Liberation Mono', Menlo, Courier, monospace !important;
+  font-family: var(--font-mono) !important;
 }

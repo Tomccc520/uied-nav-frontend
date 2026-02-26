@@ -1,4 +1,10 @@
 /**
+ * @copyright Tomda (https://www.tomda.top)
+ * @copyright UIED技术团队 (https://fsuied.com)
+ * @author UIED技术团队
+ * @createDate 2026-02-25
+ */
+/**
  * @file Home/index.tsx
  * @description 首页组件 - 参考AIBase设计，包含轮播图和最新AI资讯
  * @copyright 版权所有 (c) 2025 UIED技术团队
@@ -9,12 +15,15 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Banner from '../../components/Banner';
+import AdBanner from '../../components/AdBanner';
 import DesignArticleGrid from '../../components/DesignArticleGrid';
 import { RankingListSkeleton } from '../../components/Skeleton';
-import api from '../../services/api';
+import { getRankings } from '../../services/rankingService';
+import { getDailyHotDisplayConfig } from '../../services/dailyHotService';
+import { RankingBoardData } from '../../types/ranking';
+import { DailyHotDisplayConfig } from '../../types/dailyHot';
 import { useBanners } from '../../hooks/useBanners';
 import { useFrontendConfig } from '../../hooks/useFrontendConfig';
-import { unwrapApiResponse } from '../../utils/apiResponse';
 import './index.css';
 import './mobile.css';
 
@@ -78,36 +87,18 @@ const defaultCarouselData: CarouselSlide[] = [
   }
 ];
 
-// 文章数据接口
-interface Article {
+// 榜单项目接口
+interface RankingItem {
   id: string;
   name: string;
   description: string;
-  link: string;
-  thumbnail: string;
-  date: string;
-  authorName: string;
-  authorAvatar: string;
+  url: string;
+  iconUrl: string;
   viewCount: number;
   score: number;
-  timeAgo: string;
   isNew: boolean;
   isHot: boolean;
   isFeatured: boolean;
-}
-
-interface BackendArticleListPayload {
-  lists?: Array<{
-    id?: number | string;
-    title?: string;
-    excerpt?: string;
-    coverImage?: string;
-    author?: string;
-    slug?: string;
-    viewCount?: number;
-    publishedAt?: number | string | null;
-    createdAt?: number | string | null;
-  }>;
 }
 
 /**
@@ -115,10 +106,11 @@ interface BackendArticleListPayload {
  * @returns 首页JSX元素
  */
 const Home: React.FC = () => {
-  const [articles, setArticles] = useState<Article[]>([]);
+  const [articles, setArticles] = useState<RankingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [dailyHotDisplayConfig, setDailyHotDisplayConfig] = useState<DailyHotDisplayConfig | null>(null);
   const { config: frontendConfig } = useFrontendConfig();
   const { banners: homeBanners, recordClick: recordBannerClick } = useBanners({
     position: 'home',
@@ -130,53 +122,57 @@ const Home: React.FC = () => {
   const recommendationContentEnabled = homepageConfig.hotRecommendationsEnabled !== false;
 
   /**
-   * 将时间值格式化为 YYYY-MM-DD 字符串
+   * 判断当前是否为移动端视口（仅用于展示层开关判定）
    */
-  const formatDateString = useCallback((value: number | string | null | undefined): string => {
-    if (value === null || value === undefined || value === '') return '';
-    const date = typeof value === 'number'
-      ? new Date(value > 1e12 ? value : value * 1000)
-      : new Date(value);
-    if (isNaN(date.getTime())) return '';
-    return date.toISOString().slice(0, 10);
+  const isMobileViewport = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(max-width: 768px)').matches;
+  };
+
+  /**
+   * 判断每日热榜入口是否允许在当前终端显示
+   */
+  const canShowDailyHotByDevice = useCallback((config: DailyHotDisplayConfig | null): boolean => {
+    if (!config) return true;
+    const mobile = isMobileViewport();
+    return mobile ? config.displayMobile !== false : config.displayDesktop !== false;
   }, []);
 
   /**
-   * 将后台文章列表转换为首页推荐区结构
+   * 读取每日热榜公开展示配置（首页快捷入口/跳转链接）
    */
-  const mapBackendArticles = useCallback((payload: unknown): Article[] => {
-    const unwrapped = unwrapApiResponse<BackendArticleListPayload>(payload, {});
-    const lists = Array.isArray(unwrapped?.lists) ? unwrapped.lists : [];
-    const now = Date.now();
-    return lists.map((item, index) => {
-      const id = String(item?.id || `article-${index}`);
-      const title = String(item?.title || '');
-      const excerpt = String(item?.excerpt || '');
-      const publishedAt = item?.publishedAt ?? item?.createdAt ?? null;
-      const publishedDate = formatDateString(publishedAt);
-      const publishedTs = typeof publishedAt === 'number'
-        ? (publishedAt > 1e12 ? publishedAt : publishedAt * 1000)
-        : Date.parse(String(publishedAt || ''));
-      const isNew = Number.isFinite(publishedTs) ? (now - Number(publishedTs) <= 7 * 24 * 3600 * 1000) : false;
-      const viewCount = Number(item?.viewCount || 0);
-      return {
-        id,
-        name: title,
-        description: excerpt,
-        link: `/article/${String(item?.slug || id)}`,
-        thumbnail: String(item?.coverImage || ''),
-        date: publishedDate,
-        authorName: String(item?.author || 'UIED'),
-        authorAvatar: '',
-        viewCount,
-        score: Math.max(60, Math.min(999, Math.floor(viewCount / 5))),
-        timeAgo: publishedDate || '',
-        isNew,
-        isHot: viewCount >= 100,
-        isFeatured: index < 3,
-      };
-    });
-  }, [formatDateString]);
+  const fetchDailyHotDisplayConfig = useCallback(async () => {
+    const config = await getDailyHotDisplayConfig();
+    setDailyHotDisplayConfig(config);
+  }, []);
+
+  /**
+   * 将后台榜单数据转换为首页推荐区结构
+   */
+  const mapRankingData = useCallback((data: RankingBoardData[]): RankingItem[] => {
+    // 优先展示 "editor_pick" 或 "today_hot"
+    const targetKey = 'editor_pick';
+    const fallbackKey = 'today_hot';
+    
+    const board = data.find(b => b.key === targetKey) || 
+                  data.find(b => b.key === fallbackKey) || 
+                  data[0];
+
+    if (!board || !board.items) return [];
+
+    return board.items.map((item, index) => ({
+      id: String(item.id),
+      name: item.name,
+      description: item.description,
+      url: item.url,
+      iconUrl: item.iconUrl || '',
+      viewCount: item.viewCount || 0,
+      score: item.score || 0,
+      isNew: item.isNew,
+      isHot: item.isHot,
+      isFeatured: index < 3,
+    }));
+  }, []);
 
   /**
    * 将后台 Banner 转为首页轮播数据
@@ -215,42 +211,37 @@ const Home: React.FC = () => {
   ]);
 
   /**
-   * 获取最新文章数据
+   * 获取最新榜单数据
    */
-  const fetchLatestArticles = useCallback(async () => {
+  const fetchRankings = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await api.get('/articles', {
-        params: {
-          page: 1,
-          pageSize: 10,
-        },
-      });
-
-      const mappedArticles = mapBackendArticles(response.data);
-      if (mappedArticles.length > 0) {
-        setArticles(mappedArticles);
+      const data = await getRankings();
+      const mappedItems = mapRankingData(data);
+      
+      if (mappedItems.length > 0) {
+        setArticles(mappedItems);
       } else {
-        setError('暂无文章数据');
+        setError('暂无推荐数据');
         setArticles([]);
       }
     } catch (err) {
-      console.error('获取最新文章失败:', err);
-      setError('获取文章数据失败，请稍后重试');
+      console.error('获取榜单数据失败:', err);
+      setError('获取数据失败，请稍后重试');
       setArticles([]);
     } finally {
       setLoading(false);
     }
-  }, [mapBackendArticles]);
+  }, [mapRankingData]);
 
   /**
    * 处理文章点击
    */
-  const handleArticleClick = (article: Article) => {
-    if (article.link) {
-      window.open(article.link, '_blank', 'noopener,noreferrer');
+  const handleArticleClick = (item: RankingItem) => {
+    if (item.url) {
+      window.open(item.url, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -270,7 +261,7 @@ const Home: React.FC = () => {
    * 重试获取数据
    */
   const handleRetry = () => {
-    fetchLatestArticles();
+    fetchRankings();
   };
 
   // 推荐区开启时才请求内容
@@ -281,8 +272,13 @@ const Home: React.FC = () => {
       setArticles([]);
       return;
     }
-    fetchLatestArticles();
-  }, [fetchLatestArticles, recommendationEnabled, recommendationContentEnabled]);
+    fetchRankings();
+  }, [fetchRankings, recommendationEnabled, recommendationContentEnabled]);
+
+  // 读取每日热榜前台展示配置（失败时服务层会回退默认值）
+  useEffect(() => {
+    fetchDailyHotDisplayConfig();
+  }, [fetchDailyHotDisplayConfig]);
 
   // 当轮播数据源变化时，保证当前索引不越界
   useEffect(() => {
@@ -303,13 +299,55 @@ const Home: React.FC = () => {
     return () => clearInterval(timer);
   }, [carouselData.length, carouselEnabled]);
 
+  /**
+   * 首页“全网热榜”快捷入口是否显示
+   */
+  const showDailyHotQuickEntry = useMemo(() => {
+    if (!dailyHotDisplayConfig || dailyHotDisplayConfig.enabled === false) return false;
+    if (!canShowDailyHotByDevice(dailyHotDisplayConfig)) return false;
+    return Array.isArray(dailyHotDisplayConfig.displayPlacements)
+      && dailyHotDisplayConfig.displayPlacements.includes('nav_quick_entry');
+  }, [canShowDailyHotByDevice, dailyHotDisplayConfig]);
+
+  /**
+   * 首页推荐区右上角“热榜入口”是否显示
+   */
+  const showDailyHotRankingLink = useMemo(() => {
+    if (!dailyHotDisplayConfig) return true;
+    if (dailyHotDisplayConfig.enabled === false) return false;
+    return canShowDailyHotByDevice(dailyHotDisplayConfig);
+  }, [canShowDailyHotByDevice, dailyHotDisplayConfig]);
+
+  /**
+   * 获取首页内使用的每日热榜入口文案与链接配置
+   */
+  const dailyHotEntryView = useMemo(() => {
+    const fallback = {
+      label: '全网热榜',
+      href: '/p/daily-hot',
+      target: '_self' as '_self' | '_blank',
+      rel: undefined as string | undefined,
+    };
+    if (!dailyHotDisplayConfig || dailyHotDisplayConfig.enabled === false) return fallback;
+
+    const href = String(dailyHotDisplayConfig.displayPath || fallback.href).trim() || fallback.href;
+    const label = String(dailyHotDisplayConfig.displayLabel || fallback.label).trim() || fallback.label;
+    const newTab = dailyHotDisplayConfig.displayOpenInNewTab === true;
+    return {
+      label,
+      href,
+      target: newTab ? '_blank' as const : '_self' as const,
+      rel: newTab ? 'noopener noreferrer' : undefined,
+    };
+  }, [dailyHotDisplayConfig]);
+
   // 渲染排行榜项目（参考AntRankingPage设计）
-  const renderRankingItem = (article: Article, index: number) => {
+  const renderRankingItem = (item: RankingItem, index: number) => {
     return (
       <div 
-        key={article.id} 
+        key={item.id} 
         className="ranking-item"
-        onClick={() => handleArticleClick(article)}
+        onClick={() => handleArticleClick(item)}
       >
         <div className={`rank-number-container rank-number-${index < 3 ? index + 1 : 'other'}`}>
           <span className="rank-number">{index + 1}</span>
@@ -317,19 +355,19 @@ const Home: React.FC = () => {
         
         <div className="ranking-item-content">
           <div className="ranking-item-title">
-            {article.name}
-            {article.isNew && <span className="new-tag">新</span>}
-            {article.isHot && <span className="hot-tag">热</span>}
+            {item.name}
+            {item.isNew && <span className="new-tag">新</span>}
+            {item.isHot && <span className="hot-tag">热</span>}
           </div>
           
           <div className="ranking-item-meta">
             <span className="ranking-item-views">
               <EyeIcon size={12} />
-              {article.viewCount || 0}
+              {item.viewCount || 0}
             </span>
             <span className="ranking-item-score">
               <FireIcon size={12} />
-              {Math.floor(article.score || 0)}°
+              {Math.floor(item.score || 0)}°
             </span>
           </div>
         </div>
@@ -339,6 +377,18 @@ const Home: React.FC = () => {
 
   return (
     <div className="home-container">
+      {showDailyHotQuickEntry && (
+        <div className="home-quick-entry">
+          <a
+            className="home-quick-entry-link"
+            href={dailyHotEntryView.href}
+            target={dailyHotEntryView.target}
+            rel={dailyHotEntryView.rel}
+          >
+            {dailyHotEntryView.label}
+          </a>
+        </div>
+      )}
       {/* 顶部区域：按后台排序渲染轮播和推荐模块 */}
       {topModules.length > 0 && (
         <div className="home-top-section">
@@ -383,6 +433,16 @@ const Home: React.FC = () => {
                   <h2 className="ranking-title">
                     {homepageConfig.hotRecommendationsTitle || '最新文章'}
                   </h2>
+                  {showDailyHotRankingLink && (
+                    <a
+                      className="ranking-link"
+                      href={dailyHotEntryView.href}
+                      target={dailyHotEntryView.target}
+                      rel={dailyHotEntryView.rel}
+                    >
+                      {dailyHotEntryView.label}
+                    </a>
+                  )}
                 </div>
 
                 <div className="ranking-content">
@@ -414,7 +474,8 @@ const Home: React.FC = () => {
 
       {/* 中间：Banner区域 */}
       <div className="home-banner-section">
-        <Banner />
+        <AdBanner pageSlug="home" position="top" className="home-banner-section__ad" />
+        <Banner useBackend={false} />
       </div>
 
       {/* 下方：设计文章网格 */}
@@ -431,6 +492,7 @@ const Home: React.FC = () => {
           position="main"
         />
       </div>
+
     </div>
   );
 };

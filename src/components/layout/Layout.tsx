@@ -10,6 +10,7 @@
 import React from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import DailyHotFixedEntry from './DailyHotFixedEntry';
 import './Layout.css';
 
 interface LayoutProps {
@@ -38,6 +39,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       
       {/* 页脚 */}
       <Footer />
+
+      {/* 每日热榜固定入口（受后台显示位置配置控制） */}
+      <DailyHotFixedEntry />
     </div>
   );
 };

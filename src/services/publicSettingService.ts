@@ -133,7 +133,48 @@ export interface ExitModalConfig {
 
 // 详情页配置
 export interface DetailPageConfig {
+  pageStylePreset?: 'showcase' | 'compact' | 'enterprise';
+  layoutWidthMode?: 'contained' | 'wide' | 'fluid';
+  spacingDensity?: 'compact' | 'comfortable';
+  labelVisualStyle?: 'soft' | 'outline';
+  dataPanelEnabled?: boolean;
+  dataPanelTitle?: string;
+  heroAccentGlassEnabled?: boolean;
+  enabled?: boolean;
+  showRelated?: boolean;
+  relatedTitle?: string;
+  relatedCount?: number;
+  relatedMode?: 'same_category' | 'same_tags' | 'hot' | 'manual';
+  manualWebsiteIds?: string | string[];
+  showTags?: boolean;
+  tagsTitle?: string;
+  tagSource?: 'website' | 'category' | 'manual';
+  manualTags?: string | string[];
+  showCategory?: boolean;
+  categoryTitle?: string;
+  sidebarAdEnabled?: boolean;
+  sidebarAdSlotKey?: string;
+  detailTopAdEnabled?: boolean;
+  detailTopAdSlotKey?: string;
+  detailInlineAdEnabled?: boolean;
+  detailInlineAdSlotKey?: string;
+  detailBottomAdEnabled?: boolean;
+  detailBottomAdSlotKey?: string;
+  seoFaqEnabled?: boolean;
+  seoFaqTitle?: string;
+  seoFaqLines?: string;
+  seoLongTailEnabled?: boolean;
+  seoLongTailTitle?: string;
+  seoLongTailKeywords?: string | string[];
+  seoSchemaEnabled?: boolean;
   screenshotsEnabled: boolean;
+  thumbnailLayoutStyle?: 'device' | 'split' | 'carousel';
+  thumbnailSplitSideCount?: number;
+  thumbnailCarouselThumbCount?: number;
+  previewSnapshotEnabled?: boolean;
+  previewSnapshotTimeoutMs?: number;
+  previewSnapshotCacheTtlSeconds?: number;
+  previewSnapshotAllowFallbackMshots?: boolean;
   ratingsEnabled: boolean;
   commentsEnabled: boolean;
   sharingEnabled: boolean;
@@ -323,7 +364,48 @@ export const DEFAULT_EXIT_MODAL: ExitModalConfig = {
 };
 
 export const DEFAULT_DETAIL_PAGE: DetailPageConfig = {
+  pageStylePreset: 'showcase',
+  layoutWidthMode: 'contained',
+  spacingDensity: 'compact',
+  labelVisualStyle: 'soft',
+  dataPanelEnabled: true,
+  dataPanelTitle: '站点访问数据',
+  heroAccentGlassEnabled: true,
+  enabled: true,
+  showRelated: true,
+  relatedTitle: '你可能还喜欢',
+  relatedCount: 6,
+  relatedMode: 'same_category',
+  manualWebsiteIds: '',
+  showTags: true,
+  tagsTitle: '深入探索',
+  tagSource: 'website',
+  manualTags: '',
+  showCategory: true,
+  categoryTitle: '相关分类',
+  sidebarAdEnabled: false,
+  sidebarAdSlotKey: 'website_detail_sidebar',
+  detailTopAdEnabled: false,
+  detailTopAdSlotKey: 'detail_top',
+  detailInlineAdEnabled: false,
+  detailInlineAdSlotKey: 'detail_inline',
+  detailBottomAdEnabled: false,
+  detailBottomAdSlotKey: 'detail_bottom',
+  seoFaqEnabled: false,
+  seoFaqTitle: '常见问题',
+  seoFaqLines: '',
+  seoLongTailEnabled: false,
+  seoLongTailTitle: '相关搜索',
+  seoLongTailKeywords: '',
+  seoSchemaEnabled: true,
   screenshotsEnabled: true,
+  thumbnailLayoutStyle: 'device',
+  thumbnailSplitSideCount: 2,
+  thumbnailCarouselThumbCount: 6,
+  previewSnapshotEnabled: true,
+  previewSnapshotTimeoutMs: 12000,
+  previewSnapshotCacheTtlSeconds: 21600,
+  previewSnapshotAllowFallbackMshots: true,
   ratingsEnabled: true,
   commentsEnabled: true,
   sharingEnabled: true,
@@ -642,7 +724,11 @@ export const publicSettingService = {
   getDetailPageConfig: async (): Promise<DetailPageConfig> => {
     try {
       const response = await api.get('/settings/detailPageConfig');
-      return publicSettingService.unwrapResponseData<DetailPageConfig>(response.data, DEFAULT_DETAIL_PAGE);
+      const config = publicSettingService.unwrapResponseData<DetailPageConfig>(
+        response.data,
+        DEFAULT_DETAIL_PAGE
+      );
+      return { ...DEFAULT_DETAIL_PAGE, ...(config || {}) };
     } catch (error) {
       debugLog.error('获取详情页配置失败，使用默认配置:', error);
       return DEFAULT_DETAIL_PAGE;

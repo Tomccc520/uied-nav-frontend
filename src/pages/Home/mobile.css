@@ -333,6 +333,11 @@
     padding: 0;
   }
 
+  .home-quick-entry {
+    padding: 0.75rem 1rem 0;
+    justify-content: flex-start;
+  }
+
   /* 顶部区域在移动端垂直排列 */
   .home-top-section {
     flex-direction: column;

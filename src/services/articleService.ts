@@ -159,7 +159,7 @@ export const reportComment = async (commentId: number, reason: string): Promise<
  */
 export const getUserCollectedArticles = async (params: { page?: number; pageSize?: number }): Promise<any> => {
   const response = await api.post('/user/article/collect/list', params);
-  return response.data;
+  return unwrapApiResponse<any>(response.data, { lists: [], total: 0 });
 };
 
 /**
@@ -168,5 +168,5 @@ export const getUserCollectedArticles = async (params: { page?: number; pageSize
  */
 export const getUserLikedArticles = async (params: { page?: number; pageSize?: number }): Promise<any> => {
   const response = await api.post('/user/article/like/list', params);
-  return response.data;
+  return unwrapApiResponse<any>(response.data, { lists: [], total: 0 });
 };

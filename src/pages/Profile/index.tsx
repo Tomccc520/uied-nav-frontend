@@ -13,10 +13,34 @@ import './Profile.css';
 
 type ActiveTab = 'profile' | 'collections' | 'likes' | 'messages' | 'orders' | 'security';
 
+/**
+ * 兼容驼峰/下划线字段读取
+ */
+const pickValue = <T = any,>(obj: any, keys: string[], fallback?: T): T => {
+  for (const key of keys) {
+    if (obj && obj[key] !== undefined && obj[key] !== null && obj[key] !== '') {
+      return obj[key] as T;
+    }
+  }
+  return fallback as T;
+};
+
+/**
+ * 统一格式化日期展示
+ */
+const formatUserDate = (value: any, fallback = '-') => {
+  if (!value) return fallback;
+  if (typeof value === 'string' && /\d{4}-\d{2}-\d{2}/.test(value)) return value;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value || fallback);
+  return date.toLocaleString();
+};
+
 const ProfilePage: React.FC = () => {
   const { user, loading, isLoggedIn, refreshProfile } = useUser();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ActiveTab>('profile');
+  const [stats, setStats] = useState<{ orderCount?: number; licenseCount?: number; registerDays?: number }>({});
 
   // 如果未登录，重定向到首页
   useEffect(() => {
@@ -24,6 +48,13 @@ const ProfilePage: React.FC = () => {
       navigate('/');
     }
   }, [loading, isLoggedIn, navigate]);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    userService.getStats()
+      .then((res) => setStats(res || {}))
+      .catch(() => setStats({}));
+  }, [isLoggedIn]);
 
   if (loading || !user) {
     return <div className="loading-state">加载中...</div>;
@@ -58,7 +89,27 @@ const ProfilePage: React.FC = () => {
               {(user.nickname || user.username || 'U').charAt(0).toUpperCase()}
             </div>
             <div className="user-name-large">{user.nickname || user.username}</div>
-            <div className="user-type-badge">{user.userTypeName || '普通用户'}</div>
+            <div className="user-type-badge">
+              {user.levelName ? `${user.levelName} · ` : ''}{user.userTypeName || '普通用户'}
+            </div>
+            <div className="user-card-meta">
+              <span>注册 {formatUserDate(user.createTime, '未知')}</span>
+              <span>最近登录 {formatUserDate(user.lastLoginTime, '未知')}</span>
+            </div>
+            <div className="user-card-stats">
+              <div className="user-card-stat">
+                <div className="user-card-stat__value">{Number(stats.orderCount || 0)}</div>
+                <div className="user-card-stat__label">订单</div>
+              </div>
+              <div className="user-card-stat">
+                <div className="user-card-stat__value">{Number(stats.licenseCount || 0)}</div>
+                <div className="user-card-stat__label">授权</div>
+              </div>
+              <div className="user-card-stat">
+                <div className="user-card-stat__value">{Number(stats.registerDays || 0)}</div>
+                <div className="user-card-stat__label">注册天数</div>
+              </div>
+            </div>
           </div>
           
           <div className="profile-menu">
@@ -66,36 +117,58 @@ const ProfilePage: React.FC = () => {
               className={`menu-item ${activeTab === 'profile' ? 'active' : ''}`}
               onClick={() => setActiveTab('profile')}
             >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
               个人资料
             </div>
             <div 
               className={`menu-item ${activeTab === 'messages' ? 'active' : ''}`}
               onClick={() => setActiveTab('messages')}
             >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
               我的消息
             </div>
             <div 
               className={`menu-item ${activeTab === 'orders' ? 'active' : ''}`}
               onClick={() => setActiveTab('orders')}
             >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <path d="M16 10a4 4 0 0 1-8 0"></path>
+              </svg>
               我的订单
             </div>
             <div 
               className={`menu-item ${activeTab === 'collections' ? 'active' : ''}`}
               onClick={() => setActiveTab('collections')}
             >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+              </svg>
               我的收藏
             </div>
             <div 
               className={`menu-item ${activeTab === 'likes' ? 'active' : ''}`}
               onClick={() => setActiveTab('likes')}
             >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+              </svg>
               我的点赞
             </div>
             <div 
               className={`menu-item ${activeTab === 'security' ? 'active' : ''}`}
               onClick={() => setActiveTab('security')}
             >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
               账号安全
             </div>
           </div>
@@ -241,7 +314,11 @@ const MessagesList: React.FC = () => {
     try {
       await userService.readMessage([id]);
       // 更新本地状态
-      setList(prev => prev.map(item => item.id === id ? { ...item, is_read: 1 } : item));
+      setList(prev =>
+        prev.map(item =>
+          item.id === id ? { ...item, is_read: 1, isRead: 1 } : item
+        )
+      );
     } catch (e) {
       console.error(e);
     }
@@ -266,30 +343,34 @@ const MessagesList: React.FC = () => {
       </div>
       {list.length === 0 ? (
         <div className="empty-state">
-          <span className="empty-icon">📭</span>
+          <span className="empty-icon">消息</span>
           暂无消息
         </div>
       ) : (
         <div className="collections-list">
           {list.map(item => (
-            <div key={item.id} className="list-item" style={{ opacity: item.is_read ? 0.6 : 1 }}>
+            <div
+              key={item.id}
+              className="list-item"
+              style={{ opacity: Number(pickValue(item, ['isRead', 'is_read'], 0)) ? 0.6 : 1 }}
+            >
               <div className="item-main">
                 <div className="item-title">{item.title}</div>
                 <div className="item-meta" style={{ marginTop: 4 }}>
                   {item.content}
                 </div>
-                <div className="item-meta">
-                  <span>{item.create_time}</span>
-                  {!item.is_read && (
-                    <span 
-                      style={{ color: '#0066ff', cursor: 'pointer', marginLeft: 12 }}
+                <div className="item-meta" style={{ marginTop: 8 }}>
+                  <span>{formatUserDate(pickValue(item, ['createTime', 'create_time']))}</span>
+                  {!Number(pickValue(item, ['isRead', 'is_read'], 0)) && (
+                    <span
+                      className="inline-action inline-action--primary"
                       onClick={() => handleRead(item.id)}
                     >
                       标记已读
                     </span>
                   )}
-                  <span 
-                    style={{ color: '#ff4d4f', cursor: 'pointer', marginLeft: 12 }}
+                  <span
+                    className="inline-action inline-action--danger"
                     onClick={() => handleDelete(item.id)}
                   >
                     删除
@@ -325,7 +406,7 @@ const OrdersList: React.FC = () => {
       </div>
       {list.length === 0 ? (
         <div className="empty-state">
-          <span className="empty-icon">📦</span>
+          <span className="empty-icon">订单</span>
           暂无订单记录
         </div>
       ) : (
@@ -334,17 +415,17 @@ const OrdersList: React.FC = () => {
             <div key={item.id} className="list-item">
               <div className="item-main">
                 <div className="item-title">
-                  {item.order_sn}
-                  <span className={`status-badge status-${item.pay_status}`}>
-                    {item.pay_status === 1 ? '已支付' : '未支付'}
+                  {pickValue(item, ['orderSn', 'order_sn'], '-')}
+                  <span className={`status-badge status-${Number(pickValue(item, ['payStatus', 'pay_status'], 0))}`}>
+                    {Number(pickValue(item, ['payStatus', 'pay_status'], 0)) === 1 ? '已支付' : '未支付'}
                   </span>
                 </div>
                 <div className="item-meta">
-                  <span>{item.goods_name || '商品'}</span>
-                  <span style={{ marginLeft: 16 }}>¥{item.order_amount}</span>
+                  <span>{pickValue(item, ['goodsName', 'goods_name'], '商品')}</span>
+                  <span>¥{pickValue(item, ['orderAmount', 'order_amount'], 0)}</span>
                 </div>
                 <div className="item-meta">
-                  <span>{item.create_time}</span>
+                  <span>{formatUserDate(pickValue(item, ['createTime', 'create_time']))}</span>
                 </div>
               </div>
             </div>
@@ -357,43 +438,81 @@ const OrdersList: React.FC = () => {
 
 // 子组件：收藏列表
 const CollectionsList: React.FC = () => {
-  const [list, setList] = useState<any[]>([]);
+  const [articleList, setArticleList] = useState<any[]>([]);
+  const [websiteList, setWebsiteList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getUserCollectedArticles({ page: 1, pageSize: 20 })
-      .then(res => setList(res.lists || []))
+    Promise.allSettled([
+      getUserCollectedArticles({ page: 1, pageSize: 20 }),
+      userService.getWebsiteFavoriteList({ page: 1, pageSize: 20 }),
+    ])
+      .then(([ articleRes, websiteRes ]) => {
+        setArticleList(articleRes.status === 'fulfilled' ? (articleRes.value?.lists || []) : []);
+        setWebsiteList(websiteRes.status === 'fulfilled' ? (websiteRes.value?.lists || []) : []);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div>加载中...</div>;
+  const hasData = articleList.length > 0 || websiteList.length > 0;
 
   return (
     <div>
       <div className="content-header">
         <h2 className="content-title">我的收藏</h2>
       </div>
-      {list.length === 0 ? (
+      {!hasData ? (
         <div className="empty-state">
-          <span className="empty-icon">📭</span>
+          <span className="empty-icon">收藏</span>
           暂无收藏内容
         </div>
       ) : (
-        <div className="collections-list">
-          {list.map(item => (
-            <div key={item.id} className="list-item">
-              <div className="item-main">
-                <a href={`/article/${item.article?.slug || item.article_id}`} className="item-title">
-                  {item.article?.title || '未知文章'}
-                </a>
-                <div className="item-meta">
-                  <span>收藏于 {new Date(item.created_at).toLocaleDateString()}</span>
-                </div>
+        <>
+          {websiteList.length > 0 && (
+            <div className="profile-subsection">
+              <div className="profile-subsection__title">收藏网址 ({websiteList.length})</div>
+              <div className="collections-list">
+                {websiteList.map(item => (
+                  <div key={`website-fav-${item.websiteId || item.id}`} className="list-item">
+                    <div className="item-main">
+                      <a href={`/website/${pickValue(item, ['slug'], pickValue(item, ['websiteId', 'id'], ''))}`} className="item-title">
+                        {pickValue(item, ['name'], '未知网站')}
+                      </a>
+                      <div className="item-meta">
+                        {pickValue(item, ['categoryName']) && <span>{pickValue(item, ['categoryName'])}</span>}
+                        <span>收藏于 {formatUserDate(pickValue(item, ['favoriteTime', 'createTime']))}</span>
+                        <span>点赞 {pickValue(item, ['likeCount'], 0)}</span>
+                        <span>收藏 {pickValue(item, ['favoriteCount'], 0)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
+          )}
+
+          {articleList.length > 0 && (
+            <div className="profile-subsection">
+              <div className="profile-subsection__title">收藏文章 ({articleList.length})</div>
+              <div className="collections-list">
+                {articleList.map(item => (
+                  <div key={`article-fav-${item.id}`} className="list-item">
+                    <div className="item-main">
+                      <a href={`/article/${pickValue(item?.article, ['slug'], pickValue(item, ['articleId', 'article_id'], ''))}`} className="item-title">
+                        {pickValue(item?.article, ['title'], '未知文章')}
+                      </a>
+                      <div className="item-meta">
+                        <span>收藏于 {formatUserDate(pickValue(item, ['createTime', 'created_at']))}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -401,43 +520,81 @@ const CollectionsList: React.FC = () => {
 
 // 子组件：点赞列表
 const LikesList: React.FC = () => {
-  const [list, setList] = useState<any[]>([]);
+  const [articleList, setArticleList] = useState<any[]>([]);
+  const [websiteList, setWebsiteList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getUserLikedArticles({ page: 1, pageSize: 20 })
-      .then(res => setList(res.lists || []))
+    Promise.allSettled([
+      getUserLikedArticles({ page: 1, pageSize: 20 }),
+      userService.getWebsiteLikeList({ page: 1, pageSize: 20 }),
+    ])
+      .then(([ articleRes, websiteRes ]) => {
+        setArticleList(articleRes.status === 'fulfilled' ? (articleRes.value?.lists || []) : []);
+        setWebsiteList(websiteRes.status === 'fulfilled' ? (websiteRes.value?.lists || []) : []);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div>加载中...</div>;
+  const hasData = articleList.length > 0 || websiteList.length > 0;
 
   return (
     <div>
       <div className="content-header">
         <h2 className="content-title">我的点赞</h2>
       </div>
-      {list.length === 0 ? (
+      {!hasData ? (
         <div className="empty-state">
-          <span className="empty-icon">👍</span>
+          <span className="empty-icon">点赞</span>
           暂无点赞内容
         </div>
       ) : (
-        <div className="likes-list">
-          {list.map(item => (
-            <div key={item.id} className="list-item">
-              <div className="item-main">
-                <a href={`/article/${item.article?.slug || item.article_id}`} className="item-title">
-                  {item.article?.title || '未知文章'}
-                </a>
-                <div className="item-meta">
-                  <span>点赞于 {new Date(item.created_at).toLocaleDateString()}</span>
-                </div>
+        <>
+          {websiteList.length > 0 && (
+            <div className="profile-subsection">
+              <div className="profile-subsection__title">点赞网址 ({websiteList.length})</div>
+              <div className="likes-list">
+                {websiteList.map(item => (
+                  <div key={`website-like-${item.websiteId || item.id}`} className="list-item">
+                    <div className="item-main">
+                      <a href={`/website/${pickValue(item, ['slug'], pickValue(item, ['websiteId', 'id'], ''))}`} className="item-title">
+                        {pickValue(item, ['name'], '未知网站')}
+                      </a>
+                      <div className="item-meta">
+                        {pickValue(item, ['categoryName']) && <span>{pickValue(item, ['categoryName'])}</span>}
+                        <span>点赞于 {formatUserDate(pickValue(item, ['likeTime', 'createTime']))}</span>
+                        <span>点赞 {pickValue(item, ['likeCount'], 0)}</span>
+                        <span>收藏 {pickValue(item, ['favoriteCount'], 0)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
+          )}
+
+          {articleList.length > 0 && (
+            <div className="profile-subsection">
+              <div className="profile-subsection__title">点赞文章 ({articleList.length})</div>
+              <div className="likes-list">
+                {articleList.map(item => (
+                  <div key={`article-like-${item.id}`} className="list-item">
+                    <div className="item-main">
+                      <a href={`/article/${pickValue(item?.article, ['slug'], pickValue(item, ['articleId', 'article_id'], ''))}`} className="item-title">
+                        {pickValue(item?.article, ['title'], '未知文章')}
+                      </a>
+                      <div className="item-meta">
+                        <span>点赞于 {formatUserDate(pickValue(item, ['createTime', 'created_at']))}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

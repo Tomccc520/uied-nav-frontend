@@ -9,6 +9,8 @@
 
 // 导出所有API类型
 export * from './api';
+export * from './ranking';
+export * from './dailyHot';
 
 /**
  * 导航菜单类型枚举

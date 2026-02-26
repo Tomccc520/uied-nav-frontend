@@ -1,21 +1,21 @@
 /**
  * @file global.css
- * @description 前端用户界面组件
+ * @description Global Responsive & Layout Styles
  * @author Tomda
  * @copyright 版权所有 (c) 2026 UIED技术团队
  * @website https://fsuied.com
  * @license MIT
- * @version 1.0.0
+ * @version 1.1.0
  */
 
 /* 全局自适应样式 - 统一所有页面的响应式设计 */
 
 /* 全局字体样式和rem基准 - 响应式调整 */
 html {
-  font-size: 16px; /* 桌面端：1rem = 16px */
+  font-size: 15px; /* 桌面端：1rem = 15px */
   scroll-behavior: smooth;
   overflow-x: hidden; /* 防止水平滚动 */
-  line-height: 1.6;
+  line-height: var(--leading-normal);
   -webkit-text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -24,75 +24,44 @@ html {
 /* 75rem = 1200px 桌面端 */
 @media (min-width: 75rem) {
   html { 
-    font-size: 18px; /* 大屏幕稍大字体 */
+    font-size: 17px; /* 大屏幕稍大字体 */
   }
 }
 
 /* 64rem = 1024px 平板端 */
 @media (max-width: 64rem) {
   html { 
-    font-size: 15px; /* 平板端稍小字体 */
+    font-size: 14px; /* 平板端稍小字体 */
   }
 }
 
 /* 48rem = 768px 手机端 */
 @media (max-width: 48rem) {
   html { 
-    font-size: 14px; /* 手机端更小字体 */
+    font-size: 13px; /* 手机端更小字体 */
   }
 }
 
-/* 全局字体 - Lexend优先，系统字体降级 */
+/* 全局字体 - Lexend优先 */
 * {
-  font-family: 'Lexend', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif !important;
+  font-family: var(--font-sans) !important;
   box-sizing: border-box;
 }
 
 /* 特殊情况：代码字体保持等宽字体 */
 code, pre, .code, .monospace {
-  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, 'Liberation Mono', Menlo, Courier, monospace !important;
+  font-family: var(--font-mono) !important;
 }
 
-/* CSS变量定义 - 主题色彩 */
-:root {
-  /* 主色调 - 蓝色系 */
-  --primary-color: #0066ff;
-  --primary-light: rgba(0, 102, 255, 0.1);
-  --primary-dark: #0052cc;
-  
-  /* 文字色彩 */
-  --text-primary: #333;
-  --text-secondary: #666;
-  --text-light: #999;
-  
-  /* 背景色彩 */
-  --white: #ffffff;
-  --background-light: #f6f8fb;
-  --border-color: #f0f0f0;
-  
-  /* 阴影（简化设计，无复杂阴影） */
-  --shadow-light: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.05);
-  --shadow-medium: 0 0.25rem 1rem rgba(0, 0, 0, 0.1);
-  
-  /* 过渡动画 */
-  --transition-fast: 0.2s ease;
-  --transition-normal: 0.3s ease;
-  
-  /* 边框圆角 */
-  --border-radius: 0.75rem;
-  --border-radius-small: 0.5rem;
-  --border-radius-large: 1rem;
-}
+/* CSS变量已移动到 src/styles/design-system.css */
 
 /* 全局重置 */
 body {
   margin: 0;
   padding: 0;
-  background: var(--background-light);
+  background: var(--bg-page);
   color: var(--text-primary);
-  line-height: 1.6;
+  line-height: var(--leading-normal);
   overflow-x: hidden; /* 防止水平滚动 */
   width: 100vw; /* 确保全屏宽度 */
 }
@@ -100,9 +69,22 @@ body {
 /* 全屏页面容器 */
 .page-container {
   min-height: 100vh;
-  width: 100vw; /* 真正全屏宽度 */
+  width: 100%;
   overflow-x: hidden;
-  padding-top: 4rem; /* 为导航栏留出空间 */
+  padding-top: var(--header-height);
+}
+
+/* 移动端适配优化 */
+@media (max-width: 768px) {
+  .page-container {
+    padding-top: var(--header-height-mobile); /* 56px */
+    padding-bottom: var(--spacing-16); /* 底部导航栏高度 + 间距 */
+  }
+  
+  /* 优化滚动体验 */
+  html, body {
+    overscroll-behavior-y: none; /* 防止橡皮筋效果 */
+  }
 }
 
 /* 标准内容容器 - 不是全屏的内容使用 */

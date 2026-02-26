@@ -24,6 +24,9 @@ import SearchPage from './pages/Search';
 import ProfilePage from './pages/Profile';
 import SubmitPage from './pages/Submit';
 import ChangelogPage from './pages/Changelog';
+import DailyHotPage from './pages/DailyHot';
+import RankingsPage from './pages/Rankings';
+import WebsiteComparePage from './pages/WebsiteCompare';
 import NotFoundPage from './pages/NotFound';
 import WebsiteDetail from './pages/WebsiteDetail';
 import Layout from './components/layout/Layout';
@@ -70,6 +73,8 @@ function App() {
             <Route path="/tag/:slug" element={<TagPage />} />
             <Route path="/site/:id" element={<SitePage />} />
             <Route path="/website/:idOrSlug" element={<WebsiteDetail />} />
+            <Route path="/vs/:leftIdOrSlug/:rightIdOrSlug" element={<WebsiteComparePage />} />
+            <Route path="/vs/:pair" element={<WebsiteComparePage />} />
             
             {/* @pro-feature-start: articles */}
             <Route path="/articles" element={<ArticleList />} />
@@ -80,6 +85,11 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/submit" element={<SubmitPage />} />
             <Route path="/changelog" element={<ChangelogPage />} />
+            {/* 每日热榜专用路由：避免落入动态页 /p/:slug 后请求 pages/daily-hot/full 导致 404 */}
+            <Route path="/p/daily-hot" element={<DailyHotPage />} />
+            <Route path="/daily-hot" element={<DailyHotPage />} />
+            <Route path="/p/rankings" element={<RankingsPage />} />
+            <Route path="/rankings" element={<RankingsPage />} />
             
             {/* 动态页面路由 - 后台新建的页面通过 /p/xxx 访问 */}
             <Route path="/p/:slug" element={<DynamicPageRoute />} />

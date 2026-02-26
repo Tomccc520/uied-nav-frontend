@@ -15,7 +15,7 @@
 
 .banner-section {
   width: 100%;
-  padding: 0.25rem 0; /* 继续减少上下间距 */
+  padding: 0; /* 全局横条不留上下 padding，避免挤占首屏 */
 }
 
 .banner-container {
@@ -261,7 +261,7 @@
 /* 超小屏幕 (479px以下) - 1列，可能需要垂直布局 */
 @media (max-width: 479px) {
   .banner-section {
-    padding: 0.25rem 0; /* 减少超小屏幕上下间距 */
+    padding: 0;
   }
   
   .banner-container {

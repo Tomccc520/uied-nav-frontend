@@ -9,7 +9,7 @@
  */
 
 // @pro-feature-start: ratings
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { AxiosError } from 'axios';
 import api from '../../services/api';
 import { unwrapApiResponse } from '../../utils/apiResponse';
@@ -85,14 +85,16 @@ const RatingWidget: React.FC<RatingWidgetProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   /**
+   * 切换详情页时同步用户评分状态
+   */
+  useEffect(() => {
+    setUserRating(initialUserRating);
+  }, [initialUserRating]);
+
+  /**
    * 提交评分
    */
   const handleRate = useCallback(async (rating: number) => {
-    if (!userId) {
-      setError('请先登录后再评分');
-      return;
-    }
-
     if (isSubmitting) return;
 
     try {
@@ -101,7 +103,7 @@ const RatingWidget: React.FC<RatingWidgetProps> = ({
 
       const response = await api.post(`/websites/${websiteId}/rate`, {
         rating,
-        userId,
+        ...(userId ? { userId } : {}),
       });
       const data = unwrapApiResponse<Partial<RatingResponse>>(response.data, {});
       if (typeof data.userRating === 'number') {
@@ -206,11 +208,7 @@ const RatingWidget: React.FC<RatingWidgetProps> = ({
           <p className="rating-status error">{error}</p>
         )}
         
-        {!userId && (
-          <p className="rating-login-hint">
-            登录后即可评分
-          </p>
-        )}
+        {!userId && <p className="rating-login-hint">匿名评分已启用（登录后会绑定到账号）</p>}
       </div>
     </div>
   );

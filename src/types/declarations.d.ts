@@ -32,4 +32,24 @@ declare module '../services/wordpress-api' {
     clearCache: (type: string) => void;
   };
   export default wordPressApi;
-} 
+}
+
+// 声明 Swiper React 模块（兼容 CRA + TypeScript 4.x 对 package exports 的类型解析问题）
+declare module 'swiper/react' {
+  import * as React from 'react';
+
+  export const Swiper: React.ComponentType<Record<string, any>>;
+  export const SwiperSlide: React.ComponentType<Record<string, any>>;
+}
+
+// 声明 Swiper 模块集合（按需补充常用模块）
+declare module 'swiper/modules' {
+  export const Navigation: any;
+  export const Pagination: any;
+  export const Autoplay: any;
+  export const Thumbs: any;
+}
+
+// 声明 Swiper 样式模块
+declare module 'swiper/css';
+declare module 'swiper/css/navigation';

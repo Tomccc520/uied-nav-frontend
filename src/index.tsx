@@ -10,8 +10,10 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
 import App from './App';
+import './styles/design-system.css'; // Import Design System first
+import './index.css';
+import './styles/global.css'; // Ensure global styles are loaded
 import reportWebVitals from './reportWebVitals';
 
 const root = ReactDOM.createRoot(

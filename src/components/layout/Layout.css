@@ -17,21 +17,21 @@
 
 /* 头部样式 */
 .layout-header {
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
   position: sticky;
   top: 0;
   z-index: 100;
 }
 
 .header-content {
-  max-width: 1200px;
+  max-width: var(--container-width);
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
-  height: 64px;
+  padding: 0 var(--spacing-6);
+  height: var(--header-height);
 }
 
 .logo-section {
@@ -42,26 +42,26 @@
 }
 
 .logo {
-  font-size: 32px;
-  margin-right: 12px;
+  font-size: var(--text-3xl);
+  margin-right: var(--spacing-3);
 }
 
 .logo-text {
-  font-size: 20px;
+  font-size: var(--text-xl);
   font-weight: bold;
-  color: #165DFF;
+  color: var(--primary-600);
 }
 
 .nav-menu {
   flex: 1;
-  margin: 0 40px;
+  margin: 0 var(--spacing-10);
   border-bottom: none;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--spacing-4);
 }
 
 .user-btn {
@@ -72,18 +72,18 @@
 /* 内容区域样式 */
 .layout-content {
   flex: 1;
-  background: #f5f5f5;
-  margin-top: 64px; /* 为固定导航栏留出空间 */
-  min-height: calc(100vh - 64px);
+  background: var(--bg-page);
+  margin-top: var(--header-height); /* 为固定导航栏留出空间 */
+  min-height: calc(100vh - var(--header-height));
   padding: 0; /* 移除默认内边距，让页面组件自己控制 */
 }
 
 /* 主内容区域样式 - 对应Layout.tsx中的layout-main */
 .layout-main {
   flex: 1;
-  /*background: #f5f5f5;*/
-  margin-top: 64px; /* 为固定导航栏留出空间 */
-  min-height: calc(100vh - 64px);
+  /*background: var(--bg-page);*/
+  margin-top: var(--header-height); /* 为固定导航栏留出空间 */
+  min-height: calc(100vh - var(--header-height));
   padding: 0; /* 移除默认内边距，让页面组件自己控制 */
   transition: margin-top 0.3s ease-in-out;
 }
@@ -95,20 +95,20 @@ body.navbar-is-hidden .layout-main {
 
 /* 底部样式 */
 .layout-footer {
-  background: #001529;
-  color: rgba(255, 255, 255, 0.65);
+  background: var(--neutral-900);
+  color: var(--neutral-400);
   text-align: center;
-  padding: 24px 0;
+  padding: var(--spacing-6) 0;
 }
 
 .footer-content {
-  max-width: 1200px;
+  max-width: var(--container-width);
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 var(--spacing-6);
 }
 
 .footer-info {
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-4);
 }
 
 .footer-info p {
@@ -119,26 +119,26 @@ body.navbar-is-hidden .layout-main {
 .footer-links {
   display: flex;
   justify-content: center;
-  gap: 24px;
+  gap: var(--spacing-6);
 }
 
 .footer-links a {
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--neutral-400);
   text-decoration: none;
   transition: color 0.3s;
 }
 
 .footer-links a:hover {
-  color: #165DFF;
+  color: var(--primary-color);
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
   .header-content {
-    padding: 0 16px;
+    padding: 0 var(--spacing-4);
     flex-wrap: wrap;
     height: auto;
-    min-height: 64px;
+    min-height: var(--header-height);
   }
   
   .nav-menu {
@@ -158,7 +158,7 @@ body.navbar-is-hidden .layout-main {
   
   .footer-links {
     flex-wrap: wrap;
-    gap: 16px;
+    gap: var(--spacing-4);
   }
   
   .layout-content {
@@ -172,12 +172,12 @@ body.navbar-is-hidden .layout-main {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: #f8fafc;
+  background: var(--bg-page);
 }
 
 .app-content {
-  margin-top: 64px; /* 为固定导航栏留出空间 */
-  min-height: calc(100vh - 64px); /* 确保内容区域至少占满屏幕 */
+  margin-top: var(--header-height); /* 为固定导航栏留出空间 */
+  min-height: calc(100vh - var(--header-height)); /* 确保内容区域至少占满屏幕 */
   display: flex;
   flex-direction: column;
 }
@@ -189,9 +189,9 @@ body.navbar-is-hidden .layout-main {
 
 /* 页面容器 */
 .page-container {
-  max-width: 1230px;
+  max-width: var(--container-width);
   margin: 0 auto;
-  padding: 20px;
+  padding: var(--spacing-5);
 }
 
 /* 响应式设计 */
@@ -202,13 +202,13 @@ body.navbar-is-hidden .layout-main {
   }
   
   .page-container {
-    padding: 15px;
+    padding: var(--spacing-4);
   }
 }
 
 @media (max-width: 480px) {
   .page-container {
-    padding: 10px;
+    padding: var(--spacing-2-5);
   }
 }
 
@@ -257,11 +257,11 @@ body.navbar-is-hidden .layout-main {
 
 .error-container h2 {
   margin-bottom: 16px;
-  color: #f53f3f;
+  color: var(--danger-color);
 }
 
 .error-container p {
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 24px;
 }
 
@@ -271,14 +271,14 @@ body.navbar-is-hidden .layout-main {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--neutral-100);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: var(--neutral-300);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
+  background: var(--neutral-400);
 } 

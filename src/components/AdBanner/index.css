@@ -29,6 +29,15 @@
   margin-bottom: 24px;
 }
 
+/* 运营位：全局横条（global_strip）不保留上下留白，避免挤占首屏 */
+.ad-banner--slot-global_strip.ad-banner-top {
+  margin-bottom: 0;
+}
+
+.ad-banner--slot-global_strip .html-banner-container {
+  margin-bottom: 0;
+}
+
 .ad-banner-top .banner-single {
   position: relative;
   border-radius: 12px;
@@ -58,6 +67,50 @@
   color: #fff;
   font-size: 16px;
   font-weight: 500;
+}
+
+.banner-text-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.banner-text-item {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.banner-text-item:hover {
+  border-color: var(--primary-300);
+  background: var(--bg-hover);
+}
+
+.banner-text-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.banner-text-badge {
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  color: #fff;
+  background: var(--primary-color);
+}
+
+.banner-text-desc {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
 }
 
 /* 轮播样式 */

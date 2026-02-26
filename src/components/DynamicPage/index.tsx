@@ -470,7 +470,15 @@ const DynamicPage: React.FC<DynamicPageProps> = ({ slug, pageType }) => {
 
           {/* 广告位 - 放在设计文章下方 */}
           {!isSearchMode && (
-            <AdBanner pageSlug={slug} position="top" limit={1} />
+            <AdBanner
+              pageSlug={slug}
+              position="top"
+              limit={1}
+              commercialSlotKey="category-inline-ad"
+              commercialSlotType="category_ad"
+              commercialScopeType="category"
+              commercialScopeValue={slug}
+            />
           )}
 
           {/* 搜索结果 */}
