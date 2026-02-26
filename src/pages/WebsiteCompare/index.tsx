@@ -367,6 +367,9 @@ async function fetchCompareAiAnalysis(leftIdOrSlug: string, rightIdOrSlug: strin
   const response = await api.post('/compare/websites/ai-analysis', {
     leftIdOrSlug,
     rightIdOrSlug,
+  }, {
+    // AI 对比分析可能超过默认 10 秒，单独放宽超时
+    timeout: 90000,
   });
   return unwrapApiResponse<CompareAiAnalysisResult>(response.data, {});
 }

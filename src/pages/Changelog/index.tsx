@@ -68,6 +68,18 @@ const platformLinks = [
 // 更新记录数据
 const changelogData = [
   {
+    version: '3.0.0-beta.7',
+    date: '2026-02-26',
+    title: '热榜/榜单布局优化与站点访问数据高级版',
+    changes: [
+      { type: 'feature', text: '新增站点访问数据（高级版）模型与后台录入：月访问量、停留时长、页数、跳出率、来源占比' },
+      { type: 'feature', text: '个人中心新增收藏网址与点赞网站列表（前后端打通）' },
+      { type: 'feature', text: '网址对比页新增 AI 分析对比模块（受商业版 AI 能力控制）' },
+      { type: 'improve', text: '每日热榜与榜单页布局改造，支持多平台展示与双栏榜单布局' },
+      { type: 'improve', text: '广告管理页面增加前端显示位置说明与快捷预览入口，降低运营配置门槛' },
+    ]
+  },
+  {
     version: '3.0.0-beta.6',
     date: '2026-02-26',
     title: '商业版运营模块与详情页对比能力增强',

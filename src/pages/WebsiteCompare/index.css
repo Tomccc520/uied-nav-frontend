@@ -139,9 +139,27 @@
 
 .website-compare-section-title {
   margin: 0 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 1rem;
   color: #0f172a;
   font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  padding: 4px 10px 4px 6px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(248,250,252,0.92), rgba(241,245,249,0.88));
+  border: 1px solid rgba(15, 23, 42, 0.05);
+}
+
+.website-compare-section-title::before {
+  content: '';
+  width: 4px;
+  height: 18px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #2563eb, #0ea5e9);
+  flex-shrink: 0;
 }
 
 .website-compare-table-wrap {
