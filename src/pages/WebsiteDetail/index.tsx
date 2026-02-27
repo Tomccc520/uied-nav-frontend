@@ -16,6 +16,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import api from '../../services/api';
 import { useLicense, FEATURES } from '../../hooks/useLicense';
+import { useUser } from '../../contexts/UserContext';
 import SEO from '../../components/SEO';
 import Sidebar from './Sidebar';
 import RelatedWebsites from './RelatedWebsites';
@@ -119,6 +120,7 @@ interface WebsitePreviewSnapshotData {
   url?: string;
   source?: string;
   fallback?: boolean;
+  fallbackUrls?: string[];
 }
 
 interface DetailPageConfig {
@@ -502,6 +504,7 @@ const WebsiteDetailPage: React.FC = () => {
   const { idOrSlug } = useParams<{ idOrSlug?: string }>();
   const navigate = useNavigate();
   const { isLoading: licenseLoading, hasFeature } = useLicense();
+  const { user, isLoggedIn } = useUser();
   
   const [website, setWebsite] = useState<WebsiteDetailData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -510,7 +513,9 @@ const WebsiteDetailPage: React.FC = () => {
   const [relatedLoading, setRelatedLoading] = useState<boolean>(false);
   const [websiteTags, setWebsiteTags] = useState<WebsiteTag[]>([]);
   const [detailPageConfig, setDetailPageConfig] = useState<DetailPageConfig>(DEFAULT_DETAIL_PAGE_CONFIG);
+  const [detailPageConfigLoaded, setDetailPageConfigLoaded] = useState<boolean>(false);
   const [backendPreviewSnapshotUrl, setBackendPreviewSnapshotUrl] = useState<string>('');
+  const [backendPreviewFallbackUrls, setBackendPreviewFallbackUrls] = useState<string[]>([]);
   const [heroAccentRgb, setHeroAccentRgb] = useState<string | null>(null);
   const [comparePickerOpen, setComparePickerOpen] = useState(false);
   const [compareTargetInput, setCompareTargetInput] = useState('');
@@ -520,6 +525,7 @@ const WebsiteDetailPage: React.FC = () => {
   const [compareTagCandidates, setCompareTagCandidates] = useState<RelatedWebsite[]>([]);
   const [compareCandidatesLoading, setCompareCandidatesLoading] = useState(false);
   const [heroInfoTab, setHeroInfoTab] = useState<'summary' | 'data' | 'tags'>('summary');
+  const [previewFallbackIndex, setPreviewFallbackIndex] = useState<number>(0);
   
   // 图片灯箱状态
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -612,11 +618,14 @@ const WebsiteDetailPage: React.FC = () => {
    */
   const fetchDetailPageConfig = useCallback(async () => {
     try {
+      setDetailPageConfigLoaded(false);
       const config = await publicSettingService.getDetailPageConfig();
       setDetailPageConfig({ ...DEFAULT_DETAIL_PAGE_CONFIG, ...(config || {}) });
     } catch (err) {
       debugLog.warn('获取详情页配置失败，使用默认配置:', err);
       setDetailPageConfig(DEFAULT_DETAIL_PAGE_CONFIG);
+    } finally {
+      setDetailPageConfigLoaded(true);
     }
   }, []);
 
@@ -631,14 +640,27 @@ const WebsiteDetailPage: React.FC = () => {
   }, [fetchDetailPageConfig]);
 
   /**
+   * 当网站数据变化时，重置预览图回退索引，确保优先展示最高优先级图片源
+   */
+  useEffect(() => {
+    setPreviewFallbackIndex(0);
+  }, [website?.id, website?.thumbnail, website?.screenshots, backendPreviewSnapshotUrl, backendPreviewFallbackUrls]);
+
+  /**
    * 当后台未上传预览图/截图时，优先尝试后端本地截图服务（Playwright 缓存），失败再由前端 mShots 兜底
    */
   useEffect(() => {
     let cancelled = false;
 
     const fetchPreviewSnapshot = async () => {
+      // 等待详情页配置加载完成，避免先用默认配置请求后又被真实配置覆盖导致“闪一下消失”
+      if (!detailPageConfigLoaded) {
+        return;
+      }
+
       if (!website?.id) {
         setBackendPreviewSnapshotUrl('');
+        setBackendPreviewFallbackUrls([]);
         return;
       }
       const localScreenshots = Array.isArray(website.screenshots)
@@ -646,6 +668,7 @@ const WebsiteDetailPage: React.FC = () => {
         : (website.screenshots ? [ website.screenshots ] : []);
       if (website.thumbnail || localScreenshots.length > 0) {
         setBackendPreviewSnapshotUrl('');
+        setBackendPreviewFallbackUrls([]);
         return;
       }
 
@@ -654,6 +677,7 @@ const WebsiteDetailPage: React.FC = () => {
         detailPageConfig.previewSnapshotAllowFallbackMshots === false
       ) {
         setBackendPreviewSnapshotUrl('');
+        setBackendPreviewFallbackUrls([]);
         return;
       }
 
@@ -665,6 +689,10 @@ const WebsiteDetailPage: React.FC = () => {
         const payload = unwrapApiResponse<WebsitePreviewSnapshotData | null>(response.data, null);
         if (cancelled) return;
         const previewUrl = String(payload?.url || '').trim();
+        const fallbackUrls = Array.isArray(payload?.fallbackUrls)
+          ? payload!.fallbackUrls!.map(item => String(item || '').trim()).filter(Boolean)
+          : [];
+        setBackendPreviewFallbackUrls(fallbackUrls);
         if (!previewUrl) {
           setBackendPreviewSnapshotUrl('');
           return;
@@ -673,9 +701,8 @@ const WebsiteDetailPage: React.FC = () => {
           previewUrl.startsWith('/uploads/') ? getFullImageUrl(previewUrl) : previewUrl
         );
       } catch (error) {
-        if (!cancelled) {
-          setBackendPreviewSnapshotUrl('');
-        }
+        // 保持已有成功截图，避免接口二次请求失败时把已显示的预览图清空
+        if (cancelled) return;
       }
     };
 
@@ -684,6 +711,7 @@ const WebsiteDetailPage: React.FC = () => {
       cancelled = true;
     };
   }, [
+    detailPageConfigLoaded,
     website?.id,
     website?.thumbnail,
     website?.screenshots,
@@ -879,7 +907,6 @@ const WebsiteDetailPage: React.FC = () => {
     ...websiteTags.map(t => t.name)
   ].filter((v, i, a) => a.indexOf(v) === i);
   const displayUpdatedDate = formatDetailDateLabel(website.updatedAt || website.createdAt);
-  const displayCreatedDate = formatDetailDateLabel(website.createdAt);
   const displayHost = getWebsiteHostLabel(website.url);
   const displayProtocol = getWebsiteProtocolLabel(website.url);
   const displayAverageRating = typeof website.averageRating === 'number'
@@ -899,16 +926,35 @@ const WebsiteDetailPage: React.FC = () => {
   const spacingDensity = normalizeDetailSpacingDensity(detailPageConfig.spacingDensity);
   const labelVisualStyle = normalizeDetailLabelVisualStyle(detailPageConfig.labelVisualStyle);
   const showDataPanel = detailPageConfig.dataPanelEnabled !== false;
-  const dataPanelTitle = String(detailPageConfig.dataPanelTitle || '站点访问数据').trim() || '站点访问数据';
-  const heroPreviewImage = website.thumbnail
-    ? getFullImageUrl(website.thumbnail)
-    : (screenshots.length > 0
-      ? getFullImageUrl(screenshots[0])
-      : (backendPreviewSnapshotUrl || (
-        detailPageConfig.previewSnapshotAllowFallbackMshots === false
-          ? ''
-          : getWebsiteAutoScreenshotUrl(website.url)
-      )));
+  const dataPanelTitle = String(detailPageConfig.dataPanelTitle || '站点数据').trim() || '站点数据';
+  /**
+   * 构建预览图候选链路：上传缩略图 > 后台截图数组 > 后端Playwright缓存 > mShots兜底
+   */
+  const previewImageCandidates = (() => {
+    const list: string[] = [];
+    if (website.thumbnail) {
+      list.push(getFullImageUrl(website.thumbnail));
+    }
+    if (screenshots.length > 0) {
+      screenshots.forEach((item) => {
+        const normalized = getFullImageUrl(item);
+        if (normalized) {
+          list.push(normalized);
+        }
+      });
+    }
+    if (backendPreviewSnapshotUrl) {
+      list.push(backendPreviewSnapshotUrl);
+    }
+    if (backendPreviewFallbackUrls.length > 0) {
+      backendPreviewFallbackUrls.forEach((item) => list.push(item));
+    }
+    if (detailPageConfig.previewSnapshotAllowFallbackMshots !== false) {
+      list.push(getWebsiteAutoScreenshotUrl(website.url));
+    }
+    return Array.from(new Set(list.filter(Boolean)));
+  })();
+  const heroPreviewImage = previewImageCandidates[previewFallbackIndex] || '';
   const currentCompareIdentifier = website.slug || website.id;
   const trafficMetrics = website.trafficMetrics || null;
   const websiteDataItems: DetailDataPanelItem[] = [
@@ -924,15 +970,11 @@ const WebsiteDetailPage: React.FC = () => {
       label: '跳出率',
       value: Number(trafficMetrics?.bounceRate || 0) > 0 ? `${Number(trafficMetrics?.bounceRate || 0).toFixed(2)}%` : '未录入',
     },
-    { key: 'protocol', label: '协议', value: displayProtocol || '未知' },
-    { key: 'screenshots', label: '截图', value: screenshots.length > 0 ? `${screenshots.length} 张` : '暂无' },
-    { key: 'tags', label: '标签', value: allTags.length > 0 ? `${allTags.length} 个` : '暂无' },
-    { key: 'category', label: '分类', value: website.category?.name || '未分类' },
     { key: 'likes', label: '点赞', value: `${website.likeCount || 0}` },
     { key: 'favorites', label: '收藏', value: `${website.totalFavorites || 0}` },
     { key: 'comments', label: '评论', value: `${website.commentsCount || 0}` },
     { key: 'ratings', label: '评分数', value: `${website.totalRatings || 0}` },
-    { key: 'created', label: '收录', value: displayCreatedDate || '未知' },
+    { key: 'category', label: '分类', value: website.category?.name || '未分类' },
     { key: 'updated', label: '更新', value: displayUpdatedDate || '未知' },
   ];
   const trafficSourceItems: DetailTrafficSourceItem[] = [
@@ -1043,6 +1085,18 @@ const WebsiteDetailPage: React.FC = () => {
       ['--detail-accent-rgb' as string]: heroAccentRgb || '59, 130, 246',
     } as React.CSSProperties);
 
+  /**
+   * 预览图加载失败时自动回退到下一候选源，避免出现“闪一下后消失”的体验问题
+   */
+  const handlePreviewImageError = () => {
+    setPreviewFallbackIndex((current) => {
+      if (current >= previewImageCandidates.length - 1) {
+        return current;
+      }
+      return current + 1;
+    });
+  };
+
   return (
     <div
       className={[
@@ -1151,7 +1205,7 @@ const WebsiteDetailPage: React.FC = () => {
                         <FavoriteButton
                           websiteId={website.id}
                           initialFavorited={website.isFavorited ?? false}
-                          userId={undefined}
+                          userId={isLoggedIn ? String(user?.id || '') : undefined}
                           onFavoriteChange={handleFavoriteChange}
                         />
                       )}
@@ -1302,6 +1356,7 @@ const WebsiteDetailPage: React.FC = () => {
                             src={heroPreviewImage}
                             alt={`${website.name} 预览`}
                             loading="lazy"
+                            onError={handlePreviewImageError}
                           />
                         </div>
                       </button>
@@ -1465,7 +1520,8 @@ const WebsiteDetailPage: React.FC = () => {
                 <CommentsSection
                   websiteId={website.id}
                   initialCount={website.commentsCount ?? 0}
-                  userId={undefined}
+                  userId={isLoggedIn ? String(user?.id || '') : undefined}
+                  userName={String(user?.nickname || user?.username || '').trim() || undefined}
                 />
               </section>
             )}
@@ -1535,7 +1591,7 @@ const WebsiteDetailPage: React.FC = () => {
         <div className="lightbox" onClick={() => setLightboxOpen(false)}>
           <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
             <button className="lightbox-close" onClick={() => setLightboxOpen(false)}>×</button>
-            <img src={heroPreviewImage} alt={`${website.name} 预览`} />
+            <img src={heroPreviewImage} alt={`${website.name} 预览`} onError={handlePreviewImageError} />
           </div>
         </div>
       ) : screenshots.length > 0 && (

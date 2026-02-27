@@ -313,10 +313,10 @@ const DailyHotPage: React.FC = () => {
       <div className="daily-hot-page__container">
         <header className="daily-hot-page__hero">
           <div className="daily-hot-page__hero-content">
-            <div className="daily-hot-page__eyebrow">热点聚合 / 可运营模块</div>
+            <div className="daily-hot-page__eyebrow">第三方热榜接口聚合 / 可运营模块</div>
             <h1 className="daily-hot-page__title">{pageTitle}</h1>
             <p className="daily-hot-page__desc">
-              后台可配置默认平台与显示入口，前台按平台分段展示热点内容，适合作为导航站增长型内容页与运营入口。
+              每日热榜使用第三方热榜接口聚合数据；后台可配置默认平台与显示入口，适合作为导航站增长型内容页与运营入口。
             </p>
             <div className="daily-hot-page__meta">
               <span className="daily-hot-page__meta-chip">

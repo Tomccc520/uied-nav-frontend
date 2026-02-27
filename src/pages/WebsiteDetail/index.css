@@ -336,8 +336,8 @@
 
 .detail-data-panel__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(176px, 1fr));
+  gap: 12px;
 }
 
 .detail-data-panel__item {
@@ -345,17 +345,17 @@
   border-radius: 10px;
   border: 1px solid rgba(15, 23, 42, 0.05);
   background: rgba(248, 250, 252, 0.72);
-  padding: 11px 12px;
+  padding: 12px 13px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
 }
 
 .detail-data-panel__label {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 13px;
   color: #64748b;
   line-height: 1;
 }
@@ -372,10 +372,10 @@
 
 .detail-data-panel__value {
   min-width: 0;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
   color: #0f172a;
-  line-height: 1.45;
+  line-height: 1.35;
   text-align: left;
   word-break: break-word;
 }

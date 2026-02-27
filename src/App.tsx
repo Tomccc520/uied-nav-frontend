@@ -79,6 +79,7 @@ function App() {
             {/* @pro-feature-start: articles */}
             <Route path="/articles" element={<ArticleList />} />
             <Route path="/article/:slug" element={<ArticleDetail />} />
+            <Route path="/articles/:slug" element={<ArticleDetail />} />
             {/* @pro-feature-end: articles */}
             
             <Route path="/search" element={<SearchPage />} />

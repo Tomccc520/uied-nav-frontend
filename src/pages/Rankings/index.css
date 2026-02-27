@@ -130,22 +130,26 @@
 .rankings-page__metric-tabs,
 .rankings-page__period-tabs {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: thin;
   gap: 8px;
+  padding-bottom: 2px;
 }
 
 .rankings-page__metric-tab,
 .rankings-page__period-tab {
-  height: 36px;
-  padding: 0 12px;
-  border-radius: 10px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 12px;
   border: 1px solid rgba(15,23,42,0.08);
-  background: #fff;
+  background: rgba(248,250,252,0.85);
   color: #0f172a;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex: 0 0 auto;
 }
 
 .rankings-page__metric-tab:hover,
@@ -157,9 +161,9 @@
 .rankings-page__metric-tab.is-active,
 .rankings-page__period-tab.is-active {
   color: #1d4ed8;
-  border-color: rgba(59,130,246,0.24);
-  background: rgba(239,246,255,0.85);
-  box-shadow: inset 0 0 0 1px rgba(59,130,246,0.06);
+  border-color: rgba(59,130,246,0.26);
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(239,246,255,0.85));
+  box-shadow: inset 0 0 0 1px rgba(59,130,246,0.08);
 }
 
 .rankings-page__period-tab:disabled {

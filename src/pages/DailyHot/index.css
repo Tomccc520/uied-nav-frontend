@@ -15,7 +15,7 @@
 }
 
 .daily-hot-page__container {
-  width: min(1280px, calc(100% - 24px));
+  width: min(1320px, calc(100% - 24px));
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -50,7 +50,7 @@
 
 .daily-hot-page__title {
   margin: 0 0 8px;
-  font-size: clamp(1.6rem, 2.8vw, 2.35rem);
+  font-size: clamp(1.45rem, 2.4vw, 2.05rem);
   line-height: 1.15;
   letter-spacing: -0.02em;
   color: #0f172a;
@@ -59,7 +59,8 @@
 .daily-hot-page__desc {
   margin: 0;
   color: #64748b;
-  line-height: 1.65;
+  line-height: 1.6;
+  font-size: 14px;
   max-width: 780px;
 }
 
@@ -154,8 +155,11 @@
 
 .daily-hot-page__platform-chip-list {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: thin;
   gap: 8px;
+  padding-bottom: 2px;
 }
 
 .daily-hot-page__platform-chip {
@@ -172,6 +176,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex: 0 0 auto;
 }
 
 .daily-hot-page__platform-chip.is-default {
@@ -282,7 +287,7 @@
   background:
     linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,1)),
     radial-gradient(65% 100% at 0% 0%, rgba(59,130,246,0.04), transparent 70%);
-  padding: 12px;
+  padding: 10px;
   scroll-margin-top: 92px;
   position: relative;
   overflow: hidden;
@@ -306,7 +311,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .daily-hot-page__platform-title-group {
@@ -389,12 +394,12 @@
 .daily-hot-page__platform-list {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 7px;
+  gap: 8px;
 }
 
 .daily-hot-page__item {
   display: grid;
-  grid-template-columns: 30px minmax(0, 1fr) auto;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
   border-radius: 12px;
@@ -404,13 +409,13 @@
   padding: 8px 10px;
   text-decoration: none;
   transition: all 0.2s ease;
-  min-height: 58px;
+  min-height: 56px;
 }
 
 .daily-hot-page__item--featured {
   grid-column: 1 / -1;
-  grid-template-columns: 42px minmax(0, 1fr) 132px;
-  min-height: 104px;
+  grid-template-columns: 38px minmax(0, 1fr) 112px;
+  min-height: 96px;
   gap: 10px;
   padding: 10px;
   border-color: rgba(59, 130, 246, 0.12);
@@ -427,12 +432,12 @@
 }
 
 .daily-hot-page__item--featured .daily-hot-page__item-title {
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .daily-hot-page__rank {
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   border-radius: 10px;
   background: rgba(148, 163, 184, 0.14);
   color: #475569;
@@ -485,22 +490,31 @@
 .daily-hot-page__item-meta {
   margin-top: 4px;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  align-items: center;
+  gap: 6px;
   color: #64748b;
   font-size: 11px;
 }
 
 .daily-hot-page__item-hot {
-  color: #ea580c;
+  color: #c2410c;
   font-weight: 600;
+  background: rgba(251, 146, 60, 0.12);
+  border-radius: 999px;
+  padding: 1px 7px;
+  line-height: 18px;
+}
+
+.daily-hot-page__item-time {
+  color: #64748b;
+  line-height: 18px;
 }
 
 .daily-hot-page__item-desc {
-  margin-top: 4px;
+  margin-top: 3px;
   color: #64748b;
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
@@ -524,9 +538,9 @@
 }
 
 .daily-hot-page__item--featured .daily-hot-page__item-cover {
-  width: 132px;
-  height: 84px;
-  border-radius: 12px;
+  width: 112px;
+  height: 72px;
+  border-radius: 10px;
 }
 
 .daily-hot-page__item-cover img {
@@ -547,6 +561,18 @@
   padding: 12px;
   color: #64748b;
   font-size: 13px;
+}
+
+@media (min-width: 1600px) {
+  .daily-hot-page__sections--all {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1199px) {
+  .daily-hot-page__sections--all {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 1024px) {
@@ -597,8 +623,7 @@
   }
 
   .daily-hot-page__platform-chip-list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .daily-hot-page__platform-chip {
@@ -653,10 +678,6 @@
 }
 
 @media (max-width: 480px) {
-  .daily-hot-page__platform-chip-list {
-    grid-template-columns: 1fr;
-  }
-
   .daily-hot-page__title {
     font-size: 1.45rem;
   }

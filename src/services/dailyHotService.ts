@@ -48,6 +48,46 @@ interface DailyHotBackendAggregateResponse {
 }
 
 /**
+ * 将热榜时间字段规范化为可读时间（兼容毫秒/秒级时间戳）
+ */
+const normalizeDailyHotTimestamp = (value: unknown): string => {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+
+  // 已是常见可读格式时直接返回，避免重复格式化
+  if (/[-/:年月日]/.test(raw) && !/^\d+$/.test(raw)) {
+    return raw;
+  }
+
+  if (!/^\d{10,13}$/.test(raw)) {
+    return raw;
+  }
+
+  const numeric = Number(raw);
+  if (!Number.isFinite(numeric) || numeric <= 0) {
+    return raw;
+  }
+
+  const timestampMs = raw.length === 10 ? numeric * 1000 : numeric;
+  const date = new Date(timestampMs);
+  if (Number.isNaN(date.getTime())) {
+    return raw;
+  }
+
+  try {
+    return new Intl.DateTimeFormat('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(date);
+  } catch (error) {
+    return raw;
+  }
+};
+
+/**
  * 判断是否为 404 错误（用于前后端版本短暂不一致时兜底重试）
  */
 const is404Error = (error: unknown): boolean => {
@@ -85,7 +125,7 @@ const mapDailyHotItem = (item: DailyHotBackendItemRow): DailyHotItem => {
     hotValue: item?.hot ?? '',
     desc: String(item?.desc || ''),
     cover: String(item?.cover || ''),
-    timestamp: String(item?.timestamp || ''),
+    timestamp: normalizeDailyHotTimestamp(item?.timestamp),
   };
 };
 

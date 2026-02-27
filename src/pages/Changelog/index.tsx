@@ -68,6 +68,27 @@ const platformLinks = [
 // 更新记录数据
 const changelogData = [
   {
+    version: '3.0.0-rc.1',
+    date: '2026-02-27',
+    title: '首发候选包生成与发布健康检查通过',
+    changes: [
+      { type: 'feature', text: '完成商业版首发候选包（first-pro 预设）打包，支持按许可证交付而非代码分叉' },
+      { type: 'improve', text: '发布前健康检查增强并实测通过（FAIL=0），覆盖接口、路由、菜单、配置、数据与前台关键页面' },
+      { type: 'fix', text: '修复用户中心网址互动接口鉴权（收藏/点赞/评论列表 403），前后端联调可用' },
+    ]
+  },
+  {
+    version: '3.0.0-beta.8',
+    date: '2026-02-26',
+    title: '用户中心评论链路打通与分页对接修复',
+    changes: [
+      { type: 'feature', text: '个人中心新增“我的评论”Tab，支持文章评论与网址评论双列表展示' },
+      { type: 'feature', text: '后端新增用户评论接口：/api/user/article/comment/list 与 /api/user/website/comment/list' },
+      { type: 'improve', text: '用户中心分页参数兼容增强：统一支持 page / pageNo，修复部分列表翻页失效问题' },
+      { type: 'improve', text: '个人中心统计卡片新增“网站收藏”“网站点赞”两项，运营侧可直观看到互动沉淀' },
+    ]
+  },
+  {
     version: '3.0.0-beta.7',
     date: '2026-02-26',
     title: '热榜/榜单布局优化与站点访问数据高级版',

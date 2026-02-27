@@ -162,8 +162,8 @@ body.navbar-is-hidden .layout-main {
   }
   
   .layout-content {
-    margin-top: 56px; /* 移动端导航栏高度较小 */
-    min-height: calc(100vh - 56px);
+    margin-top: var(--header-height);
+    min-height: calc(100vh - var(--header-height));
   }
 }
 
@@ -197,8 +197,8 @@ body.navbar-is-hidden .layout-main {
 /* 响应式设计 */
 @media (max-width: 768px) {
   .app-content {
-    margin-top: 56px;
-    min-height: calc(100vh - 56px);
+    margin-top: var(--header-height);
+    min-height: calc(100vh - var(--header-height));
   }
   
   .page-container {

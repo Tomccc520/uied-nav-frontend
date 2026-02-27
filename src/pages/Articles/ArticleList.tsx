@@ -70,6 +70,16 @@ const ArticleList: React.FC<ArticleListProps> = () => {
   const pageTitle = topicConfig?.title || (currentCategory || (currentTag ? `#${currentTag}` : listTitle));
   const pageDescription = topicConfig?.description || listDescription;
   const themeColor = topicConfig?.themeColor || '#3b82f6';
+  const activeFilterSummary = useMemo(() => {
+    const summary: Array<{ key: string; label: string }> = [];
+    if (currentCategory) {
+      summary.push({ key: 'category', label: `分类：${currentCategory}` });
+    }
+    if (currentTag) {
+      summary.push({ key: 'tag', label: `标签：#${currentTag}` });
+    }
+    return summary;
+  }, [currentCategory, currentTag]);
 
   /**
    * 获取文章数据
@@ -236,6 +246,38 @@ const ArticleList: React.FC<ArticleListProps> = () => {
 
         {/* 内容区域 */}
         <section className="article-content-area">
+          <div className="article-result-toolbar">
+            <div className="article-result-toolbar__meta">
+              <span className="article-result-toolbar__count">共 {pagination.total} 篇</span>
+              {pagination.totalPages > 1 && (
+                <span className="article-result-toolbar__page">第 {pagination.page}/{pagination.totalPages} 页</span>
+              )}
+            </div>
+            {activeFilterSummary.length > 0 && (
+              <div className="article-result-toolbar__filters">
+                {activeFilterSummary.map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    className="article-result-toolbar__chip"
+                    onClick={() => updateParams(item.key, '')}
+                    title="点击移除筛选"
+                  >
+                    {item.label}
+                    <span>×</span>
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className="article-result-toolbar__reset"
+                  onClick={() => setSearchParams(new URLSearchParams())}
+                >
+                  清空筛选
+                </button>
+              </div>
+            )}
+          </div>
+
           {loading ? (
             <div className="article-loading">
               <div className="spinner"></div>

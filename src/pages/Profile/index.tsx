@@ -11,7 +11,7 @@ import { userService } from '../../services/userService';
 import { getUserCollectedArticles, getUserLikedArticles } from '../../services/articleService';
 import './Profile.css';
 
-type ActiveTab = 'profile' | 'collections' | 'likes' | 'messages' | 'orders' | 'security';
+type ActiveTab = 'profile' | 'collections' | 'likes' | 'comments' | 'messages' | 'orders' | 'security';
 
 /**
  * 兼容驼峰/下划线字段读取
@@ -41,6 +41,13 @@ const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ActiveTab>('profile');
   const [stats, setStats] = useState<{ orderCount?: number; licenseCount?: number; registerDays?: number }>({});
+  const [contentStats, setContentStats] = useState<{
+    websiteFavoriteTotal: number;
+    websiteLikeTotal: number;
+  }>({
+    websiteFavoriteTotal: 0,
+    websiteLikeTotal: 0,
+  });
 
   // 如果未登录，重定向到首页
   useEffect(() => {
@@ -56,6 +63,27 @@ const ProfilePage: React.FC = () => {
       .catch(() => setStats({}));
   }, [isLoggedIn]);
 
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    /**
+     * 拉取用户中心内容互动统计（收藏/点赞），用于首页卡片快速展示。
+     */
+    Promise.allSettled([
+      userService.getWebsiteFavoriteList({ page: 1, pageSize: 1 }),
+      userService.getWebsiteLikeList({ page: 1, pageSize: 1 }),
+    ]).then(([favoriteRes, likeRes]) => {
+      setContentStats({
+        websiteFavoriteTotal: favoriteRes.status === 'fulfilled' ? Number(favoriteRes.value?.total || 0) : 0,
+        websiteLikeTotal: likeRes.status === 'fulfilled' ? Number(likeRes.value?.total || 0) : 0,
+      });
+    }).catch(() => {
+      setContentStats({
+        websiteFavoriteTotal: 0,
+        websiteLikeTotal: 0,
+      });
+    });
+  }, [isLoggedIn]);
+
   if (loading || !user) {
     return <div className="loading-state">加载中...</div>;
   }
@@ -68,6 +96,8 @@ const ProfilePage: React.FC = () => {
         return <CollectionsList />;
       case 'likes':
         return <LikesList />;
+      case 'comments':
+        return <CommentsList />;
       case 'messages':
         return <MessagesList />;
       case 'orders':
@@ -108,6 +138,14 @@ const ProfilePage: React.FC = () => {
               <div className="user-card-stat">
                 <div className="user-card-stat__value">{Number(stats.registerDays || 0)}</div>
                 <div className="user-card-stat__label">注册天数</div>
+              </div>
+              <div className="user-card-stat">
+                <div className="user-card-stat__value">{Number(contentStats.websiteFavoriteTotal || 0)}</div>
+                <div className="user-card-stat__label">网站收藏</div>
+              </div>
+              <div className="user-card-stat">
+                <div className="user-card-stat__value">{Number(contentStats.websiteLikeTotal || 0)}</div>
+                <div className="user-card-stat__label">网站点赞</div>
               </div>
             </div>
           </div>
@@ -160,6 +198,15 @@ const ProfilePage: React.FC = () => {
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
               </svg>
               我的点赞
+            </div>
+            <div 
+              className={`menu-item ${activeTab === 'comments' ? 'active' : ''}`}
+              onClick={() => setActiveTab('comments')}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+              我的评论
             </div>
             <div 
               className={`menu-item ${activeTab === 'security' ? 'active' : ''}`}
@@ -587,6 +634,103 @@ const LikesList: React.FC = () => {
                       </a>
                       <div className="item-meta">
                         <span>点赞于 {formatUserDate(pickValue(item, ['createTime', 'created_at']))}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+// 子组件：评论列表
+const CommentsList: React.FC = () => {
+  const [articleList, setArticleList] = useState<any[]>([]);
+  const [websiteList, setWebsiteList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    /**
+     * 并行拉取用户文章评论与网址评论，减少首屏等待时间。
+     */
+    Promise.allSettled([
+      userService.getArticleCommentList({ page: 1, pageSize: 20 }),
+      userService.getWebsiteCommentList({ page: 1, pageSize: 20 }),
+    ])
+      .then(([articleRes, websiteRes]) => {
+        setArticleList(articleRes.status === 'fulfilled' ? (articleRes.value?.lists || []) : []);
+        setWebsiteList(websiteRes.status === 'fulfilled' ? (websiteRes.value?.lists || []) : []);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div>加载中...</div>;
+  const hasData = articleList.length > 0 || websiteList.length > 0;
+
+  return (
+    <div>
+      <div className="content-header">
+        <h2 className="content-title">我的评论</h2>
+      </div>
+      {!hasData ? (
+        <div className="empty-state">
+          <span className="empty-icon">评论</span>
+          暂无评论内容
+        </div>
+      ) : (
+        <>
+          {websiteList.length > 0 && (
+            <div className="profile-subsection">
+              <div className="profile-subsection__title">网址评论 ({websiteList.length})</div>
+              <div className="collections-list">
+                {websiteList.map(item => (
+                  <div key={`website-comment-${item.id}`} className="list-item">
+                    <div className="item-main">
+                      <a href={`/website/${pickValue(item?.target, ['slug'], pickValue(item, ['targetId'], ''))}`} className="item-title">
+                        {pickValue(item?.target, ['title'], '未知网址')}
+                      </a>
+                      <div className="item-meta">
+                        <span>{pickValue(item?.target, ['url'], '')}</span>
+                        <span>状态 {pickValue(item, ['status'], 'approved')}</span>
+                        <span>点赞 {pickValue(item, ['likeCount'], 0)}</span>
+                      </div>
+                      <div className="item-meta" style={{ marginTop: 6 }}>
+                        <span>{pickValue(item, ['content'], '')}</span>
+                      </div>
+                      <div className="item-meta" style={{ marginTop: 6 }}>
+                        <span>评论于 {formatUserDate(pickValue(item, ['createTime']))}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {articleList.length > 0 && (
+            <div className="profile-subsection">
+              <div className="profile-subsection__title">文章评论 ({articleList.length})</div>
+              <div className="collections-list">
+                {articleList.map(item => (
+                  <div key={`article-comment-${item.id}`} className="list-item">
+                    <div className="item-main">
+                      <a href={`/article/${pickValue(item?.target, ['slug'], pickValue(item, ['targetId'], ''))}`} className="item-title">
+                        {pickValue(item?.target, ['title'], '未知文章')}
+                      </a>
+                      <div className="item-meta">
+                        <span>状态 {pickValue(item, ['status'], 'approved')}</span>
+                        <span>点赞 {pickValue(item, ['likeCount'], 0)}</span>
+                      </div>
+                      <div className="item-meta" style={{ marginTop: 6 }}>
+                        <span>{pickValue(item, ['content'], '')}</span>
+                      </div>
+                      <div className="item-meta" style={{ marginTop: 6 }}>
+                        <span>评论于 {formatUserDate(pickValue(item, ['createTime']))}</span>
                       </div>
                     </div>
                   </div>

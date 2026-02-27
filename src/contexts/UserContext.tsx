@@ -20,6 +20,7 @@ interface UserContextValue {
 }
 
 const UserContext = createContext<UserContextValue | undefined>(undefined);
+const USER_PROFILE_CACHE_KEY = 'cached_user_profile';
 
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -32,13 +33,33 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
      */
     const initAuth = async () => {
       const token = localStorage.getItem('token');
+      const cachedProfileRaw = localStorage.getItem(USER_PROFILE_CACHE_KEY);
+      if (cachedProfileRaw) {
+        try {
+          const cachedProfile = JSON.parse(cachedProfileRaw) as User;
+          if (cachedProfile && Number(cachedProfile.id || 0) > 0) {
+            setUser(cachedProfile);
+          }
+        } catch (error) {
+          localStorage.removeItem(USER_PROFILE_CACHE_KEY);
+        }
+      }
+
       if (token) {
         try {
           const userProfile = await userService.getProfile();
           setUser(userProfile);
+          localStorage.setItem(USER_PROFILE_CACHE_KEY, JSON.stringify(userProfile));
         } catch (err) {
-          console.error('Failed to restore session:', err);
-          localStorage.removeItem('token');
+          const authInvalid = Boolean((err as any)?.authInvalid);
+          if (authInvalid) {
+            localStorage.removeItem('token');
+            localStorage.removeItem(USER_PROFILE_CACHE_KEY);
+            setUser(null);
+          } else {
+            // 网络抖动或临时接口错误时不清 token，避免频繁被动掉线
+            console.error('Restore session failed (kept token):', err);
+          }
         }
       }
       setLoading(false);
@@ -56,7 +77,9 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const { token, user: userData, userInfo } = await userService.login(params);
       localStorage.setItem('token', token);
       // 优先使用 userInfo，如果不存在则使用 user
-      setUser(userInfo || userData);
+      const nextUser = userInfo || userData;
+      setUser(nextUser);
+      localStorage.setItem(USER_PROFILE_CACHE_KEY, JSON.stringify(nextUser || {}));
     } catch (err) {
       const error = err instanceof Error ? err : new Error('登录失败');
       setError(error);
@@ -75,7 +98,9 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const { token, user: userData, userInfo } = await userService.register(params);
       localStorage.setItem('token', token);
-      setUser(userInfo || userData);
+      const nextUser = userInfo || userData;
+      setUser(nextUser);
+      localStorage.setItem(USER_PROFILE_CACHE_KEY, JSON.stringify(nextUser || {}));
     } catch (err) {
       const error = err instanceof Error ? err : new Error('注册失败');
       setError(error);
@@ -96,6 +121,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error('Logout error:', err);
     } finally {
       localStorage.removeItem('token');
+      localStorage.removeItem(USER_PROFILE_CACHE_KEY);
       setUser(null);
       setLoading(false);
     }
@@ -108,10 +134,16 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const userProfile = await userService.getProfile();
       setUser(userProfile);
+      localStorage.setItem(USER_PROFILE_CACHE_KEY, JSON.stringify(userProfile));
     } catch (err) {
-      console.error('Refresh profile error:', err);
-      // 如果获取用户信息失败（如token过期），可能需要登出
-      // 这里暂不自动登出，只记录错误
+      const authInvalid = Boolean((err as any)?.authInvalid);
+      if (authInvalid) {
+        localStorage.removeItem('token');
+        localStorage.removeItem(USER_PROFILE_CACHE_KEY);
+        setUser(null);
+      } else {
+        console.error('Refresh profile error (kept session):', err);
+      }
     }
   }, []);
 

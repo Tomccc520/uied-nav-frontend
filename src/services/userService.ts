@@ -50,6 +50,21 @@ export interface RegisterParams {
   mobile?: string;
 }
 
+interface ServiceAuthError extends Error {
+  code?: number;
+  authInvalid?: boolean;
+}
+
+/**
+ * 构建用户认证相关错误对象
+ */
+const buildAuthError = (message: string, code?: number, authInvalid = false): ServiceAuthError => {
+  const error = new Error(message) as ServiceAuthError;
+  error.code = code;
+  error.authInvalid = authInvalid;
+  return error;
+};
+
 // 用户服务
 export const userService = {
   /**
@@ -58,8 +73,12 @@ export const userService = {
   login: async (params: LoginParams): Promise<AuthResponse> => {
     const response = await api.post<AuthResponse>('/user/login', params);
     const payload = unwrapApiResponse<any>(response.data, {});
+    const token = String(payload.token || '').trim();
+    if (!token) {
+      throw buildAuthError('登录失败：未获取到有效登录令牌');
+    }
     return {
-      token: String(payload.token || ''),
+      token,
       user: payload.user || payload.userInfo || {},
       userInfo: payload.userInfo || payload.user || {},
     };
@@ -71,8 +90,12 @@ export const userService = {
   register: async (params: RegisterParams): Promise<AuthResponse> => {
     const response = await api.post<AuthResponse>('/user/register', params);
     const payload = unwrapApiResponse<any>(response.data, {});
+    const token = String(payload.token || '').trim();
+    if (!token) {
+      throw buildAuthError('注册失败：未获取到有效登录令牌');
+    }
     return {
-      token: String(payload.token || ''),
+      token,
       user: payload.user || payload.userInfo || {},
       userInfo: payload.userInfo || payload.user || {},
     };
@@ -89,8 +112,23 @@ export const userService = {
    * 获取用户信息
    */
   getProfile: async (): Promise<User> => {
-    const response = await api.get<User>('/user/profile');
-    return unwrapApiResponse<User>(response.data, {} as User);
+    const response = await api.get<any>('/user/profile');
+    const raw = response.data as Record<string, unknown>;
+    const hasWrapCode = raw && typeof raw === 'object' && 'code' in raw;
+    const code = hasWrapCode ? Number(raw.code || 0) : 0;
+    const message = String(raw?.message || raw?.msg || '').trim();
+
+    // likeadmin 前台未登录常见返回：{ code: 1001, message: '未登录', data: '' }
+    if (hasWrapCode && code !== 1 && code !== 0 && code !== 200) {
+      const authInvalid = code === 1001 || code === 332 || code === 333 || code === 403;
+      throw buildAuthError(message || '获取用户信息失败', code, authInvalid);
+    }
+
+    const profile = unwrapApiResponse<User | null>(response.data, null);
+    if (!profile || typeof profile !== 'object' || !Number((profile as any).id || 0)) {
+      throw buildAuthError('登录已失效，请重新登录', 1001, true);
+    }
+    return profile;
   },
 
   /**
@@ -218,6 +256,30 @@ export const userService = {
    */
   getWebsiteLikeList: async (params: { page?: number; pageSize?: number }): Promise<any> => {
     const response = await api.post('/user/website/like/list', {
+      ...params,
+      pageNo: params.page ?? 1,
+      pageSize: params.pageSize ?? 10,
+    });
+    return unwrapApiResponse<any>(response.data, { lists: [], total: 0, pageNo: 1, pageSize: 10 });
+  },
+
+  /**
+   * 获取用户文章评论列表
+   */
+  getArticleCommentList: async (params: { page?: number; pageSize?: number; keyword?: string; status?: string }): Promise<any> => {
+    const response = await api.post('/user/article/comment/list', {
+      ...params,
+      pageNo: params.page ?? 1,
+      pageSize: params.pageSize ?? 10,
+    });
+    return unwrapApiResponse<any>(response.data, { lists: [], total: 0, pageNo: 1, pageSize: 10 });
+  },
+
+  /**
+   * 获取用户网址评论列表
+   */
+  getWebsiteCommentList: async (params: { page?: number; pageSize?: number; keyword?: string; status?: string }): Promise<any> => {
+    const response = await api.post('/user/website/comment/list', {
       ...params,
       pageNo: params.page ?? 1,
       pageSize: params.pageSize ?? 10,

@@ -30,6 +30,7 @@ interface CommentsSectionProps {
   websiteId: string;
   initialCount?: number;
   userId?: string; // Pro 版本中从认证获取
+  userName?: string;
 }
 
 interface CommentListPayload {
@@ -165,6 +166,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
   websiteId,
   initialCount = 0,
   userId,
+  userName,
 }) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -215,12 +217,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!userId) {
-      setError('请先登录后再评论');
-      return;
-    }
-    
+
     const trimmedText = commentText.trim();
     if (!trimmedText) {
       setError('评论内容不能为空');
@@ -238,7 +235,8 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
       
       const response = await api.post(`/websites/${websiteId}/comments`, {
         text: trimmedText,
-        userId,
+        ...(userId ? { userId } : {}),
+        userName: userName || '游客',
       });
       const comment = normalizeComment(unwrapApiResponse<CommentPayload>(response.data, {}));
       if (comment.id) {
@@ -276,11 +274,11 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
       <form className="comment-form" onSubmit={handleSubmit}>
         <textarea
           className="comment-input"
-          placeholder={userId ? '写下你的评论...' : '登录后即可评论'}
+          placeholder={userId ? '写下你的评论...' : '写下你的评论（未登录将匿名发布）'}
           value={commentText}
           onChange={(e) => setCommentText(e.target.value)}
           maxLength={500}
-          disabled={!userId || submitting}
+          disabled={submitting}
         />
         <div className="comment-form-footer">
           <span className="comment-char-count">
@@ -289,14 +287,12 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
           <button 
             type="submit" 
             className="btn-submit-comment"
-            disabled={!userId || submitting || !commentText.trim()}
+            disabled={submitting || !commentText.trim()}
           >
             {submitting ? '发表中...' : '发表评论'}
           </button>
         </div>
-        {!userId && (
-          <p className="comment-login-hint">登录后即可发表评论</p>
-        )}
+        {!userId && <p className="comment-login-hint">未登录将以“游客”身份发布评论</p>}
       </form>
       
       {error && (

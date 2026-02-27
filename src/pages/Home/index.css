@@ -13,6 +13,9 @@
 .home-quick-entry {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   padding-top: var(--spacing-4);
 }
 
@@ -33,6 +36,12 @@
   color: var(--primary-color);
   border-color: var(--primary-300);
   background: var(--bg-hover);
+}
+
+.home-quick-entry-link--rankings {
+  border-color: rgba(59, 130, 246, 0.18);
+  background: rgba(239, 246, 255, 0.75);
+  color: #1d4ed8;
 }
 
 /* 顶部区域布局 */

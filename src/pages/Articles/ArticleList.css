@@ -149,6 +149,80 @@
   padding: 24px;
   margin-bottom: 40px;
   border: 1px solid rgba(0, 0, 0, 0.05); /* 移除阴影，使用微弱边框 */
+  position: sticky;
+  top: calc(var(--header-height, 64px) + 12px);
+  z-index: 5;
+}
+
+.article-result-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin: -4px 0 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.05);
+  background: rgba(255,255,255,0.92);
+}
+
+.article-result-toolbar__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--article-text-sub);
+  font-size: 0.88rem;
+}
+
+.article-result-toolbar__count {
+  color: var(--article-text-main);
+  font-weight: 600;
+}
+
+.article-result-toolbar__page {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.article-result-toolbar__filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.article-result-toolbar__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(59,130,246,0.12);
+  background: rgba(239,246,255,0.8);
+  color: #1d4ed8;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.article-result-toolbar__chip span {
+  opacity: 0.75;
+}
+
+.article-result-toolbar__reset {
+  border: 1px solid rgba(0,0,0,0.08);
+  background: white;
+  color: var(--article-text-sub);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.article-result-toolbar__reset:hover {
+  color: var(--theme-color, #3b82f6);
+  border-color: rgba(59,130,246,0.2);
 }
 
 .filter-row {
@@ -339,10 +413,24 @@
   .article-page-title {
     font-size: 2rem;
   }
+
+  .article-filters {
+    position: static;
+  }
   
   .article-main-container {
     padding: 0 16px;
     transform: translateY(-20px);
+  }
+
+  .article-result-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 10px 12px;
+  }
+
+  .article-result-toolbar__filters {
+    justify-content: flex-start;
   }
   
   .article-grid {

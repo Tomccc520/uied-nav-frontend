@@ -306,7 +306,7 @@ const RankingsPage: React.FC = () => {
       <div className="rankings-page__container">
         <header className="rankings-page__hero">
           <div>
-            <div className="rankings-page__eyebrow">榜单系统 / 运营配置驱动</div>
+            <div className="rankings-page__eyebrow">站内榜单系统（网站/文章） / 运营配置驱动</div>
             <h1 className="rankings-page__title">{pageTitle}</h1>
             <p className="rankings-page__desc">
               按指标与周期快速切换查看榜单，兼容运营榜单与数据榜单，适合做导航站导流与 SEO 内链页。

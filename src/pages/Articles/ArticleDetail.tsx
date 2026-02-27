@@ -12,6 +12,7 @@ import { getArticleDetail, recordArticleView } from '../../services/articleServi
 import { ArticleDetail as ArticleDetailType } from '../../types/article';
 import SEO from '../../components/SEO';
 import { useLicense, FEATURES } from '../../hooks/useLicense';
+import { usePublicSettings } from '../../hooks/usePublicSettings';
 import ArticleComments from './ArticleComments';
 import './ArticleDetail.css';
 
@@ -26,14 +27,41 @@ const formatDate = (value: string | number | null): string => {
   });
 };
 
+/**
+ * 规范化文章详情宽度模式，兼容后台配置异常值
+ */
+const normalizeArticleDetailLayoutWidthMode = (mode: unknown): 'contained' | 'wide' | 'fluid' => {
+  const value = String(mode || '').trim();
+  if (value === 'wide' || value === 'fluid') return value;
+  return 'contained';
+};
+
+/**
+ * 规范化文章详情标题区对齐方式
+ */
+const normalizeArticleDetailHeaderAlign = (align: unknown): 'center' | 'left' => {
+  return String(align || '').trim() === 'left' ? 'left' : 'center';
+};
+
+/**
+ * 规范化文章正文最大宽度，避免配置异常导致页面溢出
+ */
+const normalizeArticleDetailMaxWidth = (value: unknown): number => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 880;
+  return Math.max(680, Math.min(1600, parsed));
+};
+
 const ArticleDetail: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { hasFeature } = useLicense();
+  const { data: publicSettings } = usePublicSettings();
   
   const [article, setArticle] = useState<ArticleDetailType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [readingProgress, setReadingProgress] = useState(0);
 
   useEffect(() => {
     const fetchArticle = async () => {
@@ -70,6 +98,35 @@ const ArticleDetail: React.FC = () => {
     return () => clearTimeout(timer);
   }, [article?.id]);
 
+  /**
+   * 监听滚动进度，提供阅读进度条反馈
+   */
+  useEffect(() => {
+    const handleScroll = () => {
+      const doc = document.documentElement;
+      const scrollTop = window.scrollY || doc.scrollTop || 0;
+      const maxScroll = Math.max(doc.scrollHeight - window.innerHeight, 1);
+      const progress = Math.max(0, Math.min(100, (scrollTop / maxScroll) * 100));
+      setReadingProgress(progress);
+    };
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  /**
+   * 复制文章当前链接，方便转发分享
+   */
+  const handleCopyArticleLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      window.alert('文章链接已复制');
+    } catch (copyError) {
+      window.alert('复制失败，请手动复制地址栏链接');
+    }
+  };
+
   if (loading) return <div className="detail-loading"><div className="spinner" /></div>;
   
   if (error || !article) {
@@ -81,8 +138,22 @@ const ArticleDetail: React.FC = () => {
     );
   }
 
+  const articleSetting = publicSettings?.article;
+  const detailLayoutWidthMode = normalizeArticleDetailLayoutWidthMode(articleSetting?.detailLayoutWidthMode);
+  const detailHeaderAlign = normalizeArticleDetailHeaderAlign(articleSetting?.detailHeaderAlign);
+  const detailMaxWidth = normalizeArticleDetailMaxWidth(articleSetting?.detailContentMaxWidth);
+
   return (
-    <article className="article-detail-page">
+    <article
+      className={`article-detail-page article-detail-page--layout-${detailLayoutWidthMode} article-detail-page--header-${detailHeaderAlign}`}
+      style={{ '--article-detail-max-width': `${detailMaxWidth}px` } as React.CSSProperties}
+    >
+      <div className="detail-reading-progress" aria-hidden="true">
+        <div
+          className="detail-reading-progress__bar"
+          style={{ width: `${readingProgress}%` }}
+        />
+      </div>
       <SEO
         title={article.seoTitle || article.title}
         description={article.seoDescription || article.excerpt}
@@ -121,6 +192,15 @@ const ArticleDetail: React.FC = () => {
                 <span className="read-count">{article.viewCount} 次阅读</span>
               </div>
             </div>
+          </div>
+
+          <div className="detail-header-actions">
+            <button type="button" className="detail-header-action" onClick={() => navigate('/articles')}>
+              返回列表
+            </button>
+            <button type="button" className="detail-header-action detail-header-action--primary" onClick={handleCopyArticleLink}>
+              复制链接
+            </button>
           </div>
         </header>
 

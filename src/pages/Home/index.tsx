@@ -18,9 +18,9 @@ import Banner from '../../components/Banner';
 import AdBanner from '../../components/AdBanner';
 import DesignArticleGrid from '../../components/DesignArticleGrid';
 import { RankingListSkeleton } from '../../components/Skeleton';
-import { getRankings } from '../../services/rankingService';
+import { getRankings, getRankingsAggregate } from '../../services/rankingService';
 import { getDailyHotDisplayConfig } from '../../services/dailyHotService';
-import { RankingBoardData } from '../../types/ranking';
+import { RankingBoardData, RankingPublicConfig } from '../../types/ranking';
 import { DailyHotDisplayConfig } from '../../types/dailyHot';
 import { useBanners } from '../../hooks/useBanners';
 import { useFrontendConfig } from '../../hooks/useFrontendConfig';
@@ -111,6 +111,7 @@ const Home: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [dailyHotDisplayConfig, setDailyHotDisplayConfig] = useState<DailyHotDisplayConfig | null>(null);
+  const [rankingsDisplayConfig, setRankingsDisplayConfig] = useState<RankingPublicConfig | null>(null);
   const { config: frontendConfig } = useFrontendConfig();
   const { banners: homeBanners, recordClick: recordBannerClick } = useBanners({
     position: 'home',
@@ -139,11 +140,33 @@ const Home: React.FC = () => {
   }, []);
 
   /**
+   * 判断榜单系统入口是否允许在当前终端显示
+   */
+  const canShowRankingsByDevice = useCallback((config: RankingPublicConfig | null): boolean => {
+    if (!config) return true;
+    const mobile = isMobileViewport();
+    return mobile ? config.displayMobile !== false : config.displayDesktop !== false;
+  }, []);
+
+  /**
    * 读取每日热榜公开展示配置（首页快捷入口/跳转链接）
    */
   const fetchDailyHotDisplayConfig = useCallback(async () => {
     const config = await getDailyHotDisplayConfig();
     setDailyHotDisplayConfig(config);
+  }, []);
+
+  /**
+   * 读取榜单系统前台公开显示配置（用于导航快捷入口）
+   */
+  const fetchRankingsDisplayConfig = useCallback(async () => {
+    try {
+      const aggregate = await getRankingsAggregate(1);
+      setRankingsDisplayConfig(aggregate.publicConfig || null);
+    } catch (error) {
+      console.warn('获取榜单系统公开配置失败，回退默认展示:', error);
+      setRankingsDisplayConfig(null);
+    }
   }, []);
 
   /**
@@ -280,6 +303,11 @@ const Home: React.FC = () => {
     fetchDailyHotDisplayConfig();
   }, [fetchDailyHotDisplayConfig]);
 
+  // 读取榜单系统前台入口配置（失败时使用默认值）
+  useEffect(() => {
+    fetchRankingsDisplayConfig();
+  }, [fetchRankingsDisplayConfig]);
+
   // 当轮播数据源变化时，保证当前索引不越界
   useEffect(() => {
     if (currentSlide >= carouselData.length) {
@@ -341,6 +369,38 @@ const Home: React.FC = () => {
     };
   }, [dailyHotDisplayConfig]);
 
+  /**
+   * 首页“榜单系统”快捷入口是否显示
+   */
+  const showRankingsQuickEntry = useMemo(() => {
+    if (!rankingsDisplayConfig || rankingsDisplayConfig.enabled === false) return false;
+    if (!canShowRankingsByDevice(rankingsDisplayConfig)) return false;
+    return Array.isArray(rankingsDisplayConfig.displayPlacements)
+      && rankingsDisplayConfig.displayPlacements.includes('nav_quick_entry');
+  }, [canShowRankingsByDevice, rankingsDisplayConfig]);
+
+  /**
+   * 获取首页内使用的榜单系统入口文案与链接配置
+   */
+  const rankingsEntryView = useMemo(() => {
+    const fallback = {
+      label: '榜单系统',
+      href: '/p/rankings',
+      target: '_self' as '_self' | '_blank',
+      rel: undefined as string | undefined,
+    };
+    if (!rankingsDisplayConfig || rankingsDisplayConfig.enabled === false) return fallback;
+    const href = String(rankingsDisplayConfig.displayPath || fallback.href).trim() || fallback.href;
+    const label = String(rankingsDisplayConfig.displayLabel || fallback.label).trim() || fallback.label;
+    const newTab = rankingsDisplayConfig.displayOpenInNewTab === true;
+    return {
+      label,
+      href,
+      target: newTab ? '_blank' as const : '_self' as const,
+      rel: newTab ? 'noopener noreferrer' : undefined,
+    };
+  }, [rankingsDisplayConfig]);
+
   // 渲染排行榜项目（参考AntRankingPage设计）
   const renderRankingItem = (item: RankingItem, index: number) => {
     return (
@@ -377,16 +437,28 @@ const Home: React.FC = () => {
 
   return (
     <div className="home-container">
-      {showDailyHotQuickEntry && (
+      {(showDailyHotQuickEntry || showRankingsQuickEntry) && (
         <div className="home-quick-entry">
-          <a
-            className="home-quick-entry-link"
-            href={dailyHotEntryView.href}
-            target={dailyHotEntryView.target}
-            rel={dailyHotEntryView.rel}
-          >
-            {dailyHotEntryView.label}
-          </a>
+          {showDailyHotQuickEntry && (
+            <a
+              className="home-quick-entry-link"
+              href={dailyHotEntryView.href}
+              target={dailyHotEntryView.target}
+              rel={dailyHotEntryView.rel}
+            >
+              {dailyHotEntryView.label}
+            </a>
+          )}
+          {showRankingsQuickEntry && (
+            <a
+              className="home-quick-entry-link home-quick-entry-link--rankings"
+              href={rankingsEntryView.href}
+              target={rankingsEntryView.target}
+              rel={rankingsEntryView.rel}
+            >
+              {rankingsEntryView.label}
+            </a>
+          )}
         </div>
       )}
       {/* 顶部区域：按后台排序渲染轮播和推荐模块 */}

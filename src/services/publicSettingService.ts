@@ -205,6 +205,9 @@ export interface ArticleConfig {
   listPageTitle: string;
   listPageDescription: string;
   listPageCoverImage: string;
+  detailLayoutWidthMode: 'contained' | 'wide' | 'fluid';
+  detailContentMaxWidth: number;
+  detailHeaderAlign: 'left' | 'center';
   commentsEnabled: boolean;
   topicsEnabled: boolean;
 }
@@ -435,6 +438,9 @@ export const DEFAULT_ARTICLE_SETTING: ArticleConfig = {
   listPageTitle: DEFAULT_ARTICLE_UI_CONFIG.title,
   listPageDescription: DEFAULT_ARTICLE_UI_CONFIG.description,
   listPageCoverImage: DEFAULT_ARTICLE_UI_CONFIG.coverImage || '',
+  detailLayoutWidthMode: 'contained',
+  detailContentMaxWidth: 880,
+  detailHeaderAlign: 'center',
   commentsEnabled: true,
   topicsEnabled: true,
 };
@@ -511,6 +517,12 @@ export const publicSettingService = {
    */
   normalizeArticleConfig: (config: unknown): ArticleConfig => {
     const merged = { ...DEFAULT_ARTICLE_SETTING, ...((config as Partial<ArticleConfig>) || {}) };
+    const detailLayoutWidthMode = [ 'contained', 'wide', 'fluid' ].includes(String(merged.detailLayoutWidthMode || '').trim())
+      ? (String(merged.detailLayoutWidthMode || '').trim() as 'contained' | 'wide' | 'fluid')
+      : DEFAULT_ARTICLE_SETTING.detailLayoutWidthMode;
+    const detailHeaderAlign = [ 'left', 'center' ].includes(String(merged.detailHeaderAlign || '').trim())
+      ? (String(merged.detailHeaderAlign || '').trim() as 'left' | 'center')
+      : DEFAULT_ARTICLE_SETTING.detailHeaderAlign;
     return {
       ...merged,
       enabled: merged.enabled !== false,
@@ -521,6 +533,11 @@ export const publicSettingService = {
       listPageTitle: String(merged.listPageTitle || DEFAULT_ARTICLE_SETTING.listPageTitle),
       listPageDescription: String(merged.listPageDescription || DEFAULT_ARTICLE_SETTING.listPageDescription),
       listPageCoverImage: String(merged.listPageCoverImage || DEFAULT_ARTICLE_SETTING.listPageCoverImage),
+      detailLayoutWidthMode,
+      detailContentMaxWidth: Number.isFinite(Number(merged.detailContentMaxWidth))
+        ? Math.max(680, Math.min(1600, Number(merged.detailContentMaxWidth)))
+        : DEFAULT_ARTICLE_SETTING.detailContentMaxWidth,
+      detailHeaderAlign,
       homeSectionTitle: String(merged.homeSectionTitle || DEFAULT_ARTICLE_SETTING.homeSectionTitle),
       homeSectionSubtitle: String(merged.homeSectionSubtitle || DEFAULT_ARTICLE_SETTING.homeSectionSubtitle),
       commentsEnabled: merged.commentsEnabled !== false,
