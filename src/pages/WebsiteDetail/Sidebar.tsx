@@ -9,6 +9,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { AxiosError } from 'axios';
 import { Link } from 'react-router-dom';
 import WebsiteFavicon from '../../components/WebsiteFavicon';
 import api from '../../services/api';
@@ -118,6 +119,8 @@ const Sidebar: React.FC<SidebarProps> = ({ websiteId, relatedWebsites, tags, web
   const [dynamicRelated, setDynamicRelated] = useState<RelatedWebsite[]>([]);
   const [dynamicRelatedLoading, setDynamicRelatedLoading] = useState(false);
   const [sidebarPlacement, setSidebarPlacement] = useState<CommercialPlacementItem | null>(null);
+  const sidebarPlacementImageUrl = String(sidebarPlacement?.imageUrl || '').trim();
+  const sidebarPlacementTargetUrl = String(sidebarPlacement?.targetUrl || '').trim();
 
   // 获取侧边栏配置
   useEffect(() => {
@@ -201,7 +204,13 @@ const Sidebar: React.FC<SidebarProps> = ({ websiteId, relatedWebsites, tags, web
         const list = Array.isArray(payload) ? payload : (Array.isArray(payload?.list) ? payload.list : []);
         setSidebarPlacement(list[0] || null);
       } catch (error) {
-        debugLog.warn('获取侧边栏广告位失败（非关键）:', error);
+        /**
+         * 商业位接口 403 代表当前版本未授权，按非关键功能静默处理。
+         */
+        const status = Number((error as AxiosError)?.response?.status || 0);
+        if (status !== 403) {
+          debugLog.warn('获取侧边栏广告位失败（非关键）:', error);
+        }
         setSidebarPlacement(null);
       }
     };
@@ -346,7 +355,7 @@ const Sidebar: React.FC<SidebarProps> = ({ websiteId, relatedWebsites, tags, web
       {config.sidebarAdEnabled && sidebarPlacement && (
         <div className="sidebar-section sidebar-section--ad">
           <a
-            href={sidebarPlacement.targetUrl || '#'}
+            href={sidebarPlacementTargetUrl || '#'}
             target="_blank"
             rel="noopener noreferrer"
             className="sidebar-ad-card"
@@ -354,9 +363,9 @@ const Sidebar: React.FC<SidebarProps> = ({ websiteId, relatedWebsites, tags, web
             {sidebarPlacement.badgeText && (
               <span className="sidebar-ad-badge">{sidebarPlacement.badgeText}</span>
             )}
-            {sidebarPlacement.imageUrl && (
+            {sidebarPlacementImageUrl && (
               <div className="sidebar-ad-cover">
-                <img src={sidebarPlacement.imageUrl} alt={sidebarPlacement.sponsorTitle || '广告位'} />
+                <img src={sidebarPlacementImageUrl} alt={sidebarPlacement.sponsorTitle || '广告位'} />
               </div>
             )}
             <div className="sidebar-ad-body">

@@ -12,6 +12,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useUser } from '../../contexts/UserContext';
+import userService, { LoginTwoFactorChallenge } from '../../services/userService';
 import Modal from '../UI/Modal';
 import './AuthModal.css';
 
@@ -29,8 +30,11 @@ const AuthModal: React.FC<AuthModalProps> = ({
   onClose, 
   initialMode = 'login' 
 }) => {
-  const { login, register, error: authError, clearError, loading } = useUser();
+  const { login, verifyLoginTwoFactor, register, error: authError, clearError, loading } = useUser();
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
+  const [twoFactorChallenge, setTwoFactorChallenge] = useState<LoginTwoFactorChallenge | null>(null);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [sendingTwoFactorCode, setSendingTwoFactorCode] = useState(false);
   
   // 表单状态
   const [formData, setFormData] = useState({
@@ -47,6 +51,8 @@ const AuthModal: React.FC<AuthModalProps> = ({
     if (visible) {
       setMode(initialMode);
       setFormData({ username: '', password: '', confirmPassword: '', nickname: '' });
+      setTwoFactorChallenge(null);
+      setTwoFactorCode('');
       setErrors({});
       clearError();
     }
@@ -57,6 +63,13 @@ const AuthModal: React.FC<AuthModalProps> = ({
    */
   const validate = () => {
     const newErrors: Record<string, string> = {};
+    if (twoFactorChallenge) {
+      if (!twoFactorCode.trim()) {
+        newErrors.twoFactorCode = '请输入验证码';
+      }
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
+    }
     if (!formData.username.trim()) {
       newErrors.username = '请输入用户名/账号';
     }
@@ -84,11 +97,24 @@ const AuthModal: React.FC<AuthModalProps> = ({
 
     try {
       if (mode === 'login') {
-        await login({
-          username: formData.username,
-          account: formData.username,
-          password: formData.password,
-        });
+        if (twoFactorChallenge) {
+          await verifyLoginTwoFactor({
+            challengeToken: twoFactorChallenge.challengeToken,
+            code: twoFactorCode.trim(),
+          });
+        } else {
+          const result = await login({
+            username: formData.username,
+            account: formData.username,
+            password: formData.password,
+          });
+          if (result?.need2fa && result.challenge) {
+            setTwoFactorChallenge(result.challenge);
+            setTwoFactorCode('');
+            setErrors({});
+            return;
+          }
+        }
       } else {
         await register({
           username: formData.username,
@@ -121,8 +147,25 @@ const AuthModal: React.FC<AuthModalProps> = ({
    */
   const switchMode = (newMode: 'login' | 'register') => {
     setMode(newMode);
+    setTwoFactorChallenge(null);
+    setTwoFactorCode('');
     setErrors({});
     clearError();
+  };
+
+  /**
+   * 重新发送登录 2FA 验证码
+   */
+  const handleResendTwoFactorCode = async () => {
+    if (!twoFactorChallenge?.challengeToken) return;
+    setSendingTwoFactorCode(true);
+    try {
+      await userService.sendLoginTwoFactorCode(twoFactorChallenge.challengeToken);
+    } catch (error) {
+      // 具体错误由全局拦截统一处理
+    } finally {
+      setSendingTwoFactorCode(false);
+    }
   };
 
   return (
@@ -172,66 +215,98 @@ const AuthModal: React.FC<AuthModalProps> = ({
         )}
 
         <form className="auth-form" onSubmit={handleSubmit}>
-          <div className="form-item">
-            <label className="form-label">账号</label>
-            <div className="input-wrapper">
-              <input
-                type="text"
-                name="username"
-                className={`form-input ${errors.username ? 'error' : ''}`}
-                placeholder="用户名 / 手机号 / 邮箱"
-                value={formData.username}
-                onChange={handleInputChange}
-              />
-            </div>
-            {errors.username && <span className="form-error-msg">{errors.username}</span>}
-          </div>
+          {!twoFactorChallenge ? (
+            <>
+              <div className="form-item">
+                <label className="form-label">账号</label>
+                <div className="input-wrapper">
+                  <input
+                    type="text"
+                    name="username"
+                    className={`form-input ${errors.username ? 'error' : ''}`}
+                    placeholder="用户名 / 手机号 / 邮箱"
+                    value={formData.username}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                {errors.username && <span className="form-error-msg">{errors.username}</span>}
+              </div>
 
-          {mode === 'register' && (
+              {mode === 'register' && (
+                <div className="form-item">
+                  <label className="form-label">昵称 (选填)</label>
+                  <div className="input-wrapper">
+                    <input
+                      type="text"
+                      name="nickname"
+                      className="form-input"
+                      placeholder="怎么称呼您"
+                      value={formData.nickname}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="form-item">
+                <label className="form-label">密码</label>
+                <div className="input-wrapper">
+                  <input
+                    type="password"
+                    name="password"
+                    className={`form-input ${errors.password ? 'error' : ''}`}
+                    placeholder="请输入密码"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                {errors.password && <span className="form-error-msg">{errors.password}</span>}
+              </div>
+
+              {mode === 'register' && (
+                <div className="form-item">
+                  <label className="form-label">确认密码</label>
+                  <div className="input-wrapper">
+                    <input
+                      type="password"
+                      name="confirmPassword"
+                      className={`form-input ${errors.confirmPassword ? 'error' : ''}`}
+                      placeholder="请再次输入密码"
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  {errors.confirmPassword && <span className="form-error-msg">{errors.confirmPassword}</span>}
+                </div>
+              )}
+            </>
+          ) : (
             <div className="form-item">
-              <label className="form-label">昵称 (选填)</label>
+              <label className="form-label">二次验证验证码</label>
+              <div className="auth-global-error" style={{ marginBottom: 12 }}>
+                已向 {twoFactorChallenge.maskedAccount || '安全账号'} 发送验证码，请输入后完成登录。
+              </div>
               <div className="input-wrapper">
                 <input
                   type="text"
-                  name="nickname"
-                  className="form-input"
-                  placeholder="怎么称呼您"
-                  value={formData.nickname}
-                  onChange={handleInputChange}
+                  name="twoFactorCode"
+                  className={`form-input ${errors.twoFactorCode ? 'error' : ''}`}
+                  placeholder="请输入 6 位验证码"
+                  value={twoFactorCode}
+                  onChange={e => {
+                    setTwoFactorCode(e.target.value);
+                    if (errors.twoFactorCode) {
+                      setErrors(prev => ({ ...prev, twoFactorCode: '' }));
+                    }
+                  }}
                 />
               </div>
-            </div>
-          )}
-
-          <div className="form-item">
-            <label className="form-label">密码</label>
-            <div className="input-wrapper">
-              <input
-                type="password"
-                name="password"
-                className={`form-input ${errors.password ? 'error' : ''}`}
-                placeholder="请输入密码"
-                value={formData.password}
-                onChange={handleInputChange}
-              />
-            </div>
-            {errors.password && <span className="form-error-msg">{errors.password}</span>}
-          </div>
-
-          {mode === 'register' && (
-            <div className="form-item">
-              <label className="form-label">确认密码</label>
-              <div className="input-wrapper">
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  className={`form-input ${errors.confirmPassword ? 'error' : ''}`}
-                  placeholder="请再次输入密码"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                />
+              {errors.twoFactorCode && <span className="form-error-msg">{errors.twoFactorCode}</span>}
+              <div className="auth-footer" style={{ marginTop: 10 }}>
+                <span className="auth-link" onClick={handleResendTwoFactorCode}>
+                  {sendingTwoFactorCode ? '发送中...' : '重新发送验证码'}
+                </span>
               </div>
-              {errors.confirmPassword && <span className="form-error-msg">{errors.confirmPassword}</span>}
             </div>
           )}
 
@@ -240,10 +315,11 @@ const AuthModal: React.FC<AuthModalProps> = ({
             className="auth-submit-btn"
             disabled={loading}
           >
-            {loading ? '处理中...' : (mode === 'login' ? '立即登录' : '立即注册')}
+            {loading ? '处理中...' : (twoFactorChallenge ? '提交验证码' : (mode === 'login' ? '立即登录' : '立即注册'))}
           </button>
         </form>
 
+        {!twoFactorChallenge && (
         <div className="auth-footer">
           {mode === 'login' ? (
             <>
@@ -261,6 +337,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
             </>
           )}
         </div>
+        )}
       </div>
     </Modal>
   );

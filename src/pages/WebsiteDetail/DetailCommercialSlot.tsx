@@ -6,6 +6,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { AxiosError } from 'axios';
 import api from '../../services/api';
 import { unwrapApiResponse } from '../../utils/apiResponse';
 import { debugLog } from '../../utils/debugHelper';
@@ -31,6 +32,8 @@ interface DetailCommercialSlotProps {
  */
 const DetailCommercialSlot: React.FC<DetailCommercialSlotProps> = ({ slotKey, className }) => {
   const [item, setItem] = useState<CommercialPlacementItem | null>(null);
+  const imageUrl = String(item?.imageUrl || '').trim();
+  const targetUrl = String(item?.targetUrl || '').trim();
 
   useEffect(() => {
     const fetchPlacement = async () => {
@@ -50,7 +53,13 @@ const DetailCommercialSlot: React.FC<DetailCommercialSlotProps> = ({ slotKey, cl
         const list = Array.isArray(payload) ? payload : (Array.isArray(payload?.list) ? payload.list : []);
         setItem(list[0] || null);
       } catch (error) {
-        debugLog.warn(`获取详情页商业位失败（${key}）:`, error);
+        /**
+         * 商业位在未授权版本返回 403 属于预期行为，静默降级不输出告警。
+         */
+        const status = Number((error as AxiosError)?.response?.status || 0);
+        if (status !== 403) {
+          debugLog.warn(`获取详情页商业位失败（${key}）:`, error);
+        }
         setItem(null);
       }
     };
@@ -62,7 +71,7 @@ const DetailCommercialSlot: React.FC<DetailCommercialSlotProps> = ({ slotKey, cl
   return (
     <section className={['detail-commercial-slot', className || ''].filter(Boolean).join(' ')}>
       <a
-        href={item.targetUrl || '#'}
+        href={targetUrl || '#'}
         target="_blank"
         rel="noopener noreferrer"
         className="detail-commercial-slot__link"
@@ -79,9 +88,9 @@ const DetailCommercialSlot: React.FC<DetailCommercialSlotProps> = ({ slotKey, cl
               <div className="detail-commercial-slot__desc">{item.textContent}</div>
             )}
           </div>
-          {item.imageUrl && (
+          {imageUrl && (
             <div className="detail-commercial-slot__image">
-              <img src={item.imageUrl} alt={item.sponsorTitle || '广告位'} loading="lazy" />
+              <img src={imageUrl} alt={item.sponsorTitle || '广告位'} loading="lazy" />
             </div>
           )}
         </div>

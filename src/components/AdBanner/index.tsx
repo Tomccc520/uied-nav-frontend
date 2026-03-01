@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
+import { AxiosError } from 'axios';
 import { useBanners, Banner } from '../../hooks/useBanners';
 import api from '../../services/api';
 import { unwrapApiResponse } from '../../utils/apiResponse';
@@ -86,7 +87,13 @@ const AdBanner: React.FC<AdBannerProps> = ({
         const payload = unwrapApiResponse<{ list?: CommercialPlacement[] }>(res.data, { list: [] });
         setCommercialPlacements(Array.isArray(payload.list) ? payload.list : []);
       } catch (error) {
-        console.error('获取商业位投放失败:', error);
+        /**
+         * 商业位在未授权版本返回 403 属于预期行为，静默降级不刷错误日志。
+         */
+        const status = Number((error as AxiosError)?.response?.status || 0);
+        if (status !== 403) {
+          console.error('获取商业位投放失败:', error);
+        }
         setCommercialPlacements([]);
       } finally {
         setCommercialLoading(false);
@@ -179,6 +186,7 @@ const AdBanner: React.FC<AdBannerProps> = ({
 
   // 分离图片类型和 HTML 类型的广告
   const imageBanners = effectiveBanners.filter(b => b.contentType === 'image' || !b.contentType);
+  const validImageBanners = imageBanners.filter(b => String(b.imageUrl || '').trim().length > 0);
   const htmlBanners = effectiveBanners.filter(b => b.contentType === 'html');
   const textBanners = effectiveBanners.filter(b => b.contentType === 'text');
 
@@ -196,14 +204,14 @@ const AdBanner: React.FC<AdBannerProps> = ({
         )}
         
         {/* 图片类型广告 */}
-        {imageBanners.length === 1 ? (
-          <div className="banner-single" onClick={() => handleClick(imageBanners[0])}>
-            <img src={imageBanners[0].imageUrl} alt={imageBanners[0].title} />
-            {imageBanners[0].title && <div className="banner-title">{imageBanners[0].title}</div>}
+        {validImageBanners.length === 1 ? (
+          <div className="banner-single" onClick={() => handleClick(validImageBanners[0])}>
+            <img src={validImageBanners[0].imageUrl} alt={validImageBanners[0].title} />
+            {validImageBanners[0].title && <div className="banner-title">{validImageBanners[0].title}</div>}
           </div>
-        ) : imageBanners.length > 1 ? (
+        ) : validImageBanners.length > 1 ? (
           <div className="banner-carousel">
-            {imageBanners.map((banner, index) => (
+            {validImageBanners.map((banner, index) => (
               <div
                 key={banner.id}
                 className="banner-item"
@@ -216,7 +224,7 @@ const AdBanner: React.FC<AdBannerProps> = ({
           </div>
         ) : null}
 
-        {imageBanners.length === 0 && textBanners.length > 0 && (
+        {validImageBanners.length === 0 && textBanners.length > 0 && (
           <div className="banner-text-list">
             {textBanners.map(banner => (
               <div
@@ -247,7 +255,7 @@ const AdBanner: React.FC<AdBannerProps> = ({
         )}
         
         {/* 图片类型广告 */}
-        {imageBanners.map(banner => (
+        {validImageBanners.map(banner => (
           <div
             key={banner.id}
             className="sidebar-banner-item"
@@ -259,7 +267,7 @@ const AdBanner: React.FC<AdBannerProps> = ({
           </div>
         ))}
 
-        {imageBanners.length === 0 && textBanners.length > 0 && (
+        {validImageBanners.length === 0 && textBanners.length > 0 && (
           <div className="banner-text-list">
             {textBanners.map(banner => (
               <div
@@ -290,9 +298,9 @@ const AdBanner: React.FC<AdBannerProps> = ({
         )}
         
         {/* 图片类型广告 */}
-        {imageBanners.length > 0 && (
+        {validImageBanners.length > 0 && (
           <div className="bottom-banner-grid">
-            {imageBanners.map(banner => (
+            {validImageBanners.map(banner => (
               <div
                 key={banner.id}
                 className="bottom-banner-item"
@@ -304,7 +312,7 @@ const AdBanner: React.FC<AdBannerProps> = ({
           </div>
         )}
 
-        {imageBanners.length === 0 && textBanners.length > 0 && (
+        {validImageBanners.length === 0 && textBanners.length > 0 && (
           <div className="banner-text-list">
             {textBanners.map(banner => (
               <div

@@ -5,14 +5,20 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import userService, { User, LoginParams, RegisterParams } from '../services/userService';
+import userService, { User, LoginParams, RegisterParams, LoginTwoFactorChallenge, AuthResponse } from '../services/userService';
+
+interface LoginActionResult {
+  need2fa: boolean;
+  challenge?: LoginTwoFactorChallenge;
+}
 
 interface UserContextValue {
   user: User | null;
   loading: boolean;
   error: Error | null;
   isLoggedIn: boolean;
-  login: (params: LoginParams) => Promise<void>;
+  login: (params: LoginParams) => Promise<LoginActionResult>;
+  verifyLoginTwoFactor: (params: { challengeToken: string; code: string }) => Promise<void>;
   register: (params: RegisterParams) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -26,6 +32,18 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+
+  /**
+   * 写入登录完成态（token + 用户信息）
+   */
+  const applyAuthSuccess = useCallback((authData: AuthResponse) => {
+    const token = String(authData?.token || '').trim();
+    if (!token) return;
+    localStorage.setItem('token', token);
+    const nextUser = (authData.userInfo || authData.user || null) as User | null;
+    setUser(nextUser);
+    localStorage.setItem(USER_PROFILE_CACHE_KEY, JSON.stringify(nextUser || {}));
+  }, []);
 
   useEffect(() => {
     /**
@@ -70,16 +88,19 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   /**
    * 执行登录并写入用户状态
    */
-  const login = useCallback(async (params: LoginParams) => {
+  const login = useCallback(async (params: LoginParams): Promise<LoginActionResult> => {
     setLoading(true);
     setError(null);
     try {
-      const { token, user: userData, userInfo } = await userService.login(params);
-      localStorage.setItem('token', token);
-      // 优先使用 userInfo，如果不存在则使用 user
-      const nextUser = userInfo || userData;
-      setUser(nextUser);
-      localStorage.setItem(USER_PROFILE_CACHE_KEY, JSON.stringify(nextUser || {}));
+      const loginResult = await userService.login(params);
+      if ((loginResult as LoginTwoFactorChallenge).need2fa) {
+        return {
+          need2fa: true,
+          challenge: loginResult as LoginTwoFactorChallenge,
+        };
+      }
+      applyAuthSuccess(loginResult as AuthResponse);
+      return { need2fa: false };
     } catch (err) {
       const error = err instanceof Error ? err : new Error('登录失败');
       setError(error);
@@ -87,7 +108,25 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [applyAuthSuccess]);
+
+  /**
+   * 完成登录 2FA 验证并写入登录态
+   */
+  const verifyLoginTwoFactor = useCallback(async (params: { challengeToken: string; code: string }) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const authData = await userService.verifyLoginTwoFactor(params);
+      applyAuthSuccess(authData);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('二次验证失败');
+      setError(error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [applyAuthSuccess]);
 
   /**
    * 执行注册并写入用户状态
@@ -160,6 +199,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     error,
     isLoggedIn: !!user,
     login,
+    verifyLoginTwoFactor,
     register,
     logout,
     refreshProfile,

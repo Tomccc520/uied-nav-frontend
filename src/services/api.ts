@@ -71,6 +71,17 @@ api.interceptors.request.use(
     // 规范化请求 URL，统一接口路径规则
     config.url = normalizeRequestUrl(config.url, config.baseURL || API_BASE_URL);
 
+    /**
+     * FormData 请求必须移除默认 JSON 头，让浏览器自动补全 multipart boundary。
+     * 否则文件上传场景（如头像上传）会被错误编码，后端无法正常读取文件流。
+     */
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+      if (config.headers) {
+        delete config.headers['Content-Type'];
+        delete config.headers['content-type'];
+      }
+    }
+
     // 记录请求开始时间（用于性能监控）
     config._startTime = Date.now();
     
@@ -129,6 +140,18 @@ const shouldRetry = (error: AxiosError, config: ExtendedAxiosRequestConfig): boo
   return RETRY_CONFIG.retryableStatuses.includes(status);
 };
 
+/**
+ * 判断是否为可忽略的非关键错误（例如商业位未授权返回 403）
+ */
+const shouldIgnoreErrorLog = (error: AxiosError, config: ExtendedAxiosRequestConfig): boolean => {
+  const status = Number(error.response?.status || 0);
+  const requestUrl = String(config.url || '').toLowerCase();
+  if (status === 403 && requestUrl.includes('/commercial/placements')) {
+    return true;
+  }
+  return false;
+};
+
 // 延迟函数
 const delay = (ms: number): Promise<void> => {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -169,6 +192,11 @@ api.interceptors.response.use(
       return api.request(config);
     }
     
+    // 对可预期的非关键错误做静默降级，避免控制台刷屏
+    if (shouldIgnoreErrorLog(error, config)) {
+      return Promise.reject(error);
+    }
+
     // 记录错误详情
     const errorInfo = {
       url: config.url,

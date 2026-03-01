@@ -34,6 +34,17 @@ export interface AuthResponse {
   userInfo: User; // 兼容不同字段名
 }
 
+// 登录 2FA 挑战响应
+export interface LoginTwoFactorChallenge {
+  need2fa: true;
+  challengeToken: string;
+  method: 'mobile' | 'email';
+  maskedAccount: string;
+  expireSeconds: number;
+}
+
+export type LoginResponse = AuthResponse | LoginTwoFactorChallenge;
+
 // 登录参数
 export interface LoginParams {
   username?: string;
@@ -70,12 +81,46 @@ export const userService = {
   /**
    * 用户登录
    */
-  login: async (params: LoginParams): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>('/user/login', params);
+  login: async (params: LoginParams): Promise<LoginResponse> => {
+    const response = await api.post<any>('/user/login', params);
     const payload = unwrapApiResponse<any>(response.data, {});
+    if (payload?.need2fa) {
+      return {
+        need2fa: true,
+        challengeToken: String(payload.challengeToken || ''),
+        method: String(payload.method || 'mobile') as 'mobile' | 'email',
+        maskedAccount: String(payload.maskedAccount || ''),
+        expireSeconds: Number(payload.expireSeconds || 300),
+      };
+    }
     const token = String(payload.token || '').trim();
     if (!token) {
       throw buildAuthError('登录失败：未获取到有效登录令牌');
+    }
+    return {
+      token,
+      user: payload.user || payload.userInfo || {},
+      userInfo: payload.userInfo || payload.user || {},
+    };
+  },
+
+  /**
+   * 登录阶段：重新发送 2FA 验证码
+   */
+  sendLoginTwoFactorCode: async (challengeToken: string): Promise<any> => {
+    const response = await api.post('/user/login/2fa/send', { challengeToken });
+    return unwrapApiResponse<any>(response.data, {});
+  },
+
+  /**
+   * 登录阶段：提交 2FA 验证码并完成登录
+   */
+  verifyLoginTwoFactor: async (params: { challengeToken: string; code: string }): Promise<AuthResponse> => {
+    const response = await api.post('/user/login/2fa/verify', params);
+    const payload = unwrapApiResponse<any>(response.data, {});
+    const token = String(payload.token || '').trim();
+    if (!token) {
+      throw buildAuthError('登录失败：二次验证未通过');
     }
     return {
       token,
@@ -140,6 +185,24 @@ export const userService = {
   },
 
   /**
+   * 上传用户头像
+   */
+  uploadAvatar: async (file: File): Promise<{ avatar: string; user?: User }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    /**
+     * 注意：不要手动指定 multipart/form-data 头，交给浏览器自动注入 boundary。
+     * 否则部分环境会出现 “头像上传失败” 的解析异常。
+     */
+    const response = await api.post('/user/avatar/upload', formData);
+    const payload = unwrapApiResponse<any>(response.data, {});
+    return {
+      avatar: String(payload?.avatar || payload?.url || payload?.path || ''),
+      user: (payload?.user || undefined) as User | undefined,
+    };
+  },
+
+  /**
    * 修改密码
    */
   changePassword: async (params: { oldPassword?: string; newPassword: string; confirmPassword: string }): Promise<void> => {
@@ -167,6 +230,14 @@ export const userService = {
   },
 
   /**
+   * 获取订单详情
+   */
+  getOrderDetail: async (id: number | string): Promise<any> => {
+    const response = await api.post(`/user/order/detail/${id}`);
+    return unwrapApiResponse<any>(response.data, {});
+  },
+
+  /**
    * 获取许可证列表
    */
   getLicenseList: async (params: { page?: number; pageSize?: number }): Promise<any> => {
@@ -176,6 +247,22 @@ export const userService = {
       pageSize: params.pageSize ?? 10,
     });
     return unwrapApiResponse<any>(response.data, { lists: [], total: 0, pageNo: 1, pageSize: 10 });
+  },
+
+  /**
+   * 提交授权绑定
+   */
+  bindLicenseDomain: async (params: { licenseId: number; domain: string; mobile?: string; qq?: string }): Promise<any> => {
+    const response = await api.post('/user/license/bind', params);
+    return unwrapApiResponse<any>(response.data, {});
+  },
+
+  /**
+   * 修改授权域名
+   */
+  changeLicenseDomain: async (params: { licenseId: number; domain: string; mobile?: string; qq?: string }): Promise<any> => {
+    const response = await api.post('/user/license/change-domain', params);
+    return unwrapApiResponse<any>(response.data, {});
   },
 
   /**
@@ -214,6 +301,103 @@ export const userService = {
       pageSize: params.pageSize ?? 10,
     });
     return unwrapApiResponse<any>(response.data, { lists: [], total: 0, pageNo: 1, pageSize: 10 });
+  },
+
+  /**
+   * 发送绑定验证码（手机/邮箱）
+   */
+  sendBindCode: async (params: { type: 'bind_mobile' | 'bind_email'; account: string }): Promise<any> => {
+    const response = await api.post('/user/account/send-code', params);
+    return unwrapApiResponse<any>(response.data, {});
+  },
+
+  /**
+   * 绑定账号（手机/邮箱）
+   */
+  bindAccount: async (params: { type: 'mobile' | 'email'; account: string; code: string }): Promise<any> => {
+    const response = await api.post('/user/account/bind', params);
+    return unwrapApiResponse<any>(response.data, {});
+  },
+
+  /**
+   * 解绑账号（手机/邮箱）
+   */
+  unbindAccount: async (params: { type: 'mobile' | 'email' }): Promise<any> => {
+    const response = await api.post('/user/account/unbind', params);
+    return unwrapApiResponse<any>(response.data, {});
+  },
+
+  /**
+   * 发票列表
+   */
+  getInvoiceList: async (params: { page?: number; pageSize?: number; status?: string }): Promise<any> => {
+    const response = await api.post('/user/invoice/list', {
+      ...params,
+      pageNo: params.page ?? 1,
+      pageSize: params.pageSize ?? 10,
+    });
+    return unwrapApiResponse<any>(response.data, { lists: [], total: 0, pageNo: 1, pageSize: 10 });
+  },
+
+  /**
+   * 获取 2FA 状态
+   */
+  getTwoFactorStatus: async (): Promise<any> => {
+    const response = await api.post('/user/security/2fa/status');
+    return unwrapApiResponse<any>(response.data, {
+      enabled: false,
+      method: '',
+      maskedAccount: '',
+      hasMobile: false,
+      hasEmail: false,
+    });
+  },
+
+  /**
+   * 发送 2FA 配置验证码（启用/关闭）
+   */
+  sendTwoFactorCode: async (params: { purpose: 'enable' | 'disable'; type?: 'mobile' | 'email' }): Promise<any> => {
+    const response = await api.post('/user/security/2fa/send-code', params);
+    return unwrapApiResponse<any>(response.data, {});
+  },
+
+  /**
+   * 启用 2FA
+   */
+  enableTwoFactor: async (params: { type: 'mobile' | 'email'; password: string; code: string }): Promise<any> => {
+    const response = await api.post('/user/security/2fa/enable', params);
+    return unwrapApiResponse<any>(response.data, {});
+  },
+
+  /**
+   * 关闭 2FA
+   */
+  disableTwoFactor: async (params: { password: string; code: string }): Promise<any> => {
+    const response = await api.post('/user/security/2fa/disable', params);
+    return unwrapApiResponse<any>(response.data, {});
+  },
+
+  /**
+   * 获取活跃登录设备
+   */
+  getSessionList: async (): Promise<any> => {
+    const response = await api.post('/user/session/list');
+    return unwrapApiResponse<any>(response.data, { lists: [], total: 0 });
+  },
+
+  /**
+   * 下线指定登录设备
+   */
+  kickSession: async (token: string): Promise<void> => {
+    await api.post('/user/session/kick', { token });
+  },
+
+  /**
+   * 申请发票
+   */
+  applyInvoice: async (params: { orderId: number; title: string; taxNo?: string; email?: string }): Promise<any> => {
+    const response = await api.post('/user/invoice/apply', params);
+    return unwrapApiResponse<any>(response.data, {});
   },
 
   /**
@@ -264,6 +448,20 @@ export const userService = {
   },
 
   /**
+   * 取消收藏网址
+   */
+  removeWebsiteFavorite: async (websiteId: number): Promise<void> => {
+    await api.delete(`/websites/${websiteId}/favorite`);
+  },
+
+  /**
+   * 取消点赞网址
+   */
+  removeWebsiteLike: async (websiteId: number): Promise<void> => {
+    await api.delete(`/websites/${websiteId}/like`);
+  },
+
+  /**
    * 获取用户文章评论列表
    */
   getArticleCommentList: async (params: { page?: number; pageSize?: number; keyword?: string; status?: string }): Promise<any> => {
@@ -285,7 +483,53 @@ export const userService = {
       pageSize: params.pageSize ?? 10,
     });
     return unwrapApiResponse<any>(response.data, { lists: [], total: 0, pageNo: 1, pageSize: 10 });
-  }
+  },
+
+  /**
+   * 删除用户文章评论
+   */
+  deleteArticleComment: async (commentId: number): Promise<void> => {
+    await api.post('/user/article/comment/delete', { commentId });
+  },
+
+  /**
+   * 删除用户网址评论
+   */
+  deleteWebsiteComment: async (commentId: number): Promise<void> => {
+    await api.post('/user/website/comment/delete', { commentId });
+  },
+
+  /**
+   * 编辑用户文章评论
+   */
+  updateArticleComment: async (commentId: number, content: string): Promise<any> => {
+    const response = await api.post('/user/article/comment/update', { commentId, content });
+    return unwrapApiResponse<any>(response.data, {});
+  },
+
+  /**
+   * 编辑用户网址评论
+   */
+  updateWebsiteComment: async (commentId: number, content: string): Promise<any> => {
+    const response = await api.post('/user/website/comment/update', { commentId, content });
+    return unwrapApiResponse<any>(response.data, {});
+  },
+
+  /**
+   * 回复文章评论（楼中楼）
+   */
+  replyArticleComment: async (params: { targetId: number; commentId: number; content: string }): Promise<any> => {
+    const response = await api.post('/user/article/comment/reply', params);
+    return unwrapApiResponse<any>(response.data, {});
+  },
+
+  /**
+   * 回复网址评论（楼中楼）
+   */
+  replyWebsiteComment: async (params: { targetId: number; commentId: number; content: string }): Promise<any> => {
+    const response = await api.post('/user/website/comment/reply', params);
+    return unwrapApiResponse<any>(response.data, {});
+  },
 };
 
 export default userService;
